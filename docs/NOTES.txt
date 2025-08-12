@@ -1,0 +1,2 @@
+360x360 game screen
+left and right 145px can be used for UI stuff, try to leave center of gutters clear for mobile controls
