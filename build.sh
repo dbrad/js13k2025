@@ -4,12 +4,20 @@ mkdir build/constants
 node build/scripts/generate-constants.js
 cp build/constants/constants.d.ts src/ts/_constants.d.ts
 
-if [ $1 ] && [ $1=="debug" ]
-then
+if [ "$1" == "dev" ]; then
     rm -rf build/debug
 	mkdir build/debug
 	cp src/www/index.html build/debug/index.html
 	node build/scripts/debug-app.mjs
+elif [ "$1" == "net" ]; then
+	npm install
+	mkdir build/release
+	node_modules/.bin/html-minifier-terser --collapse-whitespace --remove-comments --remove-attribute-quotes --output build/release/index.html src/www/index.html
+	node build/scripts/release-app.mjs | node_modules/.bin/uglifyjs --config-file build/scripts/minify.config.json -o build/release/main.js
+	node_modules/.bin/roadroller build/release/main.js -O1 -o build/release/main.js
+	rm -rf dist
+	mkdir -p dist/src
+	node_modules/.bin/html-inline -i build/release/index.html -o dist/src/index.html
 else
     rm -rf build/release
 	mkdir build/release
