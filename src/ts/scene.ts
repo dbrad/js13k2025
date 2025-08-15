@@ -30,9 +30,9 @@ export let createScene = (setup_: VoidFunction, update_: UpdateFunction, draw_: 
 export let registerScene = (scene: Scene): void => {
     let id = nextSceneId++;
     scene.id_ = id;
-    scene.setup_();
     scenes[id] = scene;
     if (currentSceneId == -1) {
+        scene.setup_();
         currentSceneId = id;
     }
 };

@@ -1,0 +1,28 @@
+Day 02 - 2025-08-14
+
+---
+
+Theme is 'Black Cat'
+Need to do some mental mapping exercises to try to come up with game ideas. (See IDEAS.txt)
+
+Working title: I am the Night
+Gameplay specifics still not quite ironed out.
+Have a tiny blank cat that moves about in a shadowy blob of particles.
+Want to ponder on luck meter / mechnics, and figure out the main gameplay loop still.
+Some sort of exploration and / or stealth using the blob cat is desirable.
+
+---
+
+`-Zab0 -Zlr750 -Zmc4 -Zmd10 -S0,1,2,3,6,7,13,21,25,42,57,464`
+
+-------------------------------------------------------------------------------
+Language                     files          blank        comment           code
+-------------------------------------------------------------------------------
+TypeScript                      17            252             24           1461
+-------------------------------------------------------------------------------
+SUM:                            17            252             24           1461
+-------------------------------------------------------------------------------
+
+The file is under the limit.
+USED: 45.64% |  6075 BYTES
+LEFT: 54.36% |  7237 BYTES

@@ -1,4 +1,4 @@
-import { pushQuad, v4fToABGR } from "./draw";
+import { pushQuad, pushTexturedQuad, v4fToABGR } from "./draw";
 import { clamp, floor, lerp, math, setV2, setV4fFromV4f, v4f } from "./math";
 
 type ParticleParameters = {
@@ -37,13 +37,13 @@ let particlePoolIndex = particlePoolSize - 1;
 export let starParticle: ParticleParameters = {
     position_: [SCREEN_CENTER_X, SCREEN_CENTER_Y],
     velocity_: [0, 0],
-    velocityVariation_: [500, 250],
-    sizeBegin_: 1,
-    sizeEnd_: 4,
+    velocityVariation_: [50, 50],
+    sizeBegin_: 20,
+    sizeEnd_: 0,
     sizeVariation_: 1,
-    colourBegin_: v4f(0, 0, 0, 0),
-    colourEnd_: v4f(0, 0, 0, 0.75),
-    lifetime_: 2000
+    colourBegin_: v4f(0, 0, 0, 1),
+    colourEnd_: v4f(0, 0, 0, 0.1),
+    lifetime_: 200
 };
 
 export let fireParticle: ParticleParameters = {
@@ -78,10 +78,10 @@ export let initParticles = (): void => {
 
 export let updateParticles = (delta: number): void => {
     if (activeParticles.size === 0) return;
-    let deltaSeconds = (delta / 1000);
+    let deltaSeconds = (delta * 0.001);
     let indexes = activeParticles.values();
     for (let i of indexes) {
-        if (particleLifetimeRemaining[i] <= 0) {
+        if (particleLifetimeRemaining[i] <= 0 || particleSize[i] < 1) {
             activeParticles.delete(i);
             continue;
         }
@@ -113,8 +113,19 @@ export let renderParticles = (): void => {
     if (activeParticles.size === 0) return;
     let indexes = activeParticles.values();
     for (let i of indexes) {
-        let halfSize = floor(particleSize[i] * 0.5);
-        pushQuad(floor(particlePosition[i][X]) - halfSize, floor(particlePosition[i][Y]) - halfSize, particleSize[i], particleSize[i], particleColour[i]);
+        if (particleSize[i] < 1) {
+            continue;
+        }
+        let halfSize = particleSize[i] * 0.5;
+        let x = floor(particlePosition[i][X] - halfSize);
+        let y = floor(particlePosition[i][Y] - halfSize);
+        if (particleSize[i] < 4) {
+            pushQuad(x, y, particleSize[i], particleSize[i], particleColour[i]);
+        } else if (particleSize[i] > 3 && particleSize[i] < 9) {
+            pushTexturedQuad(TEXTURE_C_4x4 + (particleSize[i] - 4), x, y, 1, particleColour[i]);
+        } else {
+            pushTexturedQuad(TEXTURE_C_8x8, x, y, particleSize[i] * 0.125, particleColour[i]);
+        }
     }
 };
 

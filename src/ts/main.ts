@@ -104,7 +104,7 @@ window.addEventListener("load", async () => {
         } else {
             updateAnimationFrame(delta);
             clear();
-            pushText("js13k 2025", SCREEN_CENTER_X, SCREEN_CENTER_Y, WHITE, 2, TEXT_ALIGN_CENTER);
+            pushText("i am the night", SCREEN_CENTER_X, SCREEN_CENTER_Y, WHITE, 2, TEXT_ALIGN_CENTER);
             if (animationFrame) {
                 pushText("tap to start", SCREEN_CENTER_X, SCREEN_CENTER_Y + 35, WHITE, 1, TEXT_ALIGN_CENTER);
             }

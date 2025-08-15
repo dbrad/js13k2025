@@ -21,7 +21,8 @@ declare module '*.webp' {
 }
 
 type GameState = [
-    GS_PLAYERPOS: V2
+    GS_PLAYERPOS: V2,
+    GS_PLAYERDIR: number
 ];
 
 type TextureDefinition = [number, number[], number, number, number, number];

@@ -85,5 +85,8 @@ declare const TEXTURE_A_BUTTON_UP: 10;
 declare const TEXTURE_B_BUTTON_UP: 11;
 declare const TEXTURE_A_BUTTON_DOWN: 12;
 declare const TEXTURE_B_BUTTON_DOWN: 13;
+declare const TEXTURE_CAT_01: 14;
+declare const TEXTURE_CAT_02: 15;
 
 declare const GS_PLAYERPOS: 0;
+declare const GS_PLAYERDIR: 1;

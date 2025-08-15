@@ -55,9 +55,8 @@ let update = (delta: number): void => {
 };
 
 let draw = (delta: number): void => {
-    pushText("js13k 2025", SCREEN_CENTER_X, 20, WHITE, 3, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP);
-    pushText("entry by david brad", SCREEN_CENTER_X, 50, WHITE, 1, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP);
-    pushText("main menu", SCREEN_WIDTH, SCREEN_HEIGHT, WHITE, 1, TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM);
+    pushText("i am the night", SCREEN_CENTER_X, 20, WHITE, 3, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP);
+    pushText("js13k 2025 entry by david brad", SCREEN_CENTER_X, 50, WHITE, 1, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP);
 
     for (let i = 0; i < numOptions; i++) {
         pushText((selected === i ? "> " : "") + options[i], SCREEN_LEFT + 8, SCREEN_CENTER_Y + (24 * i), WHITE, 2);

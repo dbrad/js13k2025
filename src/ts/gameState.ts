@@ -9,7 +9,8 @@ export let saveFileExists = (): boolean => {
 
 export let newGame = (): void => {
     gameState = [
-        [0, 0], // GS_PLAYERPOS
+        [SCREEN_CENTER_X, SCREEN_CENTER_Y], // GS_PLAYERPOS
+        1, // GS_PLAYERDIR
     ];
 };
 
@@ -23,8 +24,6 @@ export let loadGame = (): void => {
     let b64 = storage.getItem(saveFileName);
     if (b64) {
         gameState = JSON.parse(atob(b64)) as GameState;
-        // VERSION UPGRADE LOGIC HERE IF NEEDED
-        // saveGame();
     } else {
         newGame();
         saveGame();
