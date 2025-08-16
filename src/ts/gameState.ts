@@ -10,6 +10,7 @@ export let saveFileExists = (): boolean => {
 export let newGame = (): void => {
     gameState = [
         [SCREEN_CENTER_X, SCREEN_CENTER_Y], // GS_PLAYERPOS
+        [0, 0], // GS_PLAYERVEL
         1, // GS_PLAYERDIR
     ];
 };

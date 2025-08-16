@@ -12,14 +12,18 @@ declare const A: 3;
 declare const SCREEN_WIDTH: 640;
 declare const SCREEN_HEIGHT: 360;
 
-declare const SCREEN_LEFT: 145;
-declare const SCREEN_RIGHT: 495;
+declare const SCREEN_DIM: 336;
+
+declare const SCREEN_GUTTER: 152;
+
+declare const SCREEN_LEFT: 152;
+declare const SCREEN_RIGHT: 488;
 
 declare const SCREEN_CENTER_X: 320;
 declare const SCREEN_CENTER_Y: 180;
 
 declare const ATLAS_WIDTH: 256;
-declare const ATLAS_HEIGHT: 64;
+declare const ATLAS_HEIGHT: 80;
 
 declare const GL_TRIANGLES: 4;
 declare const GL_TRIANGLES_FAN: 6;
@@ -87,6 +91,23 @@ declare const TEXTURE_A_BUTTON_DOWN: 12;
 declare const TEXTURE_B_BUTTON_DOWN: 13;
 declare const TEXTURE_CAT_01: 14;
 declare const TEXTURE_CAT_02: 15;
+declare const TEXTURE_DITH_00: 16;
+declare const TEXTURE_DITH_01: 17;
+declare const TEXTURE_DITH_02: 18;
+declare const TEXTURE_DITH_03: 19;
+declare const TEXTURE_DITH_04: 20;
+declare const TEXTURE_DITH_05: 21;
+declare const TEXTURE_DITH_06: 22;
+declare const TEXTURE_DITH_07: 23;
+declare const TEXTURE_DITH_08: 24;
+declare const TEXTURE_DITH_09: 25;
+declare const TEXTURE_DITH_10: 26;
+declare const TEXTURE_DITH_11: 27;
+declare const TEXTURE_DITH_12: 28;
+declare const TEXTURE_DITH_13: 29;
+declare const TEXTURE_DITH_14: 30;
+declare const TEXTURE_DITH_15: 31;
 
 declare const GS_PLAYERPOS: 0;
-declare const GS_PLAYERDIR: 1;
+declare const GS_PLAYERVEL: 1;
+declare const GS_PLAYERDIR: 2;

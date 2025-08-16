@@ -53,8 +53,6 @@ window.addEventListener("load", async () => {
     canvas.addEventListener("touchstart", initializeGame);
     canvas.addEventListener("pointerdown", initializeGame);
 
-    let targetUpdateMs: number = 16.5;
-    let accDelta: number = 0;
     let then = performance.now();
     let tick = (now: number) => {
         requestAnimationFrame(tick);
@@ -65,42 +63,43 @@ window.addEventListener("load", async () => {
 
         if (playing) {
             performanceMark("start_of_frame");
-            accDelta += delta;
-
-            if (accDelta >= targetUpdateMs) {
-                if (accDelta > 250) {
-                    accDelta = targetUpdateMs;
-                }
-                clear();
-                performanceMark("update_start");
-                {
-                    updateAnimationFrame(accDelta);
-                    updateScene(accDelta, now);
-                }
-                performanceMark("update_end");
-
-                performanceMark("draw_start");
-                {
-                    drawScene(accDelta, now);
-                    pushQuad(0, 0, 145, SCREEN_HEIGHT, 0xff000000);
-                    pushQuad(SCREEN_WIDTH - 145, 0, 145, SCREEN_HEIGHT, 0xff000000);
-                    renderControls();
-                    if (DEBUG) {
-                        drawCalls = drawCount();
-                        drawPerformanceMeter();
-                    }
-                }
-                performanceMark("draw_end");
-
-                performanceMark("render_start");
-                {
-                    render();
-                }
-                performanceMark("render_end");
-
-                tickPerformanceMeter(accDelta, drawCalls);
-                accDelta = 0;
+            if (delta > 250) {
+                delta = 16.6;
             }
+            clear();
+            performanceMark("update_start");
+            {
+                updateAnimationFrame(delta);
+                updateScene(delta, now);
+            }
+            performanceMark("update_end");
+
+            performanceMark("draw_start");
+            {
+                drawScene(delta, now);
+                pushQuad(0, 0, SCREEN_LEFT, SCREEN_DIM, 0xff000000);
+                pushQuad(SCREEN_RIGHT, 0, SCREEN_GUTTER, SCREEN_DIM, 0xff000000);
+                pushQuad(0, SCREEN_DIM, SCREEN_WIDTH, 24, 0xff000000);
+
+                pushQuad(SCREEN_LEFT, 0, 1, SCREEN_DIM, WHITE);
+                pushQuad(SCREEN_RIGHT, 0, 1, SCREEN_DIM, WHITE);
+                pushQuad(SCREEN_LEFT, 0, SCREEN_DIM, 1, WHITE);
+                pushQuad(SCREEN_LEFT, SCREEN_DIM - 1, SCREEN_DIM, 1, WHITE);
+                renderControls();
+                if (DEBUG) {
+                    drawCalls = drawCount();
+                    drawPerformanceMeter();
+                }
+            }
+            performanceMark("draw_end");
+
+            performanceMark("render_start");
+            {
+                render();
+            }
+            performanceMark("render_end");
+
+            tickPerformanceMeter(delta, drawCalls);
         } else {
             updateAnimationFrame(delta);
             clear();

@@ -22,6 +22,7 @@ declare module '*.webp' {
 
 type GameState = [
     GS_PLAYERPOS: V2,
+    GS_PLAYERVEL: V2,
     GS_PLAYERDIR: number
 ];
 

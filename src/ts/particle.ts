@@ -34,16 +34,28 @@ let particleLifetimeRemaining: number[] = [];
 let particlePoolSize: number = 10_000;
 let particlePoolIndex = particlePoolSize - 1;
 
-export let starParticle: ParticleParameters = {
-    position_: [SCREEN_CENTER_X, SCREEN_CENTER_Y],
+export let catParticle: ParticleParameters = {
+    position_: [0, 0],
     velocity_: [0, 0],
     velocityVariation_: [50, 50],
     sizeBegin_: 20,
     sizeEnd_: 0,
-    sizeVariation_: 1,
+    sizeVariation_: 4,
     colourBegin_: v4f(0, 0, 0, 1),
     colourEnd_: v4f(0, 0, 0, 0.1),
     lifetime_: 200
+};
+
+export let eyeParticle: ParticleParameters = {
+    position_: [0, 0],
+    velocity_: [0, 0],
+    velocityVariation_: [0, 0],
+    sizeBegin_: 2,
+    sizeEnd_: 0,
+    sizeVariation_: 0,
+    colourBegin_: v4f(1, 1, 1, 1),
+    colourEnd_: v4f(0, 0, 0, 0.1),
+    lifetime_: 16
 };
 
 export let fireParticle: ParticleParameters = {
