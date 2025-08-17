@@ -4,7 +4,7 @@ import { zzfxInit } from "./audio";
 import { initCanvas } from "./canvas";
 import { animationFrame, clear, drawCount, initDrawQueue, pushQuad, pushText, render, updateAnimationFrame, WHITE } from "./draw";
 import { glInit, glSetClearColour } from "./gl";
-import { initializeInput, isTouchEvent, renderControls } from "./input";
+import { initializeInput, isTouchEvent, drawControls } from "./input";
 import { initParticles } from "./particle";
 import { drawScene, registerScene, updateScene } from "./scene";
 import { gameScene } from "./scene/gameScene";
@@ -85,7 +85,7 @@ window.addEventListener("load", async () => {
                 pushQuad(SCREEN_RIGHT, 0, 1, SCREEN_DIM, WHITE);
                 pushQuad(SCREEN_LEFT, 0, SCREEN_DIM, 1, WHITE);
                 pushQuad(SCREEN_LEFT, SCREEN_DIM - 1, SCREEN_DIM, 1, WHITE);
-                renderControls();
+                drawControls();
                 if (DEBUG) {
                     drawCalls = drawCount();
                     drawPerformanceMeter();
@@ -103,7 +103,9 @@ window.addEventListener("load", async () => {
         } else {
             updateAnimationFrame(delta);
             clear();
-            pushText("i am the night", SCREEN_CENTER_X, SCREEN_CENTER_Y, WHITE, 2, TEXT_ALIGN_CENTER);
+            pushText("i am the night", SCREEN_CENTER_X, SCREEN_CENTER_Y - 28, WHITE, 3, TEXT_ALIGN_CENTER);
+            pushText("js13k 2025 entry by david brad", SCREEN_CENTER_X, SCREEN_CENTER_Y, WHITE, 1, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP);
+
             if (animationFrame) {
                 pushText("tap to start", SCREEN_CENTER_X, SCREEN_CENTER_Y + 35, WHITE, 1, TEXT_ALIGN_CENTER);
             }

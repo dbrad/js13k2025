@@ -13,6 +13,7 @@ declare const SCREEN_WIDTH: 640;
 declare const SCREEN_HEIGHT: 360;
 
 declare const SCREEN_DIM: 336;
+declare const SCREEN_HALF: 168;
 
 declare const SCREEN_GUTTER: 152;
 

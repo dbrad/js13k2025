@@ -1,3 +1,4 @@
+import { cameraPos } from "./camera";
 import { pushQuad, pushTexturedQuad, v4fToABGR } from "./draw";
 import { clamp, floor, lerp, math, setV2, setV4fFromV4f, v4f } from "./math";
 
@@ -17,6 +18,7 @@ type ParticleParameters = {
 };
 
 let particlePosition: V2[] = [];
+let screenPosition: V2[] = [];
 let particleVelocity: V2[] = [];
 
 let particleSizeBegin: number[] = [];
@@ -75,6 +77,7 @@ export let activeParticles: Set<number> = new Set();
 export let initParticles = (): void => {
     for (let i = 0; i < particlePoolSize; i++) {
         particlePosition[i] = [0, 0];
+        screenPosition[i] = [0, 0];
         particleVelocity[i] = [0, 0];
         particleSizeBegin[i] = 0;
         particleSizeEnd[i] = 0;
@@ -121,16 +124,17 @@ export let clearParticles = (): void => {
     activeParticles.clear();
 };
 
-export let renderParticles = (): void => {
+export let drawParticles = (): void => {
     if (activeParticles.size === 0) return;
-    let indexes = activeParticles.values();
-    for (let i of indexes) {
+    for (let i of activeParticles) {
         if (particleSize[i] < 1) {
             continue;
         }
+        screenPosition[i][X] = particlePosition[i][X] - cameraPos[X] + SCREEN_HALF + SCREEN_GUTTER;
+        screenPosition[i][Y] = particlePosition[i][Y] - cameraPos[Y] + SCREEN_HALF;
         let halfSize = particleSize[i] * 0.5;
-        let x = floor(particlePosition[i][X] - halfSize);
-        let y = floor(particlePosition[i][Y] - halfSize);
+        let x = floor(screenPosition[i][X] - halfSize);
+        let y = floor(screenPosition[i][Y] - halfSize);
         if (particleSize[i] < 4) {
             pushQuad(x, y, particleSize[i], particleSize[i], particleColour[i]);
         } else if (particleSize[i] > 3 && particleSize[i] < 9) {

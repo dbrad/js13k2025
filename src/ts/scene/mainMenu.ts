@@ -76,16 +76,10 @@ let update = (delta: number): void => {
 let draw = (delta: number): void => {
     if (flash) {
         pushQuad(SCREEN_LEFT, 0, SCREEN_DIM, SCREEN_DIM, WHITE);
-        // for (let x = 0; x < 23; x++) {
-        //     for (let y = 0; y < 23; y++) {
-        //         pushTexturedQuad(TEXTURE_DITH_09, SCREEN_LEFT + x * 16, y * 16, 1, WHITE, false, false, false);
-        //     }
-        // }
     }
 
     pushText("i am the", SCREEN_CENTER_X, 20, flash ? 0xff000000 : WHITE, 2, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP);
     pushText("night", SCREEN_CENTER_X, 20 + 16, flash ? 0xff000000 : WHITE, 4, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP);
-    pushText("js13k 2025 entry by david brad", SCREEN_CENTER_X, 70, flash ? 0xff000000 : WHITE, 1, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP);
     pushTexturedQuad(TEXTURE_CAT_01, SCREEN_RIGHT - 104, SCREEN_DIM - 104, 6, WHITE, true, false, true);
 
     for (let i = 0; i < numOptions; i++) {

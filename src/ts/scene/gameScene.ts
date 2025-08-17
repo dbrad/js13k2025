@@ -1,91 +1,59 @@
+import { cameraPos, cameraTarget, updateCamera } from "../camera";
 import { pushQuad, pushTexturedQuad, WHITE } from "../draw";
-import { gameState } from "../gameState";
+import { drawEntities, initEntities, playerId, posX, posY, spawnEnemy, spawnPlayer, spawnRadialBurst, updateEntities, updatePlayerVel } from "../entity";
 import { A_PRESSED, B_PRESSED, DOWN_PRESSED, LEFT_PRESSED, RIGHT_PRESSED, setKeyPulseTime, UP_PRESSED } from "../input";
-import { catParticle, emitParticles, eyeParticle } from "../particle";
-import { createScene, switchToScene } from "../scene";
-import { mainMenuScene } from "./mainMenu";
+import { createScene } from "../scene";
 
 let setup = (): void => {
     setKeyPulseTime([D_UP, D_DOWN, D_RIGHT, D_LEFT], 1);
+    initEntities();
+    spawnPlayer(250, 250, 8, 0xff22ccff);
+    let cx = 250, cy = 250;
+    cameraPos[X] = 250;
+    cameraPos[Y] = 250;
+    cameraTarget[X] = 250;
+    cameraTarget[Y] = 250;
+    let enemyRing = 60, ringRadius = 300;
+    for (let k = 0; k < enemyRing; k++) {
+        let a = (2 * Math.PI * k) / enemyRing;
+        let ex = cx + Math.cos(a) * ringRadius;
+        let ey = cy + Math.sin(a) * ringRadius;
+        spawnEnemy(ex, ey, 8, 3, 0xff000000);
+    }
 };
 
-const pxPer16 = 40;
-const decayPer16 = 0.95;
-
 let update = (delta: number): void => {
-    let ds = delta * 0.001;
-    let acc = pxPer16 * 0.06 * delta;
-
+    let acc = 15 * 0.06 * delta;
+    let velx = 0;
+    let vely = 0;
     if (A_PRESSED || B_PRESSED) {
-        switchToScene(mainMenuScene.id_);
+        spawnRadialBurst(posX[playerId], posY[playerId], 24, 300, 2, 1.5, 1);
     }
     if (DOWN_PRESSED) {
-        gameState[GS_PLAYERVEL][Y] += acc;
+        vely += acc;
     } else if (UP_PRESSED) {
-        gameState[GS_PLAYERVEL][Y] -= acc;
+        vely -= acc;
     }
     if (RIGHT_PRESSED) {
-        gameState[GS_PLAYERVEL][X] += acc;
+        velx += acc;
     } else if (LEFT_PRESSED) {
-        gameState[GS_PLAYERVEL][X] -= acc;
+        velx -= acc;
     }
 
-    if (gameState[GS_PLAYERVEL][X] !== 0) {
-        gameState[GS_PLAYERDIR] = gameState[GS_PLAYERVEL][X] < 0 ? 0 : 1;
-        gameState[GS_PLAYERVEL][X] = gameState[GS_PLAYERVEL][X] * ((decayPer16 * 0.06) ** ds);
-        if (gameState[GS_PLAYERVEL][X] < 10 && gameState[GS_PLAYERVEL][X] > -10) {
-            gameState[GS_PLAYERVEL][X] = 0;
-        }
-    }
-    if (gameState[GS_PLAYERVEL][Y] !== 0) {
-        gameState[GS_PLAYERVEL][Y] = gameState[GS_PLAYERVEL][Y] * ((decayPer16 * 0.06) ** ds);
-        if (gameState[GS_PLAYERVEL][Y] < 10 && gameState[GS_PLAYERVEL][Y] > -10) {
-            gameState[GS_PLAYERVEL][Y] = 0;
-        }
-    }
-
-    if (gameState[GS_PLAYERVEL][X] !== 0 || gameState[GS_PLAYERVEL][Y] !== 0) {
-        gameState[GS_PLAYERPOS][X] += gameState[GS_PLAYERVEL][X] * ds;
-        gameState[GS_PLAYERPOS][Y] += gameState[GS_PLAYERVEL][Y] * ds;
-
-        catParticle.position_[X] = gameState[GS_PLAYERPOS][X] + 8;
-        catParticle.position_[Y] = gameState[GS_PLAYERPOS][Y] + 8;
-        emitParticles(catParticle, 10);
-
-        eyeParticle.position_[Y] = catParticle.position_[Y] - 1;
-        eyeParticle.position_[X] = catParticle.position_[X] - 3;
-        emitParticles(eyeParticle, 2);
-        eyeParticle.position_[X] += 6;
-        emitParticles(eyeParticle, 2);
-    }
-
-    if (gameState[GS_PLAYERPOS][X] <= SCREEN_LEFT) {
-        gameState[GS_PLAYERPOS][X] = SCREEN_LEFT;
-        gameState[GS_PLAYERVEL][X] = 0;
-    }
-    if (gameState[GS_PLAYERPOS][X] >= SCREEN_RIGHT - 16) {
-        gameState[GS_PLAYERPOS][X] = SCREEN_RIGHT - 16;
-        gameState[GS_PLAYERVEL][X] = 0;
-    }
-    if (gameState[GS_PLAYERPOS][Y] <= 0) {
-        gameState[GS_PLAYERPOS][Y] = 0;
-        gameState[GS_PLAYERVEL][Y] = 0;
-    }
-    if (gameState[GS_PLAYERPOS][Y] >= SCREEN_DIM - 16) {
-        gameState[GS_PLAYERPOS][Y] = SCREEN_DIM - 16;
-        gameState[GS_PLAYERVEL][Y] = 0;
-    }
+    updatePlayerVel(velx, vely);
+    updateEntities(delta);
+    updateCamera(posX[playerId], posY[playerId], delta);
 };
 
 let draw = (delta: number): void => {
     pushQuad(SCREEN_LEFT, 0, SCREEN_DIM, SCREEN_DIM, WHITE);
-    pushQuad(SCREEN_LEFT + 292, 0, 48, SCREEN_DIM, 0xff000000);
     for (let x = 0; x < 16; x++) {
         for (let y = 0; y < 23; y++) {
             pushTexturedQuad(TEXTURE_DITH_00 + x, 36 + SCREEN_LEFT + x * 16, y * 16, 1, 0xff000000);
         }
     }
-    pushTexturedQuad(TEXTURE_CAT_01, gameState[GS_PLAYERPOS][X], gameState[GS_PLAYERPOS][Y], 1, WHITE, (gameState[GS_PLAYERDIR] == 0), false, true);
+    pushQuad(SCREEN_LEFT + 292, 0, 48, SCREEN_DIM, 0xff000000);
+    drawEntities();
 };
 
 export let gameScene = createScene(setup, update, draw);

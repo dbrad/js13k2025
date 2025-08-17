@@ -1,7 +1,7 @@
 import { pushQuad, toABGR } from "./draw";
 import { clearInput, updateHardwareInput, updateInputState } from "./input";
 import { lerp } from "./math";
-import { clearParticles, renderParticles, updateParticles } from "./particle";
+import { clearParticles, drawParticles, updateParticles } from "./particle";
 
 export let TRANSITION_TIME = 300 as const;
 export let TRANSITION_TIME_HALF = 150 as const;
@@ -73,7 +73,7 @@ export let updateScene = (delta: number, now: number): void => {
 
 export let drawScene = (delta: number, now: number): void => {
     scenes[currentSceneId].draw_(delta);
-    renderParticles();
+    drawParticles();
 
     if (transitionInProgress) {
         let progress: number = 0;
