@@ -13,4 +13,4 @@ let update = (delta: number): void => {
 let draw = (delta: number): void => {
 };
 
-export let optionsScene = createScene(setup, update, draw);
+export let optionsScene = createScene(setup, update, draw, () => { });

@@ -4,9 +4,9 @@ import { zzfxInit } from "./audio";
 import { initCanvas } from "./canvas";
 import { animationFrame, clear, drawCount, initDrawQueue, pushQuad, pushText, render, updateAnimationFrame, WHITE } from "./draw";
 import { glInit, glSetClearColour } from "./gl";
-import { initializeInput, isTouchEvent, drawControls } from "./input";
+import { drawControls, initializeInput, isTouchEvent } from "./input";
 import { initParticles } from "./particle";
-import { drawScene, registerScene, updateScene } from "./scene";
+import { drawGUI, drawScene, registerScene, updateScene } from "./scene";
 import { gameScene } from "./scene/gameScene";
 import { mainMenuScene } from "./scene/mainMenu";
 import { optionsScene } from "./scene/options";
@@ -85,6 +85,7 @@ window.addEventListener("load", async () => {
                 pushQuad(SCREEN_RIGHT, 0, 1, SCREEN_DIM, WHITE);
                 pushQuad(SCREEN_LEFT, 0, SCREEN_DIM, 1, WHITE);
                 pushQuad(SCREEN_LEFT, SCREEN_DIM - 1, SCREEN_DIM, 1, WHITE);
+                drawGUI(delta);
                 drawControls();
                 if (DEBUG) {
                     drawCalls = drawCount();

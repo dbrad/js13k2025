@@ -21,9 +21,17 @@ declare module '*.webp' {
 }
 
 type GameState = [
-    GS_PLAYERPOS: V2,
-    GS_PLAYERVEL: V2,
-    GS_PLAYERDIR: number
+    GS_PLAYER_HP: number,
+    GS_PLAYER_MAXHP: number,
+    GS_PLAYER_XP: number,
+    GS_PLAYER_LEVEL: number,
+    GS_PLAYER_LUCK: number,
+    GS_PLAYER_ATK: number,
+    GS_PLAYER_DEF: number,
+    GS_PLAYER_MOVE: number,
+    GS_PLAYER_MAXMOVE: number,
+    GS_PLAYER_COOLDOWN: number,
+    GS_TIME: number,
 ];
 
 type TextureDefinition = [number, number[], number, number, number, number];
@@ -70,4 +78,5 @@ type Scene = {
     setup_: VoidFunction,
     update_: UpdateFunction,
     draw_: UpdateFunction,
+    drawGUI_: UpdateFunction,
 };

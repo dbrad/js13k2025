@@ -3,6 +3,7 @@ import { clearInput, updateHardwareInput, updateInputState } from "./input";
 import { lerp } from "./math";
 import { clearParticles, drawParticles, updateParticles } from "./particle";
 
+
 export let TRANSITION_TIME = 300 as const;
 export let TRANSITION_TIME_HALF = 150 as const;
 export let TRANSITION_TIME_HALFWAY = 175 as const;
@@ -18,12 +19,13 @@ let sceneCleared: boolean = true;
 
 let nextSceneId: number = 0;
 
-export let createScene = (setup_: VoidFunction, update_: UpdateFunction, draw_: UpdateFunction): Scene => {
+export let createScene = (setup_: VoidFunction, update_: UpdateFunction, draw_: UpdateFunction, drawGUI_: UpdateFunction): Scene => {
     return {
         id_: -1,
         setup_,
         update_,
         draw_,
+        drawGUI_
     };
 };
 
@@ -85,4 +87,9 @@ export let drawScene = (delta: number, now: number): void => {
         let col = toABGR(0, 0, 0, progress * 255);
         pushQuad(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, col);
     }
+};
+
+
+export let drawGUI = (delta: number) => {
+    scenes[currentSceneId].drawGUI_(delta);
 };

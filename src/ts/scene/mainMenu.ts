@@ -87,4 +87,4 @@ let draw = (delta: number): void => {
     }
 };
 
-export let mainMenuScene = createScene(setup, update, draw);
+export let mainMenuScene = createScene(setup, update, draw, () => { });

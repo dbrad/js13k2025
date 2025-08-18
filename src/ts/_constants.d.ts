@@ -109,6 +109,14 @@ declare const TEXTURE_DITH_13: 29;
 declare const TEXTURE_DITH_14: 30;
 declare const TEXTURE_DITH_15: 31;
 
-declare const GS_PLAYERPOS: 0;
-declare const GS_PLAYERVEL: 1;
-declare const GS_PLAYERDIR: 2;
+declare const GS_PLAYER_HP: 0;
+declare const GS_PLAYER_MAXHP: 1;
+declare const GS_PLAYER_XP: 2;
+declare const GS_PLAYER_LEVEL: 3;
+declare const GS_PLAYER_LUCK: 4;
+declare const GS_PLAYER_ATK: 5;
+declare const GS_PLAYER_DEF: 6;
+declare const GS_PLAYER_MOVE: 7;
+declare const GS_PLAYER_MAXMOVE: 8;
+declare const GS_PLAYER_COOLDOWN: 9;
+declare const GS_TIME: 10;

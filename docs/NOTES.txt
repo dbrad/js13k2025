@@ -19,3 +19,8 @@ What Powers to add:
         Def Up
         Move Up
         Cooldown Down
+
+
+Give projectile hp?
+    Can making limited piercing projectiles by removing 1 hp per hit
+Need to track what enemy was hit by a projectile to prevent re hits
