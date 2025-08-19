@@ -1,5 +1,5 @@
 import { cameraPos, cameraTarget, updateCamera, vCameraPos } from "../camera";
-import { pushQuad, pushText, WHITE } from "../draw";
+import { pushQuad, pushText, pushTexturedQuad, WHITE } from "../draw";
 import { drawEntities, initEntities, playerId, posX, posY, spawnEnemy, spawnOrbit, spawnPlayer, spawnRadialBurst, updateEntities, updatePlayerVel } from "../entity";
 import { gameState, xpTable } from "../gameState";
 import { A_PRESSED, B_PRESSED, DOWN_IS_DOWN, LEFT_IS_DOWN, RIGHT_IS_DOWN, UP_IS_DOWN } from "../input";
@@ -8,6 +8,7 @@ import { createScene } from "../scene";
 import { drawWorld, generateWorld } from "../world";
 
 let setup = (): void => {
+    gameState[GS_TIME] = 0;
     generateWorld();
     initEntities();
     spawnPlayer(250, 250, 8, 0xff22ccff);
@@ -31,48 +32,65 @@ let timer = 0;
 let timer2 = 0;
 let update = (delta: number): void => {
     let dt = delta * 0.001;
-    let acc = EULER ** (gameState[GS_PLAYER_MOVE] * dt);
-    let velx = 0;
-    let vely = 0;
-    if (A_PRESSED) { }
-    if (B_PRESSED) { }
-    if (DOWN_IS_DOWN) {
-        vely += acc;
-    } else if (UP_IS_DOWN) {
-        vely -= acc;
-    }
-    if (RIGHT_IS_DOWN) {
-        velx += acc;
-    } else if (LEFT_IS_DOWN) {
-        velx -= acc;
-    }
-    updatePlayerVel(velx, vely);
+    if (gameState[GS_LEVELUP_PENDING]) {
+        // Offer levelup rewards.
+        // Generate Player Powerups
+        // Render out the 3 rewards and a skip option
+        if (A_PRESSED) {
+            gameState[GS_PLAYER_MOVE] += 10;
+            gameState[GS_LEVELUP_PENDING] = 0;
+        }
+        if (B_PRESSED) { }
+        if (DOWN_IS_DOWN) {
+        } else if (UP_IS_DOWN) {
+        }
+        if (RIGHT_IS_DOWN) {
+        } else if (LEFT_IS_DOWN) {
+        }
+    } else {
+        gameState[GS_TIME] += dt;
+        let acc = EULER ** (gameState[GS_PLAYER_MOVE] * dt);
+        let velx = 0;
+        let vely = 0;
+        if (A_PRESSED) { }
+        if (B_PRESSED) { }
+        if (DOWN_IS_DOWN) {
+            vely += acc;
+        } else if (UP_IS_DOWN) {
+            vely -= acc;
+        }
+        if (RIGHT_IS_DOWN) {
+            velx += acc;
+        } else if (LEFT_IS_DOWN) {
+            velx -= acc;
+        }
 
-    timer += delta;
-    timer2 += delta;
-    if (timer >= 500) {
-        timer -= 500;
-        spawnEnemy(randInt(0, 2048), randInt(0, 2048), 8, 3, 0xff000000);
-        spawnOrbit(posX[playerId], posY[playerId], 32, 4, 50, 0.05, 1);
-    }
-    if (timer2 > 1000) {
-        timer2 -= 1000;
-        spawnRadialBurst(posX[playerId], posY[playerId], 36, 300, 2, 1.5, 1);
-    }
+        updatePlayerVel(velx, vely);
 
-    updateEntities(delta);
-    updateCamera(posX[playerId], posY[playerId], delta);
+        timer += delta;
+        timer2 += delta;
+        if (timer >= 500) {
+            timer -= 500;
+            spawnEnemy(randInt(0, 2048), randInt(0, 2048), 8, 3, 0xff000000);
+            spawnOrbit(posX[playerId], posY[playerId], 32, 4, 50, 0.05, 1);
+        }
+        if (timer2 > 1000) {
+            timer2 -= 1000;
+            spawnRadialBurst(posX[playerId], posY[playerId], 36, 300, 2, 1.5, 1);
+        }
+
+        updateEntities(delta);
+        updateCamera(posX[playerId], posY[playerId], delta);
+    }
 };
 
 let draw = (delta: number): void => {
     pushQuad(SCREEN_LEFT, 0, SCREEN_DIM, SCREEN_DIM, WHITE);
-    // for (let x = 0; x < 16; x++) {
-    //     for (let y = 0; y < 23; y++) {
-    //         pushTexturedQuad(TEXTURE_DITH_00 + x, 36 + SCREEN_LEFT + x * 16, y * 16, 1, 0xff000000);
+    // for (let x = 0; x < 21; x++) {
+    //     for (let y = 0; y < 21; y++) {
+    //         pushTexturedQuad(TEXTURE_DITH_00 + clamp(floor(gameState[GS_TIME] / 20), 0, 15), SCREEN_LEFT + x * 16, y * 16, 1, 0xff000000);
     //     }
     // }
-
-    //pushQuad(SCREEN_LEFT + 292, 0, 48, SCREEN_DIM, 0xff000000);
     drawWorld();
     drawEntities();
 };
@@ -93,6 +111,11 @@ let drawGUI = (delta: number): void => {
     pushText(`def  ${gameState[GS_PLAYER_DEF]}`, 0, 70);
     pushText(`cd   ${gameState[GS_PLAYER_COOLDOWN]}`, 0, 80);
     pushText(`ms   ${gameState[GS_PLAYER_MOVE]}`, 0, 90);
+
+    if (gameState[GS_LEVELUP_PENDING]) {
+        pushQuad(SCREEN_LEFT + 50, 50, SCREEN_DIM - 100, SCREEN_DIM - 100, 0xff000000);
+        pushText("press a to level up", SCREEN_CENTER_X, SCREEN_CENTER_Y, WHITE, 1, TEXT_ALIGN_CENTER);
+    }
 };
 
 export let gameScene = createScene(setup, update, draw, drawGUI);

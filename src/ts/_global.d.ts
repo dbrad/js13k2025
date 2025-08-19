@@ -32,6 +32,7 @@ type GameState = [
     GS_PLAYER_MAXMOVE: number,
     GS_PLAYER_COOLDOWN: number,
     GS_TIME: number,
+    GS_LEVELUP_PENDING: number,
 ];
 
 type TextureDefinition = [number, number[], number, number, number, number];

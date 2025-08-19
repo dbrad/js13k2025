@@ -17,6 +17,7 @@ export let xpUp = (val: number) => {
     if (gameState[GS_PLAYER_XP] >= nextLevel) {
         gameState[GS_PLAYER_XP] -= nextLevel;
         gameState[GS_PLAYER_LEVEL] += 1;
+        gameState[GS_LEVELUP_PENDING] = 1;
     }
 };
 
@@ -33,6 +34,7 @@ export let newGame = (): void => {
         500, // GS_PLAYER_MAXMOVE
         0, // GS_PLAYER_COOLDOWN
         0, // GS_TIME
+        0, // GS_LEVELUP_PENDING
     ];
 };
 

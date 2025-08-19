@@ -120,3 +120,4 @@ declare const GS_PLAYER_MOVE: 7;
 declare const GS_PLAYER_MAXMOVE: 8;
 declare const GS_PLAYER_COOLDOWN: 9;
 declare const GS_TIME: 10;
+declare const GS_LEVELUP_PENDING: 11;
