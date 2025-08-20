@@ -1,3 +1,4 @@
+
 let saveFileName = "js13k2025dbrad";
 let storage = window.localStorage;
 
@@ -9,7 +10,8 @@ export let saveFileExists = (): boolean => {
 
 export let newGame = (): void => {
     gameState = [
-        [0, 0], // GS_PLAYERPOS
+        0, // GS_TIME
+        0, // GS_LEVELUP_PENDING
     ];
 };
 
@@ -23,8 +25,6 @@ export let loadGame = (): void => {
     let b64 = storage.getItem(saveFileName);
     if (b64) {
         gameState = JSON.parse(atob(b64)) as GameState;
-        // VERSION UPGRADE LOGIC HERE IF NEEDED
-        // saveGame();
     } else {
         newGame();
         saveGame();

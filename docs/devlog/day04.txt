@@ -1,0 +1,24 @@
+Day 04 - 2025-08-16
+
+---
+
+Created a much more robust entity system that handles enemies, projectiles, and the player.
+Pick-ups should be an eash add if desired.
+Added in a camera to support world space coordinates.
+Starting brain storming the wider gameloop and powerups.
+
+---
+
+`-Zab0 -Zdy0 -Zlr750 -Zmc4 -Zmd10 -Zpr14 -S0,1,2,3,6,7,13,21,25,42,50,100`
+
+-------------------------------------------------------------------------------
+Language                     files          blank        comment           code
+-------------------------------------------------------------------------------
+TypeScript                      19            310             32           1836
+-------------------------------------------------------------------------------
+SUM:                            19            310             32           1836
+-------------------------------------------------------------------------------
+
+The file is under the limit.
+USED: 55.89% |  7440 BYTES
+LEFT: 44.11% |  5872 BYTES

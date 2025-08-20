@@ -9,6 +9,7 @@ let zzfxContext: AudioContext;
 
 export let boop: number[];
 export let boop_good: number[];
+export let thunder: number[];
 
 export let zzfxInit = (): void => {
     if (!zzfxContext) {
@@ -16,4 +17,5 @@ export let zzfxInit = (): void => {
     }
     boop = zzfxGenerate(...[, .1, , .05, .05, , , , , , 200, .06, , , , , , .5, .05]);
     boop_good = zzfxGenerate(...[, .1, 440, .05, .05, , , , , , 200, .06, , , , , , .5, .05, 1]);
+    thunder = zzfxGenerate(...[2, 4, 25, .06, .31, .35, , 3.9, , -3, , , , .9, 12, .9, .3, .32, .16]);
 };

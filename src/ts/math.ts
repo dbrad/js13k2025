@@ -4,6 +4,12 @@ export let ceil = math.ceil;
 export let max = math.max;
 export let min = math.min;
 export let round = math.round;
+export let sqrt = math.sqrt;
+export let cos = math.cos;
+export let sin = math.sin;
+
+export let EULER = 2.71828;
+export let PI = 3.14159;
 
 export let roundTo = (value: number, nearest: number) => {
   return round(value / nearest) * nearest;

@@ -4,9 +4,9 @@ import { zzfxInit } from "./audio";
 import { initCanvas } from "./canvas";
 import { animationFrame, clear, drawCount, initDrawQueue, pushQuad, pushText, render, updateAnimationFrame, WHITE } from "./draw";
 import { glInit, glSetClearColour } from "./gl";
-import { initializeInput, isTouchEvent, renderControls } from "./input";
+import { drawControls, initializeInput, isTouchEvent } from "./input";
 import { initParticles } from "./particle";
-import { drawScene, registerScene, updateScene } from "./scene";
+import { drawGUI, drawScene, registerScene, updateScene } from "./scene";
 import { gameScene } from "./scene/gameScene";
 import { mainMenuScene } from "./scene/mainMenu";
 import { optionsScene } from "./scene/options";
@@ -53,8 +53,6 @@ window.addEventListener("load", async () => {
     canvas.addEventListener("touchstart", initializeGame);
     canvas.addEventListener("pointerdown", initializeGame);
 
-    let targetUpdateMs: number = 16.5;
-    let accDelta: number = 0;
     let then = performance.now();
     let tick = (now: number) => {
         requestAnimationFrame(tick);
@@ -65,46 +63,53 @@ window.addEventListener("load", async () => {
 
         if (playing) {
             performanceMark("start_of_frame");
-            accDelta += delta;
-
-            if (accDelta >= targetUpdateMs) {
-                if (accDelta > 250) {
-                    accDelta = targetUpdateMs;
-                }
-                clear();
-                performanceMark("update_start");
-                {
-                    updateAnimationFrame(accDelta);
-                    updateScene(accDelta, now);
-                }
-                performanceMark("update_end");
-
-                performanceMark("draw_start");
-                {
-                    drawScene(accDelta, now);
-                    pushQuad(0, 0, 145, SCREEN_HEIGHT, 0xff000000);
-                    pushQuad(SCREEN_WIDTH - 145, 0, 145, SCREEN_HEIGHT, 0xff000000);
-                    renderControls();
-                    if (DEBUG) {
-                        drawCalls = drawCount();
-                        drawPerformanceMeter();
-                    }
-                }
-                performanceMark("draw_end");
-
-                performanceMark("render_start");
-                {
-                    render();
-                }
-                performanceMark("render_end");
-
-                tickPerformanceMeter(accDelta, drawCalls);
-                accDelta = 0;
+            if (delta > 250) {
+                delta = 16.6;
             }
+            clear();
+            performanceMark("update_start");
+            {
+                updateAnimationFrame(delta);
+                updateScene(delta, now);
+            }
+            performanceMark("update_end");
+
+            performanceMark("draw_start");
+            {
+                drawScene(delta, now);
+                pushQuad(0, 0, SCREEN_LEFT, SCREEN_DIM, 0xff000000);
+                pushQuad(SCREEN_RIGHT, 0, SCREEN_GUTTER, SCREEN_DIM, 0xff000000);
+                pushQuad(0, SCREEN_DIM, SCREEN_WIDTH, 24, 0xff000000);
+
+                pushQuad(SCREEN_LEFT, 0, 1, SCREEN_DIM, WHITE);
+                pushQuad(SCREEN_RIGHT, 0, 1, SCREEN_DIM, WHITE);
+                pushQuad(SCREEN_LEFT, 0, SCREEN_DIM, 1, WHITE);
+                pushQuad(SCREEN_LEFT, SCREEN_DIM - 1, SCREEN_DIM, 1, WHITE);
+                drawGUI(delta);
+                drawControls();
+                if (DEBUG) {
+                    drawCalls = drawCount();
+                    drawPerformanceMeter();
+                }
+            }
+            performanceMark("draw_end");
+
+            performanceMark("render_start");
+            {
+                render();
+            }
+            performanceMark("render_end");
+
+            tickPerformanceMeter(delta, drawCalls);
         } else {
             updateAnimationFrame(delta);
             clear();
-            pushText("js13k 2025", SCREEN_CENTER_X, SCREEN_CENTER_Y, WHITE, 2, TEXT_ALIGN_CENTER);
+            pushText("i am the night", SCREEN_CENTER_X, SCREEN_CENTER_Y - 28, WHITE, 3, TEXT_ALIGN_CENTER);
+            pushText("js13k 2025 entry by david brad", SCREEN_CENTER_X, SCREEN_CENTER_Y, WHITE, 1, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP);
+            pushText("warning: flashing lights", SCREEN_CENTER_X, SCREEN_HEIGHT - 40, WHITE, 2, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP);
+            pushText("the game contains flashing lights and scrolling screen effects", SCREEN_CENTER_X, SCREEN_HEIGHT - 20, WHITE, 1, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP);
+
+
             if (animationFrame) {
                 pushText("tap to start", SCREEN_CENTER_X, SCREEN_CENTER_Y + 35, WHITE, 1, TEXT_ALIGN_CENTER);
             }

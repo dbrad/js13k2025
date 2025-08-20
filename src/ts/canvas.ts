@@ -6,7 +6,7 @@ let canvas: HTMLCanvasElement;
 let scale = (): void => {
   let scaleX: number = window.innerWidth / SCREEN_WIDTH;
   let scaleY: number = window.innerHeight / SCREEN_HEIGHT;
-  let scaleToFit: number = floorTo(min(scaleX, scaleY), 0.5);
+  let scaleToFit: number = floorTo(min(scaleX, scaleY), 0.1);
   scaleToFit = scaleToFit < 1 ? 1 : scaleToFit;
   let rule: string = "scale(" + scaleToFit + ")";
   stage.style.transform = rule;

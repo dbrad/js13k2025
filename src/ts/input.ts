@@ -18,9 +18,13 @@ export let setControlsUsed = (...keys: number[]) => {
 };
 
 export let UP_PRESSED: boolean = false;
+export let UP_IS_DOWN: boolean = false;
 export let DOWN_PRESSED: boolean = false;
+export let DOWN_IS_DOWN: boolean = false;
 export let LEFT_PRESSED: boolean = false;
+export let LEFT_IS_DOWN: boolean = false;
 export let RIGHT_PRESSED: boolean = false;
+export let RIGHT_IS_DOWN: boolean = false;
 
 export let A_PRESSED: boolean = false;
 export let B_PRESSED: boolean = false;
@@ -168,8 +172,6 @@ export let updateHardwareInput = (): void => {
 };
 
 let rateLimit: number[] = [0, 0, 0, 0, 0, 0];
-let PRESSED: number[] = [];
-
 export let updateInputState = (delta: number): void => {
     for (let key = 0; key <= 5; key++) {
         if (rateLimit[key] > 0) {
@@ -177,23 +179,8 @@ export let updateInputState = (delta: number): void => {
         }
 
         if (hardwareKeyState[key] === KEY_IS_DOWN) {
-            if (keyState[key] === KEY_IS_UP) {
-                PRESSED.push(key);
-            }
             keyState[key] = KEY_IS_DOWN;
-
-            if (intervalDurations[key] > 0) {
-                intervalTimers[key] += delta;
-                if (intervalTimers[key] >= intervalDurations[key]) {
-                    intervalTimers[key] = 0;
-                    rateLimit[key] = 250;
-                    keyState[key] = KEY_WAS_DOWN;
-                }
-            }
-        }
-        else // hardware key is up
-        {
-            intervalTimers[key] = 0;
+        } else {
             if (keyState[key] === KEY_IS_DOWN && rateLimit[key] <= 0) {
                 keyState[key] = KEY_WAS_DOWN;
                 rateLimit[key] = 250;
@@ -202,19 +189,24 @@ export let updateInputState = (delta: number): void => {
                 rateLimit[key] = 0;
             }
         }
-    }
+    };
 
     UP_PRESSED = keyState[D_UP] === KEY_WAS_DOWN;
     DOWN_PRESSED = keyState[D_DOWN] === KEY_WAS_DOWN;
     LEFT_PRESSED = keyState[D_LEFT] === KEY_WAS_DOWN;
     RIGHT_PRESSED = keyState[D_RIGHT] === KEY_WAS_DOWN;
 
+    UP_IS_DOWN = keyState[D_UP] === KEY_IS_DOWN;
+    DOWN_IS_DOWN = keyState[D_DOWN] === KEY_IS_DOWN;
+    LEFT_IS_DOWN = keyState[D_LEFT] === KEY_IS_DOWN;
+    RIGHT_IS_DOWN = keyState[D_RIGHT] === KEY_IS_DOWN;
+
     A_PRESSED = keyState[A_BUTTON] === KEY_WAS_DOWN;
     B_PRESSED = keyState[B_BUTTON] === KEY_WAS_DOWN;
 };
 
 let getButtonTexture = (key: number, baseTexture: number): number => keyState[key] === KEY_IS_UP ? baseTexture : baseTexture + 2;
-export let renderControls = (): void => {
+export let drawControls = (): void => {
     let helpText = "";
     if (isTouch) {
         pushTexturedQuad(TEXTURE_D_PAD, dpadX, dpadY, dpadScale, WHITE);
@@ -244,19 +236,8 @@ export let renderControls = (): void => {
     pushText(helpText, SCREEN_WIDTH / 2, SCREEN_HEIGHT - 8, 0x66ffffff, 1, TEXT_ALIGN_CENTER);
 };
 
-let intervalTimers: number[] = [0, 0, 0, 0, 0, 0];
-let intervalDurations: number[] = [0, 0, 0, 0, 0, 0];
-export let setKeyPulseTime = (keys: number[], intervalDuration: number): void => {
-    for (let key of keys) {
-        intervalTimers[key] = 0;
-        intervalDurations[key] = intervalDuration;
-    }
-};
-
 export let clearInput = (): void => {
     for (let key = 0; key <= 5; key++) {
-        intervalTimers[key] = 0;
-        intervalDurations[key] = 0;
         hardwareKeyState[key] = KEY_IS_UP;
         keyState[key] = KEY_IS_UP;
     }
@@ -264,6 +245,11 @@ export let clearInput = (): void => {
     DOWN_PRESSED = false;
     LEFT_PRESSED = false;
     RIGHT_PRESSED = false;
+    UP_IS_DOWN = false;
+    DOWN_IS_DOWN = false;
+    LEFT_IS_DOWN = false;
+    RIGHT_IS_DOWN = false;
+
     A_PRESSED = false;
     B_PRESSED = false;
 };
