@@ -1,19 +1,17 @@
-import { math } from "./math";
+import { gameState } from "./gameState";
+import { math, roundTo } from "./math";
 
 export let player: Player;
 
 export let resetPlayer = () => {
     player = {
-        stats_: {
-            hp_: 10,
-            maxHP_: 10,
-            speed_: 140,
-            damage_: 0,
-            defense_: 0,
-            fireRate_: 1,
-            projectileSpeed_: 200,
-            aoeSize_: 64,
-        },
+        hp_: 10,
+        maxHP_: 10,
+        speed_: 140,
+        damage_: 0,
+        defense_: 0,
+        cooldown_: 0,
+        fireRate_: 1,
         luck_: 0,
         abilities_: [],
         xp_: 0,
@@ -21,58 +19,83 @@ export let resetPlayer = () => {
     };
 };
 
+export let xpTable: number[] = Array.from({ length: 30 }, (_, i) => roundTo(50 * (1.5 ** (i - 1)), 5));
+
+export let xpUp = (val: number) => {
+    player.xp_ += val;
+    let nextLevel = xpTable[player.level_];
+    if (player.xp_ >= nextLevel) {
+        player.xp_ -= nextLevel;
+        player.level_ += 1;
+        gameState[GS_LEVELUP_PENDING] = 1;
+    }
+};
+
 export let UPGRADE_POOL: Upgrade[] = [
     {
-        id_: "hp_up",
+        id_: UP_HP,
         name_: "Vitality",
         description_: "+5 Max HP",
-        kind_: "stat",
+        kind_: STAT,
         weight_: 3, // common
-        apply_: () => { player.stats_.maxHP_ += 5; },
+        apply_: () => { player.maxHP_ += 5; player.hp_ += 5; },
     },
     {
-        id_: "speed_up",
+        id_: UP_ATK,
+        name_: "Ferocity",
+        description_: "+1 All Damage",
+        kind_: STAT,
+        weight_: 3, // common
+        apply_: () => { player.damage_ += 1; },
+    },
+    {
+        id_: UP_DEF,
+        name_: "Fortify",
+        description_: "+1 Defense",
+        kind_: STAT,
+        weight_: 3, // common
+        apply_: () => { player.defense_ += 1; },
+    },
+    {
+        id_: UP_CD,
+        name_: "Frequency",
+        description_: "-5% Cooldowns",
+        kind_: STAT,
+        weight_: 2, // common
+        apply_: () => { player.cooldown_ += 5; },
+    },
+    {
+
+        id_: UP_MS,
         name_: "Agility",
         description_: "+10 Movement Speed",
-        kind_: "stat",
+        kind_: STAT,
         weight_: 2, // medium
-        apply_: (player) => { player.stats_.speed_ += 10; },
+        apply_: () => { player.speed_ += 10; },
     },
     {
-        id_: "fireball",
-        name_: "Fireball",
-        description_: "Launch fireballs automatically",
-        kind_: "ability",
+        id_: UP_FOOL,
+        name_: "0. The Fool",
+        description_: "Fires shots in random directions",
+        kind_: ABILITY,
         weight_: 1, // rare
         maxLevel_: 5,
-        apply_: (player) => {
-            let existing = player.abilities_.find(a => a.id_ === "fireball");
-            if (existing) {
-                existing.level_++;
-            } else {
-                player.abilities_.push({ id_: "fireball", type_: "bullet", level_: 1, cooldown_: 500 });
-            }
-        },
-    },
-    {
-        id_: "aura_lightning",
-        name_: "Lightning Aura",
-        description_: "Damages enemies around you",
-        kind_: "ability",
-        weight_: 1, // rare
-        maxLevel_: 3,
-        apply_: (player) => {
-            let existing = player.abilities_.find(a => a.id_ === "aura_lightning");
-            if (existing) {
-                existing.level_++;
-            } else {
-                player.abilities_.push({ id_: "aura_lightning", type_: "aura", level_: 1, cooldown_: 500 });
-            }
+        apply_: () => {
+            upgradeAbility({ id_: UP_FOOL, type_: BULLET, level_: 1, cooldown_: 500 });
         },
     },
 ];
 
-export let getWeightedRandomUpgrades = (n: number, player: Player): Upgrade[] => {
+let upgradeAbility = (ability: Ability): void => {
+    let existing = player.abilities_.find(a => a.id_ === ability.id_);
+    if (existing) {
+        existing.level_++;
+    } else {
+        player.abilities_.push(ability);
+    }
+};
+
+export let getWeightedRandomUpgrades = (n: number): Upgrade[] => {
     let available = UPGRADE_POOL.filter(upg => {
         if (upg.maxLevel_) {
             let ability = player.abilities_.find(a => a.id_ === upg.id_);

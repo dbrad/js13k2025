@@ -72,36 +72,31 @@ type Scene = {
     drawGUI_: UpdateFunction,
 };
 
-type PlayerStats = {
+type Ability = {
+    id_: number;
+    type_: typeof BULLET | typeof AURA;
+    level_: number;
+    cooldown_: number;
+};
+
+type Upgrade = {
+    id_: number;
+    name_: string;
+    description_: string;
+    kind_: typeof STAT | typeof ABILITY;
+    weight_: number; // higher = more common
+    maxLevel_?: number;
+    apply_: () => void;
+};
+
+type Player = {
     hp_: number;
     maxHP_: number;
     speed_: number;
     damage_: number;
     defense_: number;
     fireRate_: number;
-    projectileSpeed_: number;
-    aoeSize_: number;
-};
-
-type Ability = {
-    id_: string;
-    type_: "bullet" | "aura";
-    level_: number;
     cooldown_: number;
-};
-
-type Upgrade = {
-    id_: string;
-    name_: string;
-    description_: string;
-    kind_: "stat" | "ability";
-    weight_: number; // higher = more common
-    maxLevel_?: number;
-    apply_: (player: Player) => void;
-};
-
-type Player = {
-    stats_: PlayerStats;
     luck_: number;
     abilities_: Ability[];
     xp_: number;

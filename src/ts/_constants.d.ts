@@ -112,3 +112,37 @@ declare const TEXTURE_DITH_15: 32;
 
 declare const GS_TIME: 0;
 declare const GS_LEVELUP_PENDING: 1;
+
+declare const UP_HP: 0;
+declare const UP_ATK: 1;
+declare const UP_DEF: 2;
+declare const UP_CD: 3;
+declare const UP_MS: 4;
+declare const UP_FOOL: 5;
+declare const UP_MAGI: 6;
+declare const UP_PRST: 7;
+declare const UP_EMPS: 8;
+declare const UP_EMPR: 9;
+declare const UP_HIERO: 10;
+declare const UP_LOVER: 11;
+declare const UP_CHARI: 12;
+declare const UP_STR: 13;
+declare const UP_HERM: 14;
+declare const UP_WHEEL: 15;
+declare const UP_JUST: 16;
+declare const UP_HANG: 17;
+declare const UP_DEATH: 18;
+declare const UP_TEMPER: 19;
+declare const UP_DEVIL: 20;
+declare const UP_TOWER: 21;
+declare const UP_STAR: 22;
+declare const UP_MOON: 23;
+declare const UP_SUN: 24;
+declare const UP_JUDGE: 25;
+declare const UP_WORLD: 26;
+
+declare const BULLET: 0;
+declare const AURA: 1;
+
+declare const STAT: 0;
+declare const ABILITY: 1;

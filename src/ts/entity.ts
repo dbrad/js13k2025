@@ -1,9 +1,8 @@
 import { cameraPos } from "./camera";
 import { pushQuad, pushTexturedQuad, WHITE } from "./draw";
-import { xpUp } from "./gameState";
 import { clamp, cos, EULER, floor, max, PI, sin, sqrt } from "./math";
 import { catParticle, emitParticles, eyeParticle } from "./particle";
-import { player } from "./player";
+import { player, xpUp } from "./player";
 import { WORLD_HEIGHT, WORLD_WIDTH } from "./world";
 
 let MAX_ENTITIES = 20_000;
@@ -283,13 +282,13 @@ export let updateEntities = (deltaMs: number): void => {
                 if ((ti & TYPE_PLAYER) && (tj & TYPE_ENEMY)) {
                     posX[j] += nx * overlap; posY[j] += ny * overlap;
                     posX[i] -= nx * (overlap * 0.25); posY[i] -= ny * (overlap * 0.25);
-                    player.stats_.hp_--;
+                    player.hp_--;
                     continue;
                 }
                 if ((tj & TYPE_PLAYER) && (ti & TYPE_ENEMY)) {
                     posX[i] -= nx * overlap; posY[i] -= ny * overlap;
                     posX[j] += nx * (overlap * 0.25); posY[j] += ny * (overlap * 0.25);
-                    player.stats_.hp_--;
+                    player.hp_--;
                     continue;
                 }
 

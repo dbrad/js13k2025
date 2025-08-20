@@ -106,6 +106,9 @@ window.addEventListener("load", async () => {
             clear();
             pushText("i am the night", SCREEN_CENTER_X, SCREEN_CENTER_Y - 28, WHITE, 3, TEXT_ALIGN_CENTER);
             pushText("js13k 2025 entry by david brad", SCREEN_CENTER_X, SCREEN_CENTER_Y, WHITE, 1, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP);
+            pushText("warning: flashing lights", SCREEN_CENTER_X, SCREEN_HEIGHT - 40, WHITE, 2, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP);
+            pushText("the game contains flashing lights and scrolling screen effects", SCREEN_CENTER_X, SCREEN_HEIGHT - 20, WHITE, 1, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP);
+
 
             if (animationFrame) {
                 pushText("tap to start", SCREEN_CENTER_X, SCREEN_CENTER_Y + 35, WHITE, 1, TEXT_ALIGN_CENTER);
