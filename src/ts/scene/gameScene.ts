@@ -1,24 +1,29 @@
 import { cameraPos, cameraTarget, updateCamera, vCameraPos } from "../camera";
-import { pushQuad, pushText, pushTexturedQuad, WHITE } from "../draw";
+import { pushQuad, pushText, WHITE } from "../draw";
 import { drawEntities, initEntities, playerId, posX, posY, spawnEnemy, spawnOrbit, spawnPlayer, spawnRadialBurst, updateEntities, updatePlayerVel } from "../entity";
-import { gameState, xpTable } from "../gameState";
+import { gameState, newGame, xpTable } from "../gameState";
 import { A_PRESSED, B_PRESSED, DOWN_IS_DOWN, LEFT_IS_DOWN, RIGHT_IS_DOWN, UP_IS_DOWN } from "../input";
-import { ceil, clamp, cos, EULER, floor, PI, randInt, sin } from "../math";
+import { ceil, clamp, cos, EULER, floor, max, min, PI, randInt, sin } from "../math";
+import { player, resetPlayer } from "../player";
 import { createScene } from "../scene";
 import { drawWorld, generateWorld } from "../world";
 
+let powerupSelectCol = 0;
+let powerupSelectRow = 0;
+
 let setup = (): void => {
-    gameState[GS_TIME] = 0;
+    newGame();
+    resetPlayer();
     generateWorld();
     initEntities();
-    spawnPlayer(250, 250, 8, 0xff22ccff);
-    let cx = 250, cy = 250;
-    cameraPos[X] = 250;
-    cameraPos[Y] = 250;
-    vCameraPos[X] = 250;
-    vCameraPos[Y] = 250;
-    cameraTarget[X] = 250;
-    cameraTarget[Y] = 250;
+    let cx = 1024, cy = 1024;
+    spawnPlayer(cx, cy, 8, 0xff22ccff);
+    cameraPos[X] = cx;
+    cameraPos[Y] = cy;
+    vCameraPos[X] = cx;
+    vCameraPos[Y] = cy;
+    cameraTarget[X] = cx;
+    cameraTarget[Y] = cy;
     let enemyRing = 60, ringRadius = 300;
     for (let k = 0; k < enemyRing; k++) {
         let a = (2 * PI * k) / enemyRing;
@@ -33,23 +38,24 @@ let timer2 = 0;
 let update = (delta: number): void => {
     let dt = delta * 0.001;
     if (gameState[GS_LEVELUP_PENDING]) {
-        // Offer levelup rewards.
-        // Generate Player Powerups
-        // Render out the 3 rewards and a skip option
         if (A_PRESSED) {
-            gameState[GS_PLAYER_MOVE] += 10;
+            player.stats_.speed_ += 10;
             gameState[GS_LEVELUP_PENDING] = 0;
         }
         if (B_PRESSED) { }
         if (DOWN_IS_DOWN) {
+            powerupSelectRow += min(powerupSelectRow + 1, 1);
         } else if (UP_IS_DOWN) {
+            powerupSelectRow += max(powerupSelectRow - 1, 0);
         }
         if (RIGHT_IS_DOWN) {
+            powerupSelectCol += min(powerupSelectCol + 1, 3);
         } else if (LEFT_IS_DOWN) {
+            powerupSelectCol += max(powerupSelectCol - 1, 0);
         }
     } else {
         gameState[GS_TIME] += dt;
-        let acc = EULER ** (gameState[GS_PLAYER_MOVE] * dt);
+        let acc = EULER ** (player.stats_.speed_ * dt);
         let velx = 0;
         let vely = 0;
         if (A_PRESSED) { }
@@ -96,21 +102,21 @@ let draw = (delta: number): void => {
 };
 
 let drawGUI = (delta: number): void => {
-    let hpPer = ceil(gameState[GS_PLAYER_HP] / gameState[GS_PLAYER_MAXHP] * 100);
-    let xpNext = xpTable[gameState[GS_PLAYER_LEVEL]];
-    let xpPer = clamp(floor(gameState[GS_PLAYER_XP] / xpNext * 100), 0, 100);
-    pushText(`lvl  ${gameState[GS_PLAYER_LEVEL]}`, 0, 0);
-    pushText(`hp   ${gameState[GS_PLAYER_HP]}/${gameState[GS_PLAYER_MAXHP]}`, 0, 10);
+    let hpPer = ceil(player.stats_.hp_ / player.stats_.maxHP_ * 100);
+    let xpNext = xpTable[player.level_];
+    let xpPer = clamp(floor(player.xp_ / xpNext * 100), 0, 100);
+    pushText(`lvl  ${player.level_}`, 0, 0);
+    pushText(`hp   ${player.stats_.hp_}/${player.stats_.maxHP_}`, 0, 10);
     pushQuad(0, 20, 100, 8, 0xffffffff);
     pushQuad(0, 21, hpPer, 6, 0xff0000aa);
-    pushText(`xp   ${gameState[GS_PLAYER_XP]}/${xpNext}`, 0, 30);
+    pushText(`xp   ${player.xp_}/${xpNext}`, 0, 30);
     pushQuad(0, 40, 100, 8, 0xffffffff);
     pushQuad(0, 41, xpPer, 6, 0xff336600);
-    pushText(`luck ${gameState[GS_PLAYER_LUCK]}`, 0, 50);
-    pushText(`atk  ${gameState[GS_PLAYER_ATK]}`, 0, 60);
-    pushText(`def  ${gameState[GS_PLAYER_DEF]}`, 0, 70);
-    pushText(`cd   ${gameState[GS_PLAYER_COOLDOWN]}`, 0, 80);
-    pushText(`ms   ${gameState[GS_PLAYER_MOVE]}`, 0, 90);
+    pushText(`luck ${player.luck_}`, 0, 50);
+    pushText(`atk  ${player.stats_.damage_}`, 0, 60);
+    pushText(`def  ${player.stats_.defense_}`, 0, 70);
+    pushText(`cd   ${player.stats_.projectileSpeed_}`, 0, 80);
+    pushText(`ms   ${player.stats_.speed_}`, 0, 90);
 
     if (gameState[GS_LEVELUP_PENDING]) {
         pushQuad(SCREEN_LEFT + 50, 50, SCREEN_DIM - 100, SCREEN_DIM - 100, 0xff000000);

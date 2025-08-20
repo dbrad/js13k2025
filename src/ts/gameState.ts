@@ -1,4 +1,5 @@
 import { roundTo } from "./math";
+import { player } from "./player";
 
 let saveFileName = "js13k2025dbrad";
 let storage = window.localStorage;
@@ -12,27 +13,17 @@ export let saveFileExists = (): boolean => {
 export let xpTable: number[] = Array.from({ length: 30 }, (_, i) => roundTo(50 * (1.5 ** (i - 1)), 5));
 
 export let xpUp = (val: number) => {
-    gameState[GS_PLAYER_XP] += val;
-    let nextLevel = xpTable[gameState[GS_PLAYER_LEVEL]];
-    if (gameState[GS_PLAYER_XP] >= nextLevel) {
-        gameState[GS_PLAYER_XP] -= nextLevel;
-        gameState[GS_PLAYER_LEVEL] += 1;
+    player.xp_ += val;
+    let nextLevel = xpTable[player.level_];
+    if (player.xp_ >= nextLevel) {
+        player.xp_ -= nextLevel;
+        player.level_ += 1;
         gameState[GS_LEVELUP_PENDING] = 1;
     }
 };
 
 export let newGame = (): void => {
     gameState = [
-        10, // GS_PLAYER_HP
-        10, // GS_PLAYER_MAXHP
-        0, // GS_PLAYER_XP
-        1, // GS_PLAYER_LEVEL
-        0, // GS_PLAYER_LUCK
-        0, // GS_PLAYER_ATK
-        0, // GS_PLAYER_DEF
-        140, // GS_PLAYER_MOVE
-        500, // GS_PLAYER_MAXMOVE
-        0, // GS_PLAYER_COOLDOWN
         0, // GS_TIME
         0, // GS_LEVELUP_PENDING
     ];

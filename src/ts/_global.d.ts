@@ -21,16 +21,6 @@ declare module '*.webp' {
 }
 
 type GameState = [
-    GS_PLAYER_HP: number,
-    GS_PLAYER_MAXHP: number,
-    GS_PLAYER_XP: number,
-    GS_PLAYER_LEVEL: number,
-    GS_PLAYER_LUCK: number,
-    GS_PLAYER_ATK: number,
-    GS_PLAYER_DEF: number,
-    GS_PLAYER_MOVE: number,
-    GS_PLAYER_MAXMOVE: number,
-    GS_PLAYER_COOLDOWN: number,
     GS_TIME: number,
     GS_LEVELUP_PENDING: number,
 ];
@@ -80,4 +70,40 @@ type Scene = {
     update_: UpdateFunction,
     draw_: UpdateFunction,
     drawGUI_: UpdateFunction,
+};
+
+type PlayerStats = {
+    hp_: number;
+    maxHP_: number;
+    speed_: number;
+    damage_: number;
+    defense_: number;
+    fireRate_: number;
+    projectileSpeed_: number;
+    aoeSize_: number;
+};
+
+type Ability = {
+    id_: string;
+    type_: "bullet" | "aura";
+    level_: number;
+    cooldown_: number;
+};
+
+type Upgrade = {
+    id_: string;
+    name_: string;
+    description_: string;
+    kind_: "stat" | "ability";
+    weight_: number; // higher = more common
+    maxLevel_?: number;
+    apply_: (player: Player) => void;
+};
+
+type Player = {
+    stats_: PlayerStats;
+    luck_: number;
+    abilities_: Ability[];
+    xp_: number;
+    level_: number;
 };

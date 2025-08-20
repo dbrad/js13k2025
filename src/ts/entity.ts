@@ -1,8 +1,9 @@
 import { cameraPos } from "./camera";
 import { pushQuad, pushTexturedQuad, WHITE } from "./draw";
-import { gameState, xpUp } from "./gameState";
+import { xpUp } from "./gameState";
 import { clamp, cos, EULER, floor, max, PI, sin, sqrt } from "./math";
 import { catParticle, emitParticles, eyeParticle } from "./particle";
+import { player } from "./player";
 import { WORLD_HEIGHT, WORLD_WIDTH } from "./world";
 
 let MAX_ENTITIES = 20_000;
@@ -218,14 +219,14 @@ export let updateEntities = (deltaMs: number): void => {
                 if (velX[id] < 1 && velX[id] > -1) {
                     velX[id] = 0;
                 }
-                velX[id] = clamp(velX[id], -gameState[GS_PLAYER_MAXMOVE], gameState[GS_PLAYER_MAXMOVE]);
+                velX[id] = clamp(velX[id], -500, 500);
             }
             if (velY[id] !== 0) {
                 velY[id] = velY[id] * EULER ** (-5 * dt);
                 if (velY[id] < 1 && velY[id] > -1) {
                     velY[id] = 0;
                 }
-                velY[id] = clamp(velY[id], -gameState[GS_PLAYER_MAXMOVE], gameState[GS_PLAYER_MAXMOVE]);
+                velY[id] = clamp(velY[id], -500, 500);
             }
         }
 
@@ -282,13 +283,13 @@ export let updateEntities = (deltaMs: number): void => {
                 if ((ti & TYPE_PLAYER) && (tj & TYPE_ENEMY)) {
                     posX[j] += nx * overlap; posY[j] += ny * overlap;
                     posX[i] -= nx * (overlap * 0.25); posY[i] -= ny * (overlap * 0.25);
-                    gameState[GS_PLAYER_HP]--;
+                    player.stats_.hp_--;
                     continue;
                 }
                 if ((tj & TYPE_PLAYER) && (ti & TYPE_ENEMY)) {
                     posX[i] -= nx * overlap; posY[i] -= ny * overlap;
                     posX[j] += nx * (overlap * 0.25); posY[j] += ny * (overlap * 0.25);
-                    gameState[GS_PLAYER_HP]--;
+                    player.stats_.hp_--;
                     continue;
                 }
 
@@ -316,6 +317,8 @@ export let updateEntities = (deltaMs: number): void => {
                     continue;
                 }
 
+                // TODO: CHECK FOR AURA OVERLAP
+
                 // (Optional) Projectile ↔ Player (hazards)
                 // if ((ti & TYPE_PROJECTILE) && (tj & TYPE_PLAYER)) { /* playerTakeDamage(...); destroyProjectile(i); */ }
                 // if ((tj & TYPE_PROJECTILE) && (ti & TYPE_PLAYER)) { /* playerTakeDamage(...); destroyProjectile(j); */ }
@@ -339,14 +342,21 @@ export let drawEntities = (): void => {
         if (sPosX[id] < -d || sPosX[id] > SCREEN_DIM + SCREEN_GUTTER + d || sPosY[id] < -d || sPosY[id] > SCREEN_DIM + d) {
             continue;
         }
-        if (d < 4) {
-            pushQuad(sPosX[id] - r, sPosY[id] - r, d, d, color[id] || 0xffffffff);
-        } else if (d > 3 && d < 9) {
-            pushTexturedQuad(TEXTURE_C_4x4 + (d - 4), sPosX[id] - r, sPosY[id] - r, 1, color[id] || 0xffffffff);
+        let t = type[id];
+        if (t & TYPE_ENEMY) {
+            pushTexturedQuad(TEXTURE_RAT, sPosX[id] - r, sPosY[id] - r, 1, WHITE, velX[id] < 0, false, true);
         } else {
-            pushTexturedQuad(TEXTURE_C_8x8, sPosX[id] - r, sPosY[id] - r, d * 0.125, color[id] || 0xffffffff);
+            if (d < 4) {
+                pushQuad(sPosX[id] - r, sPosY[id] - r, d, d, color[id] || 0xffffffff);
+            } else if (d > 3 && d < 9) {
+                pushTexturedQuad(TEXTURE_C_4x4 + (d - 4), sPosX[id] - r, sPosY[id] - r, 1, color[id] || 0xffffffff);
+            } else {
+                pushTexturedQuad(TEXTURE_C_8x8, sPosX[id] - r, sPosY[id] - r, d * 0.125, color[id] || 0xffffffff);
+            }
         }
     }
+
+    // TODO: Render Auras
 
     if (velX[playerId] !== 0 || velY[playerId] !== 0) {
         catParticle.position_[X] = posX[playerId];
@@ -359,6 +369,6 @@ export let drawEntities = (): void => {
         eyeParticle.position_[X] += 6;
         emitParticles(eyeParticle, 2);
     } else {
-        pushTexturedQuad(TEXTURE_CAT_01, sPosX[playerId] - 8, sPosY[playerId] - 8, 1, WHITE, playerDir === 0, false, true);
+        pushTexturedQuad(TEXTURE_CAT_01, sPosX[playerId] - 8, sPosY[playerId] - 8, 1, WHITE, playerDir === 0, false, false, true);
     }
 };

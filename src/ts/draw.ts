@@ -115,13 +115,13 @@ export let pushQuad = (x: number, y: number, w: number, h: number, colour: numbe
     queueDraw(x, y, w, h, 1, 1, 2, 2, 2, 2, colour, false, false);
 };
 
-export let pushTexturedQuad = (textureId: number, x: number, y: number, scale: number = 1, colour: number = WHITE, hFlip: boolean = false, vFlip: boolean = false, idleAnimation: boolean = false): void => {
-    let t = TEXTURE_CACHE[textureId + (idleAnimation ? animationFrame : 0)];
+export let pushTexturedQuad = (textureId: number, x: number, y: number, scale: number = 1, colour: number = WHITE, hFlip: boolean = false, vFlip: boolean = false, idleAnimation: boolean = false, customAnimation: boolean = false): void => {
+    let t = TEXTURE_CACHE[textureId + (customAnimation ? animationFrame : 0)];
     queueDraw(
-        x, y, // + (idleAnimation ? animationFrame : 0),
-        t.w_, t.h_, // - (idleAnimation ? animationFrame : 0),
+        x, y + (idleAnimation ? animationFrame : 0),
+        t.w_, t.h_ - (idleAnimation ? animationFrame : 0),
         scale, scale,
-        t.u0_, t.v0_, t.u1_, t.v1_, // - (idleAnimation ? animationFrame * (1 / ATLAS_HEIGHT) : 0),
+        t.u0_, t.v0_, t.u1_, t.v1_ - (idleAnimation ? animationFrame * (1 / ATLAS_HEIGHT) : 0),
         colour,
         hFlip, vFlip
     );

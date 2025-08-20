@@ -1,0 +1,23 @@
+Day 07 - 2025-08-19
+
+---
+
+Started fleshing out the level up / ability system.
+Made a decision to try to base 22 abilties on the 22 Major Arcana.
+Still need to decide how many arcana to limit the player to.
+
+---
+
+`-Zab0 -Zdy0 -Zlr750 -Zmc4 -Zmd10 -Zpr14 -S0,1,2,3,6,7,13,21,25,42,50,305`
+
+-------------------------------------------------------------------------------
+Language                     files          blank        comment           code
+-------------------------------------------------------------------------------
+TypeScript                      21            347             38           2145
+-------------------------------------------------------------------------------
+SUM:                            21            347             38           2145
+-------------------------------------------------------------------------------
+
+The file is under the limit.
+USED: 62.07% |  8263 BYTES
+LEFT: 37.93% |  5049 BYTES
