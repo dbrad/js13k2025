@@ -37,7 +37,7 @@ export let UPGRADE_POOL: Upgrade[] = [
         name_: "Vitality",
         description_: "+5 Max HP",
         kind_: STAT,
-        weight_: 3, // common
+        weight_: 3,
         apply_: () => { player.maxHP_ += 5; player.hp_ += 5; },
     },
     {
@@ -45,7 +45,7 @@ export let UPGRADE_POOL: Upgrade[] = [
         name_: "Ferocity",
         description_: "+1 All Damage",
         kind_: STAT,
-        weight_: 3, // common
+        weight_: 3,
         apply_: () => { player.damage_ += 1; },
     },
     {
@@ -53,7 +53,7 @@ export let UPGRADE_POOL: Upgrade[] = [
         name_: "Fortify",
         description_: "+1 Defense",
         kind_: STAT,
-        weight_: 3, // common
+        weight_: 3,
         apply_: () => { player.defense_ += 1; },
     },
     {
@@ -61,16 +61,15 @@ export let UPGRADE_POOL: Upgrade[] = [
         name_: "Frequency",
         description_: "-5% Cooldowns",
         kind_: STAT,
-        weight_: 2, // common
+        weight_: 2,
         apply_: () => { player.cooldown_ += 5; },
     },
     {
-
         id_: UP_MS,
         name_: "Agility",
         description_: "+10 Movement Speed",
         kind_: STAT,
-        weight_: 2, // medium
+        weight_: 2,
         apply_: () => { player.speed_ += 10; },
     },
     {
@@ -78,7 +77,7 @@ export let UPGRADE_POOL: Upgrade[] = [
         name_: "0. The Fool",
         description_: "Fires shots in random directions",
         kind_: ABILITY,
-        weight_: 1, // rare
+        weight_: 1,
         maxLevel_: 5,
         apply_: () => {
             upgradeAbility({ id_: UP_FOOL, type_: BULLET, level_: 1, cooldown_: 500 });

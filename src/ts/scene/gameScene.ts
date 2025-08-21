@@ -1,6 +1,6 @@
 import { cameraPos, cameraTarget, updateCamera, vCameraPos } from "../camera";
 import { pushQuad, pushText, WHITE } from "../draw";
-import { drawEntities, initEntities, playerId, posX, posY, spawnEnemy, spawnOrbit, spawnPlayer, spawnRadialBurst, updateEntities, updatePlayerVel } from "../entity";
+import { drawEntities, initEntities, playerId, posX, posY, spawnAura, spawnEnemy, spawnPlayer, updateEntities, updatePlayerVel } from "../entity";
 import { gameState, newGame } from "../gameState";
 import { A_PRESSED, B_PRESSED, DOWN_IS_DOWN, DOWN_PRESSED, LEFT_IS_DOWN, RIGHT_IS_DOWN, UP_IS_DOWN, UP_PRESSED } from "../input";
 import { ceil, clamp, cos, EULER, floor, max, min, PI, randInt, sin } from "../math";
@@ -17,7 +17,7 @@ let setup = (): void => {
     generateWorld();
     initEntities();
     let cx = 1024, cy = 1024;
-    spawnPlayer(cx, cy, 8, 0xff22ccff);
+    console.log(spawnPlayer(cx, cy, 8, 0xff22ccff));
     cameraPos[X] = cx;
     cameraPos[Y] = cy;
     vCameraPos[X] = cx;
@@ -62,7 +62,9 @@ let update = (delta: number): void => {
         let acc = EULER ** (player.speed_ * dt);
         let velx = 0;
         let vely = 0;
-        if (A_PRESSED) { }
+        if (A_PRESSED) {
+            spawnAura(50, 1);
+        }
         if (B_PRESSED) { }
         if (DOWN_IS_DOWN) {
             vely += acc;
@@ -82,11 +84,11 @@ let update = (delta: number): void => {
         if (timer >= 500) {
             timer -= 500;
             spawnEnemy(randInt(0, 2048), randInt(0, 2048), 8, 3, 0xff000000);
-            spawnOrbit(posX[playerId], posY[playerId], 32, 4, 50, 0.05, 1);
+            // spawnOrbit(posX[playerId], posY[playerId], 32, 4, 50, 0.05, 1);
         }
         if (timer2 > 1000) {
             timer2 -= 1000;
-            spawnRadialBurst(posX[playerId], posY[playerId], 36, 300, 2, 1.5, 1);
+            // spawnRadialBurst(posX[playerId], posY[playerId], 36, 300, 2, 1.5, 1);
         }
 
         updateEntities(delta);

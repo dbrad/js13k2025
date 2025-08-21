@@ -7,13 +7,13 @@ import { WORLD_HEIGHT, WORLD_WIDTH } from "./world";
 
 let MAX_ENTITIES = 20_000;
 
-let GRID_CELL_SIZE = 64;
+let GRID_CELL_SIZE = 128;
 let GRID_WIDTH = 256;
 let GRID_HEIGHT = 256;
 let MAX_PER_CELL = 64;
 
 let ENEMY_SPEED = 50;
-let SEEK_STOP_DIST = 17;
+let SEEK_STOP_DIST = 16;
 let PLAYER_RADIUS = 8;
 
 let ENEMY_RADIUS = 8;
@@ -24,7 +24,7 @@ let DEFAULT_ENEMY_HP = 3;
 let TYPE_PLAYER = 1 << 0;
 let TYPE_ENEMY = 1 << 1;
 let TYPE_PROJECTILE = 1 << 2;
-// let TYPE_PICKUP = 1 << 3;
+let TYPE_AURA = 1 << 3;
 
 let playerDir = 0;
 
@@ -147,6 +147,22 @@ export let spawnProjectile = (x: number, y: number, vx: number, vy: number, r: n
     return id;
 };
 
+export let spawnAura = (r: number = 50, dmg: number = 5, lifeSec: number = -1): number => {
+    let id = alloc();
+    if (id < 0) return -1;
+    type[id] = TYPE_AURA;
+    radius[id] = r;
+    posX[id] = posX[playerId];
+    posY[id] = posY[playerId];
+    velX[id] = 0;
+    velY[id] = 0;
+    damage[id] = dmg;
+    lifetime[id] = lifeSec;
+    color[id] = 0x4000ff80;
+    hp[id] = 999;
+    return id;
+};
+
 export let spawnRadialBurst = (cx: number, cy: number, count: number, speed: number, r: number = PROJECTILE_RADIUS, lifeSec: number = 2, dmg: number = 1): void => {
     for (let k = 0; k < count; k++) {
         let a = (2 * PI * k) / count;
@@ -227,6 +243,19 @@ export let updateEntities = (deltaMs: number): void => {
                 }
                 velY[id] = clamp(velY[id], -500, 500);
             }
+            if (lifetime[id] > 0) {
+                lifetime[id] -= dt;
+            }
+        } else if (t & TYPE_AURA) {
+            if (lifetime[id] > 0) {
+                lifetime[id] -= dt;
+                if (lifetime[id] <= 0) {
+                    free(id);
+                    continue;
+                }
+            }
+            posX[id] = posX[playerId];
+            posY[id] = posY[playerId];
         }
 
         posX[id] += velX[id] * dt;
@@ -282,13 +311,19 @@ export let updateEntities = (deltaMs: number): void => {
                 if ((ti & TYPE_PLAYER) && (tj & TYPE_ENEMY)) {
                     posX[j] += nx * overlap; posY[j] += ny * overlap;
                     posX[i] -= nx * (overlap * 0.25); posY[i] -= ny * (overlap * 0.25);
-                    player.hp_--;
+                    if (lifetime[i] <= 0) {
+                        player.hp_--;
+                        lifetime[i] = 0.8;
+                    }
                     continue;
                 }
                 if ((tj & TYPE_PLAYER) && (ti & TYPE_ENEMY)) {
                     posX[i] -= nx * overlap; posY[i] -= ny * overlap;
                     posX[j] += nx * (overlap * 0.25); posY[j] += ny * (overlap * 0.25);
-                    player.hp_--;
+                    if (lifetime[j] <= 0) {
+                        player.hp_--;
+                        lifetime[j] = 0.8;
+                    }
                     continue;
                 }
 
@@ -315,14 +350,35 @@ export let updateEntities = (deltaMs: number): void => {
                         free(j);
                     continue;
                 }
+            }
+        }
+    }
 
-                // TODO: CHECK FOR AURA OVERLAP
-
-                // (Optional) Projectile ↔ Player (hazards)
-                // if ((ti & TYPE_PROJECTILE) && (tj & TYPE_PLAYER)) { /* playerTakeDamage(...); destroyProjectile(i); */ }
-                // if ((tj & TYPE_PROJECTILE) && (ti & TYPE_PLAYER)) { /* playerTakeDamage(...); destroyProjectile(j); */ }
-
-                // Player ↔ Pickup, etc., can be added here similarly.
+    for (let n = 0; n < activeCount; n++) {
+        let id = activeIds[n];
+        if (!alive[id] || !(type[id] & TYPE_AURA)) continue;
+        let ar = radius[id];
+        let cx_min = clamp(floor((pX - ar) / GRID_CELL_SIZE), 0, GRID_WIDTH - 1);
+        let cx_max = clamp(floor((pX + ar) / GRID_CELL_SIZE), 0, GRID_WIDTH - 1);
+        let cy_min = clamp(floor((pY - ar) / GRID_CELL_SIZE), 0, GRID_HEIGHT - 1);
+        let cy_max = clamp(floor((pY + ar) / GRID_CELL_SIZE), 0, GRID_HEIGHT - 1);
+        for (let cy = cy_min; cy <= cy_max; cy++) {
+            for (let cx = cx_min; cx <= cx_max; cx++) {
+                let gi = cy * GRID_WIDTH + cx;
+                let gc = gridCounts[gi];
+                let gbase = gi * MAX_PER_CELL;
+                for (let k = 0; k < gc; k++) {
+                    let eid = gridIds[gbase + k];
+                    if (!alive[eid] || !(type[eid] & TYPE_ENEMY)) continue;
+                    let dx = posX[eid] - pX;
+                    let dy = posY[eid] - pY;
+                    let d2 = dx * dx + dy * dy;
+                    let rsum = ar + radius[eid];
+                    if (d2 < rsum * rsum) {
+                        damageEnemy(eid, damage[id] * dt);
+                        // Optional: emitParticles for hit effect, e.g., cat scratch
+                    }
+                }
             }
         }
     }
@@ -342,7 +398,9 @@ export let drawEntities = (): void => {
             continue;
         }
         let t = type[id];
-        if (t & TYPE_ENEMY) {
+        if (t & TYPE_AURA) {
+            pushTexturedQuad(TEXTURE_C_16x16, sPosX[id] - r, sPosY[id] - r, d * 0.0625, color[id] || 0xffffffff);
+        } else if (t & TYPE_ENEMY) {
             pushTexturedQuad(TEXTURE_RAT, sPosX[id] - r, sPosY[id] - r, 1, WHITE, velX[id] < 0, false, true);
         } else {
             if (d < 4) {
@@ -355,9 +413,12 @@ export let drawEntities = (): void => {
         }
     }
 
-    // TODO: Render Auras
-
-    if (velX[playerId] !== 0 || velY[playerId] !== 0) {
+    if (velX[playerId] !== 0 || velY[playerId] !== 0 || lifetime[playerId] > 0) {
+        if (lifetime[playerId] > 0 && floor(lifetime[playerId] * 10) % 2 == 1) {
+            catParticle.colourBegin_[R] = 1;
+        } else {
+            catParticle.colourBegin_[R] = 0;
+        }
         catParticle.position_[X] = posX[playerId];
         catParticle.position_[Y] = posY[playerId];
         emitParticles(catParticle, 10);
@@ -368,6 +429,7 @@ export let drawEntities = (): void => {
         eyeParticle.position_[X] += 6;
         emitParticles(eyeParticle, 2);
     } else {
-        pushTexturedQuad(TEXTURE_CAT_01, sPosX[playerId] - 8, sPosY[playerId] - 8, 1, WHITE, playerDir === 0, false, false, true);
+        let c = lifetime[playerId] > 0 ? (floor(lifetime[playerId] * 10) % 2 ? 0xff0000ff : WHITE) : WHITE;
+        pushTexturedQuad(TEXTURE_CAT_01, sPosX[playerId] - 8, sPosY[playerId] - 8, 1, c, playerDir === 0, false, false, true);
     }
 };
