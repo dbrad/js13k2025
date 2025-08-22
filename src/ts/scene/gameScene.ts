@@ -4,7 +4,7 @@ import { drawEntities, initEntities, playerId, posX, posY, spawnAura, spawnEnemy
 import { gameState, newGame } from "../gameState";
 import { A_PRESSED, B_PRESSED, DOWN_IS_DOWN, DOWN_PRESSED, LEFT_IS_DOWN, RIGHT_IS_DOWN, UP_IS_DOWN, UP_PRESSED } from "../input";
 import { ceil, clamp, cos, EULER, floor, max, min, PI, randInt, sin } from "../math";
-import { getWeightedRandomUpgrades, player, resetPlayer, xpTable } from "../player";
+import { getWeightedRandomUpgrades, player, resetPlayer, updatePlayer, xpTable } from "../player";
 import { createScene } from "../scene";
 import { drawWorld, generateWorld } from "../world";
 
@@ -16,14 +16,9 @@ let setup = (): void => {
     resetPlayer();
     generateWorld();
     initEntities();
-    let cx = 1024, cy = 1024;
-    console.log(spawnPlayer(cx, cy, 8, 0xff22ccff));
-    cameraPos[X] = cx;
-    cameraPos[Y] = cy;
-    vCameraPos[X] = cx;
-    vCameraPos[Y] = cy;
-    cameraTarget[X] = cx;
-    cameraTarget[Y] = cy;
+    let cx = cameraPos[X] = vCameraPos[X] = cameraTarget[X] = 1024;
+    let cy = cameraPos[Y] = vCameraPos[Y] = cameraTarget[Y] = 1024;
+    spawnPlayer(cx, cy, 8, 0xff22ccff);
     let enemyRing = 60, ringRadius = 300;
     for (let k = 0; k < enemyRing; k++) {
         let a = (2 * PI * k) / enemyRing;
@@ -34,13 +29,12 @@ let setup = (): void => {
 };
 
 let timer = 0;
-let timer2 = 0;
 let update = (delta: number): void => {
     let dt = delta * 0.001;
     if (gameState[GS_LEVELUP_PENDING]) {
-        if (upgrades.length === 0) [
-            upgrades = getWeightedRandomUpgrades(3)
-        ];
+        if (upgrades.length === 0) {
+            upgrades = getWeightedRandomUpgrades(3);
+        }
         if (A_PRESSED) {
             if (upgradeSelectRow === 3) {
                 player.luck_--;
@@ -80,18 +74,14 @@ let update = (delta: number): void => {
         updatePlayerVel(velx, vely);
 
         timer += delta;
-        timer2 += delta;
         if (timer >= 500) {
+            // TODO: Better enemy spawning (offscreen, and ramp up and down)
             timer -= 500;
             spawnEnemy(randInt(0, 2048), randInt(0, 2048), 8, 3, 0xff000000);
-            // spawnOrbit(posX[playerId], posY[playerId], 32, 4, 50, 0.05, 1);
-        }
-        if (timer2 > 1000) {
-            timer2 -= 1000;
-            // spawnRadialBurst(posX[playerId], posY[playerId], 36, 300, 2, 1.5, 1);
         }
 
         updateEntities(delta);
+        updatePlayer(delta);
         updateCamera(posX[playerId], posY[playerId], delta);
     }
 };
@@ -118,6 +108,8 @@ let drawGUI = (delta: number): void => {
     pushText(`def  ${player.defense_}`, 0, 70);
     pushText(`cd   ${player.cooldown_}`, 0, 80);
     pushText(`ms   ${player.speed_}`, 0, 90);
+
+    // TODO: Render player abilities in the right hand gutter
 
     if (gameState[GS_LEVELUP_PENDING]) {
         pushQuad(SCREEN_LEFT, 0, SCREEN_DIM + 1, SCREEN_DIM + 1, 0xcc000000);

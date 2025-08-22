@@ -125,16 +125,16 @@ export let updateHardwareInput = (): void => {
             let [x, y] = touches[i];
 
             // D-pad Checks
-            if (isPointInRect(x, y, dpadX, dpadY, dpadSize, dpadTouchCenter)) {
+            if (isPointInRect(x, y, dpadX - 20, dpadY - 20, dpadSize + 40, dpadTouchCenter + 20)) {
                 hardwareKeyState[D_UP] = KEY_IS_DOWN;
             }
-            if (isPointInRect(x, y, dpadX, dpadY + dpadTouchCenter * 2 + 1, dpadSize, dpadTouchCenter)) {
+            if (isPointInRect(x, y, dpadX - 20, dpadY + dpadTouchCenter * 2 + 1, dpadSize + 40, dpadTouchCenter + 20)) {
                 hardwareKeyState[D_DOWN] = KEY_IS_DOWN;
             }
-            if (isPointInRect(x, y, dpadX, dpadY, dpadTouchCenter, dpadSize)) {
+            if (isPointInRect(x, y, dpadX - 20, dpadY - 20, dpadTouchCenter + 20, dpadSize + 40)) {
                 hardwareKeyState[D_LEFT] = KEY_IS_DOWN;
             }
-            if (isPointInRect(x, y, dpadX + dpadTouchCenter * 2 + 1, dpadY, dpadTouchCenter, dpadSize)) {
+            if (isPointInRect(x, y, dpadX + dpadTouchCenter * 2 + 1, dpadY - 20, dpadTouchCenter + 20, dpadSize + 40)) {
                 hardwareKeyState[D_RIGHT] = KEY_IS_DOWN;
             }
             // Button Checks

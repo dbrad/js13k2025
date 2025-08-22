@@ -60,19 +60,7 @@ export let eyeParticle: ParticleParameters = {
     lifetime_: 16
 };
 
-export let fireParticle: ParticleParameters = {
-    position_: [0, 0],
-    velocity_: [0, -45],
-    velocityVariation_: [15, 40],
-    sizeBegin_: 6,
-    sizeEnd_: 0,
-    sizeVariation_: 0.5,
-    colourBegin_: v4f(120 / 255, 170 / 255, 220 / 255, 1),
-    colourEnd_: v4f(1, 1, 1, 0.25),
-    lifetime_: 500
-};
-
-export let activeParticles: Set<number> = new Set();
+let activeParticles: Set<number> = new Set();
 
 export let initParticles = (): void => {
     for (let i = 0; i < particlePoolSize; i++) {

@@ -26,7 +26,7 @@ let TYPE_ENEMY = 1 << 1;
 let TYPE_PROJECTILE = 1 << 2;
 let TYPE_AURA = 1 << 3;
 
-let playerDir = 0;
+export let playerDir = 0;
 
 let type = new Uint16Array(MAX_ENTITIES);
 let alive = new Uint8Array(MAX_ENTITIES);
@@ -57,6 +57,8 @@ let enemyHitSet: Uint16Array[] = new Array(MAX_ENTITIES);
 let enemyHitSetCount: Uint8Array = new Uint8Array(MAX_ENTITIES);
 for (let i = 0; i < MAX_ENTITIES; i++) enemyHitSet[i] = new Uint16Array(256);
 
+export let nearestEnemyPos = new Float32Array(2);
+
 let gridIndexFor = (x: number, y: number): number => {
     let cx = floor(x / GRID_CELL_SIZE);
     let cy = floor(y / GRID_CELL_SIZE);
@@ -72,6 +74,36 @@ let gridInsert = (id: number): void => {
         gridIds[gi * MAX_PER_CELL + c] = id;
         gridCounts[gi] = c + 1;
     }
+};
+
+export let findNearestEnemy = (maxDist: number): boolean => {
+    let px = posX[playerId], py = posY[playerId];
+    let maxDist2 = maxDist * maxDist;
+    let cx_min = clamp(floor((px - maxDist) / GRID_CELL_SIZE), 0, GRID_WIDTH - 1);
+    let cx_max = clamp(floor((px + maxDist) / GRID_CELL_SIZE), 0, GRID_WIDTH - 1);
+    let cy_min = clamp(floor((py - maxDist) / GRID_CELL_SIZE), 0, GRID_HEIGHT - 1);
+    let cy_max = clamp(floor((py + maxDist) / GRID_CELL_SIZE), 0, GRID_HEIGHT - 1);
+    let minDist2 = maxDist2 + 1;
+    for (let cy = cy_min; cy <= cy_max; cy++) {
+        for (let cx = cx_min; cx <= cx_max; cx++) {
+            let gi = cy * GRID_WIDTH + cx;
+            let gc = gridCounts[gi];
+            let gbase = gi * MAX_PER_CELL;
+            for (let k = 0; k < gc; k++) {
+                let id = gridIds[gbase + k];
+                if (!alive[id] || !(type[id] & TYPE_ENEMY)) continue;
+                let dx = posX[id] - px;
+                let dy = posY[id] - py;
+                let d2 = dx * dx + dy * dy;
+                if (d2 < minDist2 && d2 <= maxDist2) {
+                    minDist2 = d2;
+                    nearestEnemyPos[X] = posX[id];
+                    nearestEnemyPos[Y] = posY[id];
+                }
+            }
+        }
+    }
+    return minDist2 <= maxDist2;
 };
 
 export let initEntities = (): void => {
@@ -159,7 +191,6 @@ export let spawnAura = (r: number = 50, dmg: number = 5, lifeSec: number = -1): 
     damage[id] = dmg;
     lifetime[id] = lifeSec;
     color[id] = 0x4000ff80;
-    hp[id] = 999;
     return id;
 };
 

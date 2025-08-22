@@ -1,0 +1,23 @@
+Day 09 - 2025-08-21
+
+---
+
+Increased the detection area of the mobile controls.
+Added a function to find the nearest enemy,
+Stubbed out the 22 player abilities.
+
+---
+
+`-Zab0 -Zlr1000 -Zmc4 -Zpr14 -S0,1,2,3,6,7,21,25,42,57,340,389`
+
+-------------------------------------------------------------------------------
+Language                     files          blank        comment           code
+-------------------------------------------------------------------------------
+TypeScript                      21            350             29           2763
+-------------------------------------------------------------------------------
+SUM:                            21            350             29           2763
+-------------------------------------------------------------------------------
+
+The file is under the limit.
+USED: 70.53% |  9389 BYTES
+LEFT: 29.47% |  3923 BYTES

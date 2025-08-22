@@ -74,9 +74,11 @@ type Scene = {
 
 type Ability = {
     id_: number;
-    type_: typeof BULLET | typeof AURA;
+    type_: number;
     level_: number;
     cooldown_: number;
+    timer_: number;
+    fire_: (a: Ability) => void;
 };
 
 type Upgrade = {
