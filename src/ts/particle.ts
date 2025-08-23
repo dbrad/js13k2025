@@ -60,6 +60,18 @@ export let eyeParticle: ParticleParameters = {
     lifetime_: 16
 };
 
+export let burstParticle: ParticleParameters = {
+    position_: [0, 0],
+    velocity_: [0, 0],
+    velocityVariation_: [250, 250],
+    sizeBegin_: 8,
+    sizeEnd_: 0,
+    sizeVariation_: 1,
+    colourBegin_: v4f(1, 0, 0, 1),
+    colourEnd_: v4f(1, 0, 0, 0.1),
+    lifetime_: 200
+};
+
 let activeParticles: Set<number> = new Set();
 
 export let initParticles = (): void => {
@@ -128,7 +140,7 @@ export let drawParticles = (): void => {
         } else if (particleSize[i] > 3 && particleSize[i] < 9) {
             pushTexturedQuad(TEXTURE_C_4x4 + (particleSize[i] - 4), x, y, 1, particleColour[i]);
         } else {
-            pushTexturedQuad(TEXTURE_C_8x8, x, y, particleSize[i] * 0.125, particleColour[i]);
+            pushTexturedQuad(TEXTURE_C_16x16, x, y, particleSize[i] * 0.0625, particleColour[i]);
         }
     }
 };
@@ -147,7 +159,7 @@ export let emitParticle = (particleParams: ParticleParameters): void => {
     particleLifetime[particlePoolIndex] = particleParams.lifetime_;
     particleLifetimeRemaining[particlePoolIndex] = particleLifetime[particlePoolIndex];
 
-    particleSizeBegin[particlePoolIndex] = particleParams.sizeBegin_ + particleParams.sizeVariation_ * (math.random() - 0.5);
+    particleSizeBegin[particlePoolIndex] = floor(particleParams.sizeBegin_ + particleParams.sizeVariation_ * (math.random() - 0.5));
     particleSizeEnd[particlePoolIndex] = particleParams.sizeEnd_;
     particleSize[particlePoolIndex] = particleSizeBegin[particlePoolIndex];
 

@@ -11,7 +11,7 @@ export let saveFileExists = (): boolean => {
 export let newGame = (): void => {
     gameState = [
         0, // GS_TIME
-        0, // GS_LEVELUP_PENDING
+        1, // GS_LEVELUP_PENDING
     ];
 };
 

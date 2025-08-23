@@ -1,12 +1,9 @@
-Game over at 0 hp
+Add damage value control to enemies
 Make luck do something
-Hook up other stats
-cap stat increases
-cap number of ability
+put cap on stat increases
 !!Create the 22 abilities!!
-Add GUI area for current abilities and their cooldowns
+Add GUI area in right gutter to display current abilities, their levels, their dmg, and their cooldowns
 
-Add lightning strikes during midnight
 spawn boss and boss hp bar during midnight
 transition back to morning
 Sound effects

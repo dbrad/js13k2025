@@ -1,88 +1,93 @@
 import { cameraPos, cameraTarget, updateCamera, vCameraPos } from "../camera";
-import { pushQuad, pushText, WHITE } from "../draw";
-import { drawEntities, initEntities, playerId, posX, posY, spawnAura, spawnEnemy, spawnPlayer, updateEntities, updatePlayerVel } from "../entity";
+import { pushQuad, pushText, updateLightning, WHITE } from "../draw";
+import { drawEntities, initEntities, posX, posY, spawnOffscreenEnemy, spawnPlayer, updateEntities, updatePlayerVel } from "../entity";
 import { gameState, newGame } from "../gameState";
-import { A_PRESSED, B_PRESSED, DOWN_IS_DOWN, DOWN_PRESSED, LEFT_IS_DOWN, RIGHT_IS_DOWN, UP_IS_DOWN, UP_PRESSED } from "../input";
-import { ceil, clamp, cos, EULER, floor, max, min, PI, randInt, sin } from "../math";
-import { getWeightedRandomUpgrades, player, resetPlayer, updatePlayer, xpTable } from "../player";
-import { createScene } from "../scene";
+import { A_PRESSED, DOWN_IS_DOWN, DOWN_PRESSED, LEFT_IS_DOWN, RIGHT_IS_DOWN, UP_IS_DOWN, UP_PRESSED } from "../input";
+import { ceil, clamp, EULER, floor, max, min } from "../math";
+import { getWeightedRandomUpgrades, player, resetPlayer, updatePlayerAbilities, xpTable } from "../player";
+import { createScene, switchToScene } from "../scene";
 import { drawWorld, generateWorld } from "../world";
+import { mainMenuScene } from "./mainMenu";
 
 let upgradeSelectRow = 0;
 let upgrades: Upgrade[] = [];
+let timer = 0;
+let gameover = false;
+let bossSpawn = false;
 
 let setup = (): void => {
+    gameover = bossSpawn = false;
     newGame();
     resetPlayer();
     generateWorld();
     initEntities();
     let cx = cameraPos[X] = vCameraPos[X] = cameraTarget[X] = 1024;
     let cy = cameraPos[Y] = vCameraPos[Y] = cameraTarget[Y] = 1024;
-    spawnPlayer(cx, cy, 8, 0xff22ccff);
-    let enemyRing = 60, ringRadius = 300;
-    for (let k = 0; k < enemyRing; k++) {
-        let a = (2 * PI * k) / enemyRing;
-        let ex = cx + cos(a) * ringRadius;
-        let ey = cy + sin(a) * ringRadius;
-        spawnEnemy(ex, ey, 8, 3, 0xff000000);
-    }
+    spawnPlayer(cx, cy, 8);
 };
 
-let timer = 0;
 let update = (delta: number): void => {
-    let dt = delta * 0.001;
-    if (gameState[GS_LEVELUP_PENDING]) {
-        if (upgrades.length === 0) {
-            upgrades = getWeightedRandomUpgrades(3);
-        }
-        if (A_PRESSED) {
-            if (upgradeSelectRow === 3) {
-                player.luck_--;
-            } else {
-                upgrades[upgradeSelectRow].apply_();
-                player.luck_++;
-            }
-            upgrades = [];
-            upgradeSelectRow = 0;
-            gameState[GS_LEVELUP_PENDING] = 0;
-        }
-        if (DOWN_PRESSED) {
-            upgradeSelectRow = min(upgradeSelectRow + 1, 3);
-        } else if (UP_PRESSED) {
-            upgradeSelectRow = max(upgradeSelectRow - 1, 0);
-        }
+    if (player.hp_ <= 0 && !gameover) {
+        switchToScene(mainMenuScene.id_);
+        gameover = true;
     } else {
-        gameState[GS_TIME] += dt;
-        let acc = EULER ** (player.speed_ * dt);
-        let velx = 0;
-        let vely = 0;
-        if (A_PRESSED) {
-            spawnAura(50, 1);
-        }
-        if (B_PRESSED) { }
-        if (DOWN_IS_DOWN) {
-            vely += acc;
-        } else if (UP_IS_DOWN) {
-            vely -= acc;
-        }
-        if (RIGHT_IS_DOWN) {
-            velx += acc;
-        } else if (LEFT_IS_DOWN) {
-            velx -= acc;
-        }
+        let dt = delta * 0.001;
+        if (gameState[GS_LEVELUP_PENDING]) {
+            if (upgrades.length === 0) {
+                upgrades = getWeightedRandomUpgrades(3);
+            }
+            if (A_PRESSED) {
+                if (upgradeSelectRow === 3) {
+                    player.luck_--;
+                } else {
+                    upgrades[upgradeSelectRow].apply_();
+                    player.luck_++;
+                }
+                upgrades = [];
+                upgradeSelectRow = 0;
+                gameState[GS_LEVELUP_PENDING] = 0;
+            }
+            if (DOWN_PRESSED) {
+                upgradeSelectRow = min(upgradeSelectRow + 1, 3);
+            } else if (UP_PRESSED) {
+                upgradeSelectRow = max(upgradeSelectRow - 1, 0);
+            }
+        } else {
+            gameState[GS_TIME] += dt;
+            if (gameState[GS_TIME] > 32) {
+                updateLightning(delta);
+                if (!bossSpawn) {
+                    spawnOffscreenEnemy(100, 64);
+                    bossSpawn = true;
+                }
+            }
+            let acc = EULER ** (player.speed_ * dt);
+            let velx = 0;
+            let vely = 0;
+            if (DOWN_IS_DOWN) {
+                vely += acc;
+            } else if (UP_IS_DOWN) {
+                vely -= acc;
+            }
+            if (RIGHT_IS_DOWN) {
+                velx += acc;
+            } else if (LEFT_IS_DOWN) {
+                velx -= acc;
+            }
 
-        updatePlayerVel(velx, vely);
+            updatePlayerVel(velx, vely);
 
-        timer += delta;
-        if (timer >= 500) {
-            // TODO: Better enemy spawning (offscreen, and ramp up and down)
-            timer -= 500;
-            spawnEnemy(randInt(0, 2048), randInt(0, 2048), 8, 3, 0xff000000);
+            timer += delta;
+            if (timer >= 200) {
+                // TODO: Better enemy spawning (offscreen, and ramp up and down)
+                timer -= 200;
+                spawnOffscreenEnemy(3, 8);
+            }
+
+            updateEntities(delta);
+            updatePlayerAbilities(delta);
+            updateCamera(posX[0], posY[0], delta);
         }
-
-        updateEntities(delta);
-        updatePlayer(delta);
-        updateCamera(posX[playerId], posY[playerId], delta);
     }
 };
 

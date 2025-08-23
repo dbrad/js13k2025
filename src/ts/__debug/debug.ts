@@ -1,4 +1,5 @@
 import { pushQuad, pushText, WHITE } from "../draw";
+import { activeCount, freeTop } from "../entity";
 
 let frameCount: number = 0;
 let fps: number = 60;
@@ -56,6 +57,8 @@ export let drawPerformanceMeter = (): void => {
             pushText(`draw ${displayDrawTime} us`, col1, 57, WHITE, 1, TEXT_ALIGN_RIGHT);
             pushText(`render ${displayRenderTime} us`, col1, 70, WHITE, 1, TEXT_ALIGN_RIGHT);
 
+            pushText(`free top   ${freeTop.toFixed(0).padStart(7, " ")}`, col2, 44, WHITE, 1, TEXT_ALIGN_RIGHT);
+            pushText(`active ent ${activeCount.toFixed(0).padStart(7, " ")}`, col2, 57, WHITE, 1, TEXT_ALIGN_RIGHT);
             pushText(`draw calls ${displayDrawCount}`, col2, 70, WHITE, 1, TEXT_ALIGN_RIGHT);
         }
     }

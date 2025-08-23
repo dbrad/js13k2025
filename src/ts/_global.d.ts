@@ -79,6 +79,7 @@ type Ability = {
     cooldown_: number;
     timer_: number;
     fire_: (a: Ability) => void;
+    entityId_: number;
 };
 
 type Upgrade = {

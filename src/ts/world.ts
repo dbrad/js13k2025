@@ -1,7 +1,7 @@
 import { cameraPos } from "./camera";
-import { pushQuad, pushTexturedQuad } from "./draw";
+import { lightningFlash, pushQuad, pushTexturedQuad } from "./draw";
 import { gameState } from "./gameState";
-import { floor, ceil, max, min, clamp } from "./math";
+import { ceil, clamp, floor, max, min } from "./math";
 
 export let WORLD_WIDTH = 2048;
 export let WORLD_HEIGHT = 2048;
@@ -50,9 +50,10 @@ export let drawWorld = () => {
             } else if (tile > 1) {
                 pushTexturedQuad(TEXTURE_DITH_15 - (tile - 2), screenX, screenY);
             }
+
             if (offset <= 15) {
                 pushTexturedQuad(TEXTURE_DITH_00 + offset, screenX, screenY, 1, 0xff000000);
-            } else {
+            } else if (!lightningFlash) {
                 pushQuad(screenX, screenY, 16, 16, 0xff000000);
             }
         }
