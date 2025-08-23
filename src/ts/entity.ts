@@ -1,9 +1,10 @@
 import { assert } from "./__debug/debug";
+import { cathit } from "./audio";
 import { cameraPos } from "./camera";
-import { pushQuad, pushTexturedQuad, WHITE } from "./draw";
+import { BLACK, pushQuad, pushTexturedQuad, WHITE } from "./draw";
 import { clamp, cos, EULER, floor, math, max, PI, sin, sqrt } from "./math";
 import { burstParticle, catParticle, emitParticles, eyeParticle } from "./particle";
-import { player, xpUp } from "./player";
+import { player, gainXp } from "./player";
 import { WORLD_HEIGHT, WORLD_WIDTH } from "./world";
 
 let MAX_ENTITIES = 20_000;
@@ -14,7 +15,7 @@ let GRID_HEIGHT = 256;
 let MAX_PER_CELL = 64;
 
 let ENEMY_SPEED = 50;
-let SEEK_STOP_DIST = 15;
+let SEEK_STOP_DIST = 14;
 let PLAYER_RADIUS = 8;
 
 let ENEMY_RADIUS = 8;
@@ -79,6 +80,9 @@ let gridInsert = (id: number): void => {
 };
 
 export let findNearestEnemy = (maxDist: number): boolean => {
+    if (nearestEnemyPos[X] !== -1 || nearestEnemyPos[Y] !== -1) {
+        return true;
+    }
     let px = posX[0], py = posY[0];
     let maxDist2 = maxDist * maxDist;
     let cx_min = clamp(floor((px - maxDist) / GRID_CELL_SIZE), 0, GRID_WIDTH - 1);
@@ -149,9 +153,10 @@ export let spawnPlayer = (x: number, y: number, r: number = PLAYER_RADIUS): void
     posY[id] = y;
     velX[id] = 0;
     velY[id] = 0;
+    lifetime[id] = 0;
 };
 
-export let spawnEnemy = (x: number, y: number, r: number = ENEMY_RADIUS, hpVal: number = DEFAULT_ENEMY_HP, rgba: number = 0xff000000): number => {
+export let spawnEnemy = (x: number, y: number, r: number = ENEMY_RADIUS, hpVal: number = DEFAULT_ENEMY_HP, rgba: number = BLACK): number => {
     let id = alloc();
     if (id < 1) return -1;
     type[id] = TYPE_ENEMY;
@@ -232,11 +237,22 @@ export let spawnOrbit = (cx: number, cy: number, count: number, r: number = PROJ
 let damageEnemy = (id: number, amt: number): void => {
     hp[id] -= amt;
     if (hp[id] <= 0) {
-        xpUp(1);
+        gainXp(1);
         burstParticle.position_[X] = posX[id];
         burstParticle.position_[Y] = posY[id];
         emitParticles(burstParticle, 20);
         alive[id] = 0;
+    }
+};
+
+let damagePlayer = (amt: number): void => {
+    if (lifetime[0] <= 0) {
+        player.hp_ -= amt;
+        lifetime[0] = 0.8;
+        cathit();
+        if (player.hp_ <= 0) {
+            alive[0] = 0;
+        }
     }
 };
 
@@ -250,6 +266,8 @@ export let updateEntities = (deltaMs: number): void => {
     if (activeCount === 0 || alive[0] === 0) return;
     gridCounts.fill(0);
 
+    nearestEnemyPos[X] = -1;
+    nearestEnemyPos[Y] = -1;
     let pX = posX[0], pY = posY[0];
 
     for (let n = activeCount - 1; n >= 0; n--) {
@@ -366,26 +384,14 @@ export let updateEntities = (deltaMs: number): void => {
                 if ((ti & TYPE_PLAYER) && (tj & TYPE_ENEMY)) {
                     posX[j] += nx * overlap; posY[j] += ny * overlap;
                     posX[i] -= nx * (overlap * 0.25); posY[i] -= ny * (overlap * 0.25);
-                    if (lifetime[i] <= 0) {
-                        player.hp_--;
-                        lifetime[i] = 0.8;
-                        if (player.hp_ <= 0) {
-                            alive[0] = 0;
-                        }
-                    }
+                    damagePlayer(1);
                     continue;
                 }
 
                 if ((tj & TYPE_PLAYER) && (ti & TYPE_ENEMY)) {
                     posX[i] -= nx * overlap; posY[i] -= ny * overlap;
                     posX[j] += nx * (overlap * 0.25); posY[j] += ny * (overlap * 0.25);
-                    if (lifetime[j] <= 0) {
-                        player.hp_--;
-                        lifetime[j] = 0.8;
-                        if (player.hp_ <= 0) {
-                            alive[0] = 0;
-                        }
-                    }
+                    damagePlayer(1);
                     continue;
                 }
 
@@ -441,7 +447,6 @@ export let updateEntities = (deltaMs: number): void => {
                     if (d2 < rsum * rsum) {
                         damageEnemy(eid, damage[id] * dt);
                         slowFactor[eid] = Math.min(slowFactor[eid], slowFactor[id]);
-                        // NOTE: optional - emitParticles for hit effect
                     }
                 }
             }
@@ -466,14 +471,14 @@ export let drawEntities = (): void => {
         if (t & TYPE_AURA) {
             pushTexturedQuad(TEXTURE_C_16x16, sPosX[id] - r, sPosY[id] - r, d * 0.0625, color[id] || 0x33ffffff);
         } else if (t & TYPE_ENEMY) {
-            pushTexturedQuad(TEXTURE_RAT, sPosX[id] - r, sPosY[id] - r, d * 0.0625, WHITE, velX[id] < 0, false, true);
+            pushTexturedQuad(TEXTURE_RAT, sPosX[id] - r, sPosY[id] - r, d * 0.0625, BLACK, velX[id] < 0, false, true);
         } else {
             if (d < 4) {
-                pushQuad(sPosX[id] - r, sPosY[id] - r, d, d, color[id] || 0xffffffff);
+                pushQuad(sPosX[id] - r, sPosY[id] - r, d, d, color[id] || WHITE);
             } else if (d > 3 && d < 9) {
-                pushTexturedQuad(TEXTURE_C_4x4 + (d - 4), sPosX[id] - r, sPosY[id] - r, 1, color[id] || 0xffffffff);
+                pushTexturedQuad(TEXTURE_C_4x4 + (d - 4), sPosX[id] - r, sPosY[id] - r, 1, color[id] || WHITE);
             } else {
-                pushTexturedQuad(TEXTURE_C_8x8, sPosX[id] - r, sPosY[id] - r, d * 0.125, color[id] || 0xffffffff);
+                pushTexturedQuad(TEXTURE_C_8x8, sPosX[id] - r, sPosY[id] - r, d * 0.125, color[id] || WHITE);
             }
         }
     }
@@ -494,6 +499,6 @@ export let drawEntities = (): void => {
         eyeParticle.position_[X] += 6;
         emitParticles(eyeParticle, 2);
     } else {
-        pushTexturedQuad(TEXTURE_CAT_01, sPosX[0] - 8, sPosY[0] - 8, 1, WHITE, playerDir === 0, false, false, true);
+        pushTexturedQuad(TEXTURE_CAT_01, sPosX[0] - 8, sPosY[0] - 8, 1, BLACK, playerDir === 0, false, false, true);
     }
 };

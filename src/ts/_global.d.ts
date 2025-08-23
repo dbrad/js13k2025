@@ -87,8 +87,6 @@ type Upgrade = {
     name_: string;
     description_: string;
     kind_: typeof STAT | typeof ABILITY;
-    weight_: number; // higher = more common
-    maxLevel_?: number;
     apply_: () => void;
 };
 

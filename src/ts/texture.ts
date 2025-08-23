@@ -20,7 +20,7 @@ let newTexture = (_w: number, _h: number, _u0: number, _v0: number, _u1: number,
 };
 
 export let loadTextureAtlas = async (): Promise<void> => {
-  return new Promise(async (resolve) => {
+  return new Promise(async (resolve): Promise<void> => {
     let response = await fetch(textureAltas);
     let blob = await response.blob();
     let imageBitmap = await createImageBitmap(blob);

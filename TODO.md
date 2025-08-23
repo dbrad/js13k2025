@@ -1,7 +1,7 @@
 Add damage value control to enemies
 Make luck do something
-put cap on stat increases
-!!Create the 22 abilities!!
+!!Finish the 22 abilities!!
+Change cooldown to be fire rate (% increase, not % reduction. 100% is 2x faster, not instant)
 Add GUI area in right gutter to display current abilities, their levels, their dmg, and their cooldowns
 
 spawn boss and boss hp bar during midnight

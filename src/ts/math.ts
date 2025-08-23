@@ -11,11 +11,11 @@ export let sin = math.sin;
 export let EULER = 2.71828;
 export let PI = 3.14159;
 
-export let roundTo = (value: number, nearest: number) => {
+export let roundTo = (value: number, nearest: number): number => {
   return round(value / nearest) * nearest;
 };
 
-export let floorTo = (value: number, nearest: number) => {
+export let floorTo = (value: number, nearest: number): number => {
   return floor(value / nearest) * nearest;
 };
 

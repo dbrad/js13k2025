@@ -4,7 +4,7 @@ import { cos, math, min, PI, randInt, roundTo, sin, sqrt } from "./math";
 
 export let player: Player;
 
-export let resetPlayer = () => {
+export let resetPlayer = (): void => {
     player = {
         hp_: 10,
         maxHP_: 10,
@@ -18,11 +18,12 @@ export let resetPlayer = () => {
         xp_: 0,
         level_: 1,
     };
+    UPGRADE_POOL[UP_CLAW].apply_();
 };
 
-export let xpTable: number[] = Array.from({ length: 30 }, (_, i) => roundTo(10 * (1.5 ** (i - 1)), 5));
+export let xpTable: number[] = Array.from({ length: 30 }, (_, i) => roundTo(25 * (1.5 ** (i - 1)), 5));
 
-export let xpUp = (val: number) => {
+export let gainXp = (val: number): void => {
     player.xp_ += val;
     let nextLevel = xpTable[player.level_];
     if (player.xp_ >= nextLevel) {
@@ -38,45 +39,66 @@ export let UPGRADE_POOL: Upgrade[] = [
         name_: "Vitality",
         description_: "+5 Max HP",
         kind_: STAT,
-        weight_: 1,
-        apply_: () => { player.maxHP_ += 5; player.hp_ += 5; },
+        apply_: (): void => { player.maxHP_ += 5; player.hp_ += 5; },
     }, {
         id_: UP_ATK,
         name_: "Ferocity",
         description_: "+1 All Damage",
         kind_: STAT,
-        weight_: 1,
-        apply_: () => { player.damage_ += 1; },
+        apply_: (): void => { player.damage_ += 1; },
     }, {
         id_: UP_DEF,
         name_: "Fortify",
         description_: "+1 Defense",
         kind_: STAT,
-        weight_: 1,
-        apply_: () => { player.defense_ += 1; },
+        apply_: (): void => { player.defense_ += 1; },
     }, {
         id_: UP_CD,
         name_: "Frequency",
         description_: "-5% Cooldowns",
         kind_: STAT,
-        weight_: 1,
-        apply_: () => { player.cooldown_ += 5; },
+        apply_: (): void => { player.cooldown_ += 5; },
     }, {
         id_: UP_MS,
         name_: "Agility",
         description_: "+10 Movement Speed",
         kind_: STAT,
-        weight_: 1,
-        apply_: () => { player.speed_ += 10; },
+        apply_: (): void => { player.speed_ += 10; },
+    }, {
+        id_: UP_CLAW,
+        name_: "Cat Claw",
+        description_: "Feriously claw at nearby enemies|upgrade: range+ pierce+",
+        kind_: ABILITY,
+        apply_: (): void => {
+            upgradeAbility(UP_CLAW, BULLET, 500, (a: Ability): void => {
+                let speed = 500;
+                let range = 0.1 + (a.level_ - 1) * 0.1;
+                if (findNearestEnemy(300)) {
+                    let dx = nearestEnemyPos[0] - posX[0];
+                    let dy = nearestEnemyPos[1] - posY[0];
+                    let dist = sqrt(dx * dx + dy * dy);
+                    let vx = (dx / dist) * speed;
+                    let vy = (dy / dist) * speed;
+                    let perpX = -dy / dist * 10;
+                    let perpY = dx / dist * 10;
+                    spawnProjectile(posX[0], posY[0], vx, vy, 2, 1, range, a.level_);
+                    spawnProjectile(posX[0] + perpX, posY[0] + perpY, vx, vy, 2, 1, range, a.level_);
+                    spawnProjectile(posX[0] - perpX, posY[0] - perpY, vx, vy, 2, 1, range, a.level_);
+                } else {
+                    let vx = playerDir === 0 ? -speed : speed;
+                    spawnProjectile(posX[0], posY[0], vx, 0, 2, 1, range, a.level_);
+                    spawnProjectile(posX[0], posY[0] + 10, vx, 0, 2, 1, range, a.level_);
+                    spawnProjectile(posX[0], posY[0] - 10, vx, 0, 2, 1, range, a.level_);
+                }
+            });
+        },
     }, {
         id_: UP_FOOL,
-        name_: "0.The Fool",
-        description_: "Fire shots in random directions",
+        name_: "The Fool",
+        description_: "Fire in random directions|upgrade: projectiles+",
         kind_: ABILITY,
-        weight_: 2,
-        maxLevel_: 5,
-        apply_: () => {
-            upgradeAbility(UP_FOOL, BULLET, 300, (a: Ability) => {
+        apply_: (): void => {
+            upgradeAbility(UP_FOOL, BULLET, 300, (a: Ability): void => {
                 for (let i = 0; i < a.level_ + 1; i++) {
                     let a = math.random() * PI * 2;
                     let speed = randInt(150, 200);
@@ -88,62 +110,56 @@ export let UPGRADE_POOL: Upgrade[] = [
         },
     }, {
         id_: UP_MAGI,
-        name_: "1.The Magician",
-        description_: "Fire 1 powerful piercing shot|at a nearby enemy",
+        name_: "The Magician",
+        description_: "Fire a powerful piercing shot|at a nearby enemies|upgrade: damage+ size+",
         kind_: ABILITY,
-        weight_: 2,
-        maxLevel_: 5,
-        apply_: () => {
-            upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability) => {
+        apply_: (): void => {
+            upgradeAbility(UP_MAGI, BULLET, 2000, (a: Ability): void => {
                 let speed = 300;
+                let dmg = 10 * a.level_;
+                let size = 5 * a.level_;
                 if (findNearestEnemy(300)) {
                     let dx = nearestEnemyPos[0] - posX[0];
                     let dy = nearestEnemyPos[1] - posY[0];
                     let dist = sqrt(dx * dx + dy * dy);
                     let vx = (dx / dist) * speed;
                     let vy = (dy / dist) * speed;
-                    spawnProjectile(posX[0], posY[0], vx, vy, 10, 10, 5, 999);
+                    spawnProjectile(posX[0], posY[0], vx, vy, size, dmg, 5, 999);
                 } else {
                     let vx = playerDir === 0 ? -speed : speed;
-                    spawnProjectile(posX[0], posY[0], vx, 0, 10, 10, 5, 999);
+                    spawnProjectile(posX[0], posY[0], vx, 0, size, dmg, 5, 999);
                 }
             });
         },
     }, {
         id_: UP_PRST,
-        name_: "2.The High Priestess",
+        name_: "The High Priestess",
         description_: "Slow nearby enemies",
         kind_: ABILITY,
-        weight_: 2,
-        maxLevel_: 5,
-        apply_: () => {
-            upgradeAbility(UP_PRST, AURA, 5000, (a: Ability) => {
+        apply_: (): void => {
+            upgradeAbility(UP_PRST, AURA, 5000, (a: Ability): void => {
                 let slow = Math.max(0.7 - (a.level_ - 1) * 0.1, 0.3);
                 let radius = 50 + a.level_ * 10;
-                a.entityId_ = spawnAura(radius, 0, -1, 0x33ff8888, slow, a.entityId_);
+                a.entityId_ = spawnAura(radius, 0, -1, 0x22ff8888, slow, a.entityId_);
             });
         },
     }, {
         id_: UP_EMPS,
-        name_: "3.The Empress",
+        name_: "The Empress",
         description_: "Slowly regenerate heal",
         kind_: ABILITY,
-        weight_: 2,
-        maxLevel_: 5,
-        apply_: () => {
-            upgradeAbility(UP_EMPS, AURA, 1000, (a: Ability) => {
-                player.hp_ = min(player.maxHP_, player.hp_ + 1);
+        apply_: (): void => {
+            upgradeAbility(UP_EMPS, AURA, 1000, (a: Ability): void => {
+                player.hp_ = min(player.maxHP_, player.hp_ + (0.1 * a.level_));
             });
         },
     }, {
         id_: UP_EMPR,
-        name_: "4. The Emperor",
+        name_: "The Emperor",
         description_: "",
         kind_: ABILITY,
-        weight_: 0,
-        maxLevel_: 5,
-        apply_: () => {
-            upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability) => {
+        apply_: (): void => {
+            upgradeAbility(UP_EMPR, BULLET, 1000, (a: Ability): void => {
                 if (findNearestEnemy(300)) {
                     let dx = nearestEnemyPos[0] - posX[0];
                     let dy = nearestEnemyPos[1] - posY[0];
@@ -160,13 +176,11 @@ export let UPGRADE_POOL: Upgrade[] = [
         },
     }, {
         id_: UP_HIERO,
-        name_: "5. The Hierophant",
+        name_: "The Hierophant",
         description_: "",
         kind_: ABILITY,
-        weight_: 0,
-        maxLevel_: 5,
-        apply_: () => {
-            upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability) => {
+        apply_: (): void => {
+            upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability): void => {
                 if (findNearestEnemy(300)) {
                     let dx = nearestEnemyPos[0] - posX[0];
                     let dy = nearestEnemyPos[1] - posY[0];
@@ -183,24 +197,20 @@ export let UPGRADE_POOL: Upgrade[] = [
         },
     }, {
         id_: UP_LOVER,
-        name_: "6. The Lovers",
+        name_: "The Lovers",
         description_: "",
         kind_: ABILITY,
-        weight_: 0,
-        maxLevel_: 5,
-        apply_: () => {
-            upgradeAbility(UP_LOVER, AURA, 1000, (a: Ability) => {
+        apply_: (): void => {
+            upgradeAbility(UP_LOVER, AURA, 1000, (a: Ability): void => {
             });
         },
     }, {
         id_: UP_CHARI,
-        name_: "7. The Chariot",
+        name_: "The Chariot",
         description_: "",
         kind_: ABILITY,
-        weight_: 0,
-        maxLevel_: 5,
-        apply_: () => {
-            upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability) => {
+        apply_: (): void => {
+            upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability): void => {
                 if (findNearestEnemy(300)) {
                     let dx = nearestEnemyPos[0] - posX[0];
                     let dy = nearestEnemyPos[1] - posY[0];
@@ -217,13 +227,11 @@ export let UPGRADE_POOL: Upgrade[] = [
         },
     }, {
         id_: UP_STR,
-        name_: "8. Strength",
+        name_: "Strength",
         description_: "",
         kind_: ABILITY,
-        weight_: 0,
-        maxLevel_: 5,
-        apply_: () => {
-            upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability) => {
+        apply_: (): void => {
+            upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability): void => {
                 if (findNearestEnemy(300)) {
                     let dx = nearestEnemyPos[0] - posX[0];
                     let dy = nearestEnemyPos[1] - posY[0];
@@ -240,13 +248,11 @@ export let UPGRADE_POOL: Upgrade[] = [
         },
     }, {
         id_: UP_HERM,
-        name_: "9. The Hermit",
+        name_: "The Hermit",
         description_: "",
         kind_: ABILITY,
-        weight_: 0,
-        maxLevel_: 5,
-        apply_: () => {
-            upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability) => {
+        apply_: (): void => {
+            upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability): void => {
                 if (findNearestEnemy(300)) {
                     let dx = nearestEnemyPos[0] - posX[0];
                     let dy = nearestEnemyPos[1] - posY[0];
@@ -263,13 +269,11 @@ export let UPGRADE_POOL: Upgrade[] = [
         },
     }, {
         id_: UP_WHEEL,
-        name_: "10. Wheel of Fortune",
+        name_: "Wheel of Fortune",
         description_: "",
         kind_: ABILITY,
-        weight_: 0,
-        maxLevel_: 5,
-        apply_: () => {
-            upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability) => {
+        apply_: (): void => {
+            upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability): void => {
                 if (findNearestEnemy(300)) {
                     let dx = nearestEnemyPos[0] - posX[0];
                     let dy = nearestEnemyPos[1] - posY[0];
@@ -286,13 +290,11 @@ export let UPGRADE_POOL: Upgrade[] = [
         },
     }, {
         id_: UP_JUST,
-        name_: "11. Justice",
+        name_: "Justice",
         description_: "",
         kind_: ABILITY,
-        weight_: 0,
-        maxLevel_: 5,
-        apply_: () => {
-            upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability) => {
+        apply_: (): void => {
+            upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability): void => {
                 if (findNearestEnemy(300)) {
                     let dx = nearestEnemyPos[0] - posX[0];
                     let dy = nearestEnemyPos[1] - posY[0];
@@ -309,13 +311,11 @@ export let UPGRADE_POOL: Upgrade[] = [
         },
     }, {
         id_: UP_HANG,
-        name_: "12. The Hanged Man",
+        name_: "The Hanged Man",
         description_: "",
         kind_: ABILITY,
-        weight_: 0,
-        maxLevel_: 5,
-        apply_: () => {
-            upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability) => {
+        apply_: (): void => {
+            upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability): void => {
                 if (findNearestEnemy(300)) {
                     let dx = nearestEnemyPos[0] - posX[0];
                     let dy = nearestEnemyPos[1] - posY[0];
@@ -332,13 +332,11 @@ export let UPGRADE_POOL: Upgrade[] = [
         },
     }, {
         id_: UP_DEATH,
-        name_: "13. Death",
+        name_: "Death",
         description_: "",
         kind_: ABILITY,
-        weight_: 0,
-        maxLevel_: 5,
-        apply_: () => {
-            upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability) => {
+        apply_: (): void => {
+            upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability): void => {
                 if (findNearestEnemy(300)) {
                     let dx = nearestEnemyPos[0] - posX[0];
                     let dy = nearestEnemyPos[1] - posY[0];
@@ -355,13 +353,11 @@ export let UPGRADE_POOL: Upgrade[] = [
         },
     }, {
         id_: UP_TEMPER,
-        name_: "14. Temperance",
+        name_: "Temperance",
         description_: "",
         kind_: ABILITY,
-        weight_: 0,
-        maxLevel_: 5,
-        apply_: () => {
-            upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability) => {
+        apply_: (): void => {
+            upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability): void => {
                 if (findNearestEnemy(300)) {
                     let dx = nearestEnemyPos[0] - posX[0];
                     let dy = nearestEnemyPos[1] - posY[0];
@@ -378,13 +374,11 @@ export let UPGRADE_POOL: Upgrade[] = [
         },
     }, {
         id_: UP_DEVIL,
-        name_: "15. The Devil",
+        name_: "The Devil",
         description_: "",
         kind_: ABILITY,
-        weight_: 0,
-        maxLevel_: 5,
-        apply_: () => {
-            upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability) => {
+        apply_: (): void => {
+            upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability): void => {
                 if (findNearestEnemy(300)) {
                     let dx = nearestEnemyPos[0] - posX[0];
                     let dy = nearestEnemyPos[1] - posY[0];
@@ -401,13 +395,11 @@ export let UPGRADE_POOL: Upgrade[] = [
         },
     }, {
         id_: UP_TOWER,
-        name_: "16. The Tower",
+        name_: "The Tower",
         description_: "",
         kind_: ABILITY,
-        weight_: 0,
-        maxLevel_: 5,
-        apply_: () => {
-            upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability) => {
+        apply_: (): void => {
+            upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability): void => {
                 if (findNearestEnemy(300)) {
                     let dx = nearestEnemyPos[0] - posX[0];
                     let dy = nearestEnemyPos[1] - posY[0];
@@ -424,13 +416,11 @@ export let UPGRADE_POOL: Upgrade[] = [
         },
     }, {
         id_: UP_STAR,
-        name_: "17. The Star",
+        name_: "The Star",
         description_: "",
         kind_: ABILITY,
-        weight_: 0,
-        maxLevel_: 5,
-        apply_: () => {
-            upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability) => {
+        apply_: (): void => {
+            upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability): void => {
                 if (findNearestEnemy(300)) {
                     let dx = nearestEnemyPos[0] - posX[0];
                     let dy = nearestEnemyPos[1] - posY[0];
@@ -447,13 +437,11 @@ export let UPGRADE_POOL: Upgrade[] = [
         },
     }, {
         id_: UP_MOON,
-        name_: "18. The Moon",
+        name_: "The Moon",
         description_: "",
         kind_: ABILITY,
-        weight_: 0,
-        maxLevel_: 5,
-        apply_: () => {
-            upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability) => {
+        apply_: (): void => {
+            upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability): void => {
                 if (findNearestEnemy(300)) {
                     let dx = nearestEnemyPos[0] - posX[0];
                     let dy = nearestEnemyPos[1] - posY[0];
@@ -470,13 +458,11 @@ export let UPGRADE_POOL: Upgrade[] = [
         },
     }, {
         id_: UP_SUN,
-        name_: "19. The Sun",
+        name_: "The Sun",
         description_: "",
         kind_: ABILITY,
-        weight_: 0,
-        maxLevel_: 5,
-        apply_: () => {
-            upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability) => {
+        apply_: (): void => {
+            upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability): void => {
                 if (findNearestEnemy(300)) {
                     let dx = nearestEnemyPos[0] - posX[0];
                     let dy = nearestEnemyPos[1] - posY[0];
@@ -493,13 +479,11 @@ export let UPGRADE_POOL: Upgrade[] = [
         },
     }, {
         id_: UP_JUDGE,
-        name_: "20. Judgement",
+        name_: "Judgement",
         description_: "",
         kind_: ABILITY,
-        weight_: 0,
-        maxLevel_: 5,
-        apply_: () => {
-            upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability) => {
+        apply_: (): void => {
+            upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability): void => {
                 if (findNearestEnemy(300)) {
                     let dx = nearestEnemyPos[0] - posX[0];
                     let dy = nearestEnemyPos[1] - posY[0];
@@ -516,13 +500,11 @@ export let UPGRADE_POOL: Upgrade[] = [
         },
     }, {
         id_: UP_WORLD,
-        name_: "21. The World",
+        name_: "The World",
         description_: "",
         kind_: ABILITY,
-        weight_: 0,
-        maxLevel_: 5,
-        apply_: () => {
-            upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability) => {
+        apply_: (): void => {
+            upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability): void => {
                 if (findNearestEnemy(300)) {
                     let dx = nearestEnemyPos[0] - posX[0];
                     let dy = nearestEnemyPos[1] - posY[0];
@@ -549,35 +531,24 @@ let upgradeAbility = (id_: number, type_: number, cooldown_: number, fire_: (abi
     }
 };
 
-export let getWeightedRandomUpgrades = (n: number): Upgrade[] => {
+export let getRandomUpgrades = (n: number): Upgrade[] => {
     let available = UPGRADE_POOL.filter(upg => {
-        if (upg.kind_ === ABILITY && upg.maxLevel_) {
+        if (upg.kind_ === ABILITY) {
             let ability = player.abilities_.find(a => a.id_ === upg.id_);
-            return (!ability && player.abilities_.length < 3) || (ability && ability.level_ < upg.maxLevel_);
+            return (!ability && player.abilities_.length < 3) || (ability && ability.level_ < 5);
         }
         return true;
     });
     let choices: Upgrade[] = [];
     for (let i = 0; i < n && available.length > 0; i++) {
-        let totalWeight = available.reduce((sum, upg) => sum + upg.weight_, 0);
-        let r = math.random() * totalWeight;
-        let chosen: Upgrade | null = null;
-        for (let upg of available) {
-            if (r < upg.weight_) {
-                chosen = upg;
-                break;
-            }
-            r -= upg.weight_;
-        }
-        if (chosen) {
-            choices.push(chosen);
-            available = available.filter(upg => upg.id_ !== chosen!.id_);
-        }
+        let idx = randInt(0, available.length - 1);
+        choices.push(available[idx]);
+        available.splice(idx, 1);
     }
     return choices;
 };
 
-export let updatePlayerAbilities = (delta: number) => {
+export let updatePlayerAbilities = (delta: number): void => {
     for (let ability of player.abilities_) {
         if (ability.timer_ <= 0) {
             ability.fire_(ability);

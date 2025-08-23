@@ -2,7 +2,7 @@
   "compress": {
     "toplevel": true,
     "keep_fargs": false,
-    "passes": 300,
+    "passes": 1000,
     "pure_getters": true,
     "arrows": true,
     "unsafe": true,

@@ -2,7 +2,7 @@ import version from "../../VERSION.txt";
 import { drawPerformanceMeter, initPerformanceMeter, performanceMark, tickPerformanceMeter, togglePerformanceDisplay } from "./__debug/debug";
 import { zzfxInit } from "./audio";
 import { initCanvas } from "./canvas";
-import { animationFrame, clear, drawCount, initDrawQueue, pushQuad, pushText, render, updateAnimationFrame, WHITE } from "./draw";
+import { animationFrame, BLACK, clear, drawCount, initDrawQueue, pushQuad, pushText, render, updateAnimationFrame, WHITE } from "./draw";
 import { glInit, glSetClearColour } from "./gl";
 import { drawControls, initializeInput, isTouchEvent } from "./input";
 import { initParticles } from "./particle";
@@ -12,7 +12,7 @@ import { mainMenuScene } from "./scene/mainMenu";
 import { optionsScene } from "./scene/options";
 import { loadTextureAtlas } from "./texture";
 
-window.addEventListener("load", async () => {
+window.addEventListener("load", async (): Promise<void> => {
     let VERSION = version;
     let canvas = initCanvas();
     glInit(canvas);
@@ -23,7 +23,7 @@ window.addEventListener("load", async () => {
     initDrawQueue();
 
     let playing = false;
-    let initializeGame = (e: PointerEvent | TouchEvent) => {
+    let initializeGame = (e: PointerEvent | TouchEvent): void => {
         if (!playing) {
             initializeInput(canvas);
             isTouchEvent(e);
@@ -40,7 +40,7 @@ window.addEventListener("load", async () => {
             registerScene(gameScene);
 
             if (DEBUG) {
-                document.addEventListener("keyup", (e: KeyboardEvent) => {
+                document.addEventListener("keyup", (e: KeyboardEvent): void => {
                     if (e.code === "KeyD") {
                         togglePerformanceDisplay();
 
@@ -54,7 +54,7 @@ window.addEventListener("load", async () => {
     canvas.addEventListener("pointerdown", initializeGame);
 
     let then = performance.now();
-    let tick = (now: number) => {
+    let tick = (now: number): void => {
         requestAnimationFrame(tick);
 
         let delta = now - then;
@@ -77,9 +77,9 @@ window.addEventListener("load", async () => {
             performanceMark("draw_start");
             {
                 drawScene(delta, now);
-                pushQuad(0, 0, SCREEN_LEFT, SCREEN_DIM, 0xff000000);
-                pushQuad(SCREEN_RIGHT, 0, SCREEN_GUTTER, SCREEN_DIM, 0xff000000);
-                pushQuad(0, SCREEN_DIM, SCREEN_WIDTH, 24, 0xff000000);
+                pushQuad(0, 0, SCREEN_LEFT, SCREEN_DIM, BLACK);
+                pushQuad(SCREEN_RIGHT, 0, SCREEN_GUTTER, SCREEN_DIM, BLACK);
+                pushQuad(0, SCREEN_DIM, SCREEN_WIDTH, 24, BLACK);
 
                 pushQuad(SCREEN_LEFT, 0, 1, SCREEN_DIM, WHITE);
                 pushQuad(SCREEN_RIGHT, 0, 1, SCREEN_DIM, WHITE);

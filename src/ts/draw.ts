@@ -5,7 +5,8 @@ import { clamp, floor, randInt } from "./math";
 import { TEXTURE_CACHE } from "./texture";
 
 // Colour
-export let WHITE = 0xffffffff;
+export let WHITE = 0xfff5f5f5;
+export let BLACK = 0xff000000;
 
 export let toABGR = (r: number, g: number, b: number, a: number): number => {
     let out = (0 | (clamp(a, 0, 255) & 0xff)) << 8 >>> 0;
@@ -79,7 +80,7 @@ export let initDrawQueue = (): void => {
     }
 };
 
-let queueDraw = (x: number, y: number, w: number, h: number, sx: number, sy: number, u0: number, v0: number, u1: number, v1: number, colour: number, hFlip: boolean, vFlip: boolean) => {
+let queueDraw = (x: number, y: number, w: number, h: number, sx: number, sy: number, u0: number, v0: number, u1: number, v1: number, colour: number, hFlip: boolean, vFlip: boolean): void => {
     let call: DrawCall = drawQueue[index];
     call.x_ = x;
     call.y_ = y;
