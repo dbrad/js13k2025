@@ -6,7 +6,7 @@ export let vCameraPos: V2 = [0, 0];
 export let cameraTarget: V2 = [0, 0];
 
 
-export let updateCamera = (x: number, y: number, delta: number) => {
+export let updateCamera = (x: number, y: number, delta: number): void => {
     cameraTarget[X] = x;
     cameraTarget[Y] = y;
 

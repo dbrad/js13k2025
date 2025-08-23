@@ -1,19 +1,21 @@
+import { assert } from "./__debug/debug";
+import { cathit } from "./audio";
 import { cameraPos } from "./camera";
-import { pushQuad, pushTexturedQuad, WHITE } from "./draw";
-import { clamp, cos, EULER, floor, max, PI, sin, sqrt } from "./math";
-import { catParticle, emitParticles, eyeParticle } from "./particle";
-import { player, xpUp } from "./player";
+import { BLACK, pushQuad, pushTexturedQuad, WHITE } from "./draw";
+import { clamp, cos, EULER, floor, math, max, PI, sin, sqrt } from "./math";
+import { burstParticle, catParticle, emitParticles, eyeParticle } from "./particle";
+import { player, gainXp } from "./player";
 import { WORLD_HEIGHT, WORLD_WIDTH } from "./world";
 
 let MAX_ENTITIES = 20_000;
 
-let GRID_CELL_SIZE = 64;
+let GRID_CELL_SIZE = 128;
 let GRID_WIDTH = 256;
 let GRID_HEIGHT = 256;
 let MAX_PER_CELL = 64;
 
 let ENEMY_SPEED = 50;
-let SEEK_STOP_DIST = 17;
+let SEEK_STOP_DIST = 14;
 let PLAYER_RADIUS = 8;
 
 let ENEMY_RADIUS = 8;
@@ -24,11 +26,11 @@ let DEFAULT_ENEMY_HP = 3;
 let TYPE_PLAYER = 1 << 0;
 let TYPE_ENEMY = 1 << 1;
 let TYPE_PROJECTILE = 1 << 2;
-// let TYPE_PICKUP = 1 << 3;
+let TYPE_AURA = 1 << 3;
 
-let playerDir = 0;
+export let playerDir = 0;
 
-let type = new Uint16Array(MAX_ENTITIES);
+let type = new Uint8Array(MAX_ENTITIES);
 let alive = new Uint8Array(MAX_ENTITIES);
 let radius = new Float32Array(MAX_ENTITIES);
 export let posX = new Float32Array(MAX_ENTITIES);
@@ -42,13 +44,14 @@ let hp = new Float32Array(MAX_ENTITIES);
 let damage = new Float32Array(MAX_ENTITIES);
 let lifetime = new Float32Array(MAX_ENTITIES);
 let color = new Uint32Array(MAX_ENTITIES);
+let slowFactor = new Float32Array(MAX_ENTITIES).fill(1);
 
 let activeIds = new Uint32Array(MAX_ENTITIES);
-let activeIndex = new Int32Array(MAX_ENTITIES).fill(-1);
-let activeCount = 0;
+let activeIndex = new Int32Array(MAX_ENTITIES);
+export let activeCount = 0;
 
 let freeList = new Uint32Array(MAX_ENTITIES);
-let freeTop = 0;
+export let freeTop = 0;
 
 let gridCounts = new Uint16Array(GRID_WIDTH * GRID_HEIGHT);
 let gridIds = new Uint32Array(GRID_WIDTH * GRID_HEIGHT * MAX_PER_CELL);
@@ -56,6 +59,8 @@ let gridIds = new Uint32Array(GRID_WIDTH * GRID_HEIGHT * MAX_PER_CELL);
 let enemyHitSet: Uint16Array[] = new Array(MAX_ENTITIES);
 let enemyHitSetCount: Uint8Array = new Uint8Array(MAX_ENTITIES);
 for (let i = 0; i < MAX_ENTITIES; i++) enemyHitSet[i] = new Uint16Array(256);
+
+export let nearestEnemyPos = new Float32Array(2);
 
 let gridIndexFor = (x: number, y: number): number => {
     let cx = floor(x / GRID_CELL_SIZE);
@@ -74,7 +79,45 @@ let gridInsert = (id: number): void => {
     }
 };
 
+export let findNearestEnemy = (maxDist: number): boolean => {
+    if (nearestEnemyPos[X] !== -1 || nearestEnemyPos[Y] !== -1) {
+        return true;
+    }
+    let px = posX[0], py = posY[0];
+    let maxDist2 = maxDist * maxDist;
+    let cx_min = clamp(floor((px - maxDist) / GRID_CELL_SIZE), 0, GRID_WIDTH - 1);
+    let cx_max = clamp(floor((px + maxDist) / GRID_CELL_SIZE), 0, GRID_WIDTH - 1);
+    let cy_min = clamp(floor((py - maxDist) / GRID_CELL_SIZE), 0, GRID_HEIGHT - 1);
+    let cy_max = clamp(floor((py + maxDist) / GRID_CELL_SIZE), 0, GRID_HEIGHT - 1);
+    let minDist2 = maxDist2 + 1;
+    for (let cy = cy_min; cy <= cy_max; cy++) {
+        for (let cx = cx_min; cx <= cx_max; cx++) {
+            let gi = cy * GRID_WIDTH + cx;
+            let gc = gridCounts[gi];
+            let gbase = gi * MAX_PER_CELL;
+            for (let k = 0; k < gc; k++) {
+                let id = gridIds[gbase + k];
+                if (!alive[id] || !(type[id] & TYPE_ENEMY)) continue;
+                let dx = posX[id] - px;
+                let dy = posY[id] - py;
+                let d2 = dx * dx + dy * dy;
+                if (d2 < minDist2 && d2 <= maxDist2) {
+                    minDist2 = d2;
+                    nearestEnemyPos[X] = posX[id];
+                    nearestEnemyPos[Y] = posY[id];
+                }
+            }
+        }
+    }
+    return minDist2 <= maxDist2;
+};
+
 export let initEntities = (): void => {
+    for (let n = activeCount - 1; n >= 0; n--) {
+        let id = activeIds[n];
+        free(id);
+    }
+    activeCount = 0;
     for (let i = 0; i < MAX_ENTITIES; i++) {
         freeList[i] = MAX_ENTITIES - 1 - i;
     }
@@ -85,13 +128,13 @@ let alloc = (): number => {
     if (freeTop === 0) return -1;
     let id = freeList[--freeTop];
     alive[id] = 1;
+    slowFactor[id] = 1;
     activeIndex[id] = activeCount;
     activeIds[activeCount++] = id;
     return id;
 };
 
 let free = (id: number): void => {
-    if (alive[id] === 0) return;
     alive[id] = 0;
     let idx = activeIndex[id];
     let lastId = activeIds[--activeCount];
@@ -101,25 +144,21 @@ let free = (id: number): void => {
     freeList[freeTop++] = id;
 };
 
-export let playerId = -1;
-
-export let spawnPlayer = (x: number, y: number, r: number = PLAYER_RADIUS, rgba: number = 0xff00ffff): number => {
+export let spawnPlayer = (x: number, y: number, r: number = PLAYER_RADIUS): void => {
     let id = alloc();
-    if (id < 0) return -1;
+    assert(id === 0, "player got non-zero id");
     type[id] = TYPE_PLAYER;
     radius[id] = r;
     posX[id] = x;
     posY[id] = y;
     velX[id] = 0;
     velY[id] = 0;
-    color[id] = rgba;
-    playerId = id;
-    return id;
+    lifetime[id] = 0;
 };
 
-export let spawnEnemy = (x: number, y: number, r: number = ENEMY_RADIUS, hpVal: number = DEFAULT_ENEMY_HP, rgba: number = 0xff0000ff): number => {
+export let spawnEnemy = (x: number, y: number, r: number = ENEMY_RADIUS, hpVal: number = DEFAULT_ENEMY_HP, rgba: number = BLACK): number => {
     let id = alloc();
-    if (id < 0) return -1;
+    if (id < 1) return -1;
     type[id] = TYPE_ENEMY;
     radius[id] = r;
     posX[id] = x;
@@ -131,19 +170,49 @@ export let spawnEnemy = (x: number, y: number, r: number = ENEMY_RADIUS, hpVal: 
     return id;
 };
 
-export let spawnProjectile = (x: number, y: number, vx: number, vy: number, r: number = PROJECTILE_RADIUS, dmg: number = 1, lifeSec: number = 2, hpVal: number = 1, rgba: number = 0xff0000ff): number => {
+let diag = sqrt(SCREEN_DIM * SCREEN_DIM * 2) / 2 + 84;
+export let spawnOffscreenEnemy = (hp: number = 3, r: number = 8): number => {
+    let angle = math.random() * PI * 2;
+    let x = cameraPos[X] + cos(angle) * diag;
+    let y = cameraPos[Y] + sin(angle) * diag;
+    if (x < 0 || y < 0 || x > WORLD_WIDTH || y > WORLD_HEIGHT) {
+        angle = (angle + PI) % (2 * PI);
+        x = cameraPos[X] + cos(angle) * diag;
+        y = cameraPos[Y] + sin(angle) * diag;
+    }
+    x = clamp(x, 0, WORLD_WIDTH); y = clamp(y, 0, WORLD_HEIGHT);
+    return spawnEnemy(x, y, r, hp);
+};
+
+export let spawnProjectile = (x: number, y: number, vx: number, vy: number, r: number = PROJECTILE_RADIUS, dmg: number = 1, lifeSec: number = 2, hpVal: number = 1, abgr: number = 0xff0000ff): number => {
     let id = alloc();
-    if (id < 0) return -1;
+    if (id < 1) return -1;
     type[id] = TYPE_PROJECTILE;
     radius[id] = r;
     posX[id] = x;
     posY[id] = y;
     velX[id] = vx;
     velY[id] = vy;
-    damage[id] = dmg;
+    damage[id] = dmg + player.damage_;
     lifetime[id] = lifeSec;
     hp[id] = hpVal;
-    color[id] = rgba;
+    color[id] = abgr;
+    return id;
+};
+
+export let spawnAura = (r: number = 50, dmg: number = 5, lifeSec: number = -1, abgr: number = 0x4000ff80, slow: number = 1.0, existingId: number = -1): number => {
+    let id = existingId >= 0 && alive[existingId] && type[existingId] & TYPE_AURA ? existingId : alloc();
+    if (id < 1) return -1;
+    type[id] = TYPE_AURA;
+    radius[id] = r;
+    posX[id] = posX[0];
+    posY[id] = posY[0];
+    velX[id] = 0;
+    velY[id] = 0;
+    damage[id] = dmg;
+    lifetime[id] = lifeSec;
+    color[id] = abgr;
+    slowFactor[id] = slow;
     return id;
 };
 
@@ -168,26 +237,47 @@ export let spawnOrbit = (cx: number, cy: number, count: number, r: number = PROJ
 let damageEnemy = (id: number, amt: number): void => {
     hp[id] -= amt;
     if (hp[id] <= 0) {
-        xpUp(1);
-        free(id);
+        gainXp(1);
+        burstParticle.position_[X] = posX[id];
+        burstParticle.position_[Y] = posY[id];
+        emitParticles(burstParticle, 20);
+        alive[id] = 0;
+    }
+};
+
+let damagePlayer = (amt: number): void => {
+    if (lifetime[0] <= 0) {
+        player.hp_ -= amt;
+        lifetime[0] = 0.8;
+        cathit();
+        if (player.hp_ <= 0) {
+            alive[0] = 0;
+        }
     }
 };
 
 export let updatePlayerVel = (x: number, y: number): void => {
-    velX[playerId] += x;
-    velY[playerId] += y;
+    velX[0] += x;
+    velY[0] += y;
 };
 
 export let updateEntities = (deltaMs: number): void => {
     let dt = deltaMs * 0.001;
-    if (activeCount === 0 || playerId < 0 || alive[playerId] === 0) return;
+    if (activeCount === 0 || alive[0] === 0) return;
     gridCounts.fill(0);
 
-    let pX = posX[playerId], pY = posY[playerId];
+    nearestEnemyPos[X] = -1;
+    nearestEnemyPos[Y] = -1;
+    let pX = posX[0], pY = posY[0];
 
     for (let n = activeCount - 1; n >= 0; n--) {
         let id = activeIds[n];
         let t = type[id];
+
+        if (!alive[id]) {
+            free(id);
+            continue;
+        }
 
         if (t & TYPE_ENEMY) {
             enemyHitSetCount[id] = 0;
@@ -198,8 +288,9 @@ export let updateEntities = (deltaMs: number): void => {
                 let inv = 1 / sqrt(max(d2, 1e-8));
                 dx *= inv;
                 dy *= inv;
-                velX[id] = dx * ENEMY_SPEED;
-                velY[id] = dy * ENEMY_SPEED;
+                velX[id] = dx * ENEMY_SPEED * slowFactor[id];
+                velY[id] = dy * ENEMY_SPEED * slowFactor[id];
+                slowFactor[id] = 1.0;
             } else {
                 velX[id] = 0;
                 velY[id] = 0;
@@ -210,7 +301,7 @@ export let updateEntities = (deltaMs: number): void => {
                 free(id);
                 continue;
             }
-            // (velocity already set on spawn; homing/projectile logic could modify here)
+            // NOTE: (velocity already set on spawn; homing/projectile logic could modify here)
         } else if (t & TYPE_PLAYER) {
             if (velX[id] !== 0) {
                 playerDir = velX[id] < 0 ? 0 : 1;
@@ -227,6 +318,19 @@ export let updateEntities = (deltaMs: number): void => {
                 }
                 velY[id] = clamp(velY[id], -500, 500);
             }
+            if (lifetime[id] > 0) {
+                lifetime[id] -= dt;
+            }
+        } else if (t & TYPE_AURA) {
+            if (lifetime[id] > 0) {
+                lifetime[id] -= dt;
+                if (lifetime[id] <= 0) {
+                    free(id);
+                    continue;
+                }
+            }
+            posX[id] = posX[0];
+            posY[id] = posY[0];
         }
 
         posX[id] += velX[id] * dt;
@@ -270,7 +374,6 @@ export let updateEntities = (deltaMs: number): void => {
 
                 let ti = type[i], tj = type[j];
 
-                // Enemy ↔ Enemy: push apart equally
                 if ((ti & TYPE_ENEMY) && (tj & TYPE_ENEMY)) {
                     let half = overlap * 0.5;
                     posX[i] -= nx * half; posY[i] -= ny * half;
@@ -278,21 +381,20 @@ export let updateEntities = (deltaMs: number): void => {
                     continue;
                 }
 
-                // Player ↔ Enemy: push enemy away from player (and optionally the player)
                 if ((ti & TYPE_PLAYER) && (tj & TYPE_ENEMY)) {
                     posX[j] += nx * overlap; posY[j] += ny * overlap;
                     posX[i] -= nx * (overlap * 0.25); posY[i] -= ny * (overlap * 0.25);
-                    player.hp_--;
-                    continue;
-                }
-                if ((tj & TYPE_PLAYER) && (ti & TYPE_ENEMY)) {
-                    posX[i] -= nx * overlap; posY[i] -= ny * overlap;
-                    posX[j] += nx * (overlap * 0.25); posY[j] += ny * (overlap * 0.25);
-                    player.hp_--;
+                    damagePlayer(1);
                     continue;
                 }
 
-                // Projectile ↔ Enemy: deal damage, destroy projectile
+                if ((tj & TYPE_PLAYER) && (ti & TYPE_ENEMY)) {
+                    posX[i] -= nx * overlap; posY[i] -= ny * overlap;
+                    posX[j] += nx * (overlap * 0.25); posY[j] += ny * (overlap * 0.25);
+                    damagePlayer(1);
+                    continue;
+                }
+
                 if ((ti & TYPE_PROJECTILE) && (tj & TYPE_ENEMY)) {
                     if (enemyHitSet[j].includes(i)) {
                         continue;
@@ -300,10 +402,12 @@ export let updateEntities = (deltaMs: number): void => {
                     enemyHitSet[j][enemyHitSetCount[j]++] = i;
                     damageEnemy(j, damage[i]);
                     hp[i] -= 1;
-                    if (hp[i] <= 0)
-                        free(i);
+                    if (hp[i] <= 0) {
+                        alive[i] = 0;
+                    }
                     continue;
                 }
+
                 if ((tj & TYPE_PROJECTILE) && (ti & TYPE_ENEMY)) {
                     if (enemyHitSet[i].includes(j)) {
                         continue;
@@ -311,18 +415,40 @@ export let updateEntities = (deltaMs: number): void => {
                     enemyHitSet[i][enemyHitSetCount[i]++] = j;
                     damageEnemy(i, damage[j]);
                     hp[j] -= 1;
-                    if (hp[j] <= 0)
-                        free(j);
+                    if (hp[j] <= 0) {
+                        alive[j] = 0;
+                    }
                     continue;
                 }
+            }
+        }
+    }
 
-                // TODO: CHECK FOR AURA OVERLAP
-
-                // (Optional) Projectile ↔ Player (hazards)
-                // if ((ti & TYPE_PROJECTILE) && (tj & TYPE_PLAYER)) { /* playerTakeDamage(...); destroyProjectile(i); */ }
-                // if ((tj & TYPE_PROJECTILE) && (ti & TYPE_PLAYER)) { /* playerTakeDamage(...); destroyProjectile(j); */ }
-
-                // Player ↔ Pickup, etc., can be added here similarly.
+    for (let n = activeCount - 1; n >= 0; n--) {
+        let id = activeIds[n];
+        if (!alive[id] || !(type[id] & TYPE_AURA)) continue;
+        let ar = radius[id];
+        let cx_min = clamp(floor((pX - ar) / GRID_CELL_SIZE), 0, GRID_WIDTH - 1);
+        let cx_max = clamp(floor((pX + ar) / GRID_CELL_SIZE), 0, GRID_WIDTH - 1);
+        let cy_min = clamp(floor((pY - ar) / GRID_CELL_SIZE), 0, GRID_HEIGHT - 1);
+        let cy_max = clamp(floor((pY + ar) / GRID_CELL_SIZE), 0, GRID_HEIGHT - 1);
+        for (let cy = cy_min; cy <= cy_max; cy++) {
+            for (let cx = cx_min; cx <= cx_max; cx++) {
+                let gi = cy * GRID_WIDTH + cx;
+                let gc = gridCounts[gi];
+                let gbase = gi * MAX_PER_CELL;
+                for (let k = 0; k < gc; k++) {
+                    let eid = gridIds[gbase + k];
+                    if (!alive[eid] || !(type[eid] & TYPE_ENEMY)) continue;
+                    let dx = posX[eid] - pX;
+                    let dy = posY[eid] - pY;
+                    let d2 = dx * dx + dy * dy;
+                    let rsum = ar + radius[eid];
+                    if (d2 < rsum * rsum) {
+                        damageEnemy(eid, damage[id] * dt);
+                        slowFactor[eid] = Math.min(slowFactor[eid], slowFactor[id]);
+                    }
+                }
             }
         }
     }
@@ -333,7 +459,7 @@ export let drawEntities = (): void => {
         let id = activeIds[n];
         sPosX[id] = posX[id] - cameraPos[X] + SCREEN_HALF + SCREEN_GUTTER;
         sPosY[id] = posY[id] - cameraPos[Y] + SCREEN_HALF;
-        if (playerId === id) {
+        if (0 === id) {
             continue;
         }
         let r = radius[id];
@@ -342,24 +468,29 @@ export let drawEntities = (): void => {
             continue;
         }
         let t = type[id];
-        if (t & TYPE_ENEMY) {
-            pushTexturedQuad(TEXTURE_RAT, sPosX[id] - r, sPosY[id] - r, 1, WHITE, velX[id] < 0, false, true);
+        if (t & TYPE_AURA) {
+            pushTexturedQuad(TEXTURE_C_16x16, sPosX[id] - r, sPosY[id] - r, d * 0.0625, color[id] || 0x33ffffff);
+        } else if (t & TYPE_ENEMY) {
+            pushTexturedQuad(TEXTURE_RAT, sPosX[id] - r, sPosY[id] - r, d * 0.0625, BLACK, velX[id] < 0, false, true);
         } else {
             if (d < 4) {
-                pushQuad(sPosX[id] - r, sPosY[id] - r, d, d, color[id] || 0xffffffff);
+                pushQuad(sPosX[id] - r, sPosY[id] - r, d, d, color[id] || WHITE);
             } else if (d > 3 && d < 9) {
-                pushTexturedQuad(TEXTURE_C_4x4 + (d - 4), sPosX[id] - r, sPosY[id] - r, 1, color[id] || 0xffffffff);
+                pushTexturedQuad(TEXTURE_C_4x4 + (d - 4), sPosX[id] - r, sPosY[id] - r, 1, color[id] || WHITE);
             } else {
-                pushTexturedQuad(TEXTURE_C_8x8, sPosX[id] - r, sPosY[id] - r, d * 0.125, color[id] || 0xffffffff);
+                pushTexturedQuad(TEXTURE_C_8x8, sPosX[id] - r, sPosY[id] - r, d * 0.125, color[id] || WHITE);
             }
         }
     }
 
-    // TODO: Render Auras
-
-    if (velX[playerId] !== 0 || velY[playerId] !== 0) {
-        catParticle.position_[X] = posX[playerId];
-        catParticle.position_[Y] = posY[playerId];
+    if (velX[0] !== 0 || velY[0] !== 0 || lifetime[0] > 0) {
+        if (lifetime[0] > 0 && floor(lifetime[0] * 10) % 2 == 1) {
+            catParticle.colourBegin_[R] = 1;
+        } else {
+            catParticle.colourBegin_[R] = 0;
+        }
+        catParticle.position_[X] = posX[0];
+        catParticle.position_[Y] = posY[0];
         emitParticles(catParticle, 10);
 
         eyeParticle.position_[Y] = catParticle.position_[Y] - 1;
@@ -368,6 +499,6 @@ export let drawEntities = (): void => {
         eyeParticle.position_[X] += 6;
         emitParticles(eyeParticle, 2);
     } else {
-        pushTexturedQuad(TEXTURE_CAT_01, sPosX[playerId] - 8, sPosY[playerId] - 8, 1, WHITE, playerDir === 0, false, false, true);
+        pushTexturedQuad(TEXTURE_CAT_01, sPosX[0] - 8, sPosY[0] - 8, 1, BLACK, playerDir === 0, false, false, true);
     }
 };

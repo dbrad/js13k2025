@@ -90,6 +90,6 @@ export let drawScene = (delta: number, now: number): void => {
 };
 
 
-export let drawGUI = (delta: number) => {
+export let drawGUI = (delta: number): void => {
     scenes[currentSceneId].drawGUI_(delta);
 };

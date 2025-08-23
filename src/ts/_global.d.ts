@@ -74,9 +74,12 @@ type Scene = {
 
 type Ability = {
     id_: number;
-    type_: typeof BULLET | typeof AURA;
+    type_: number;
     level_: number;
     cooldown_: number;
+    timer_: number;
+    fire_: (a: Ability) => void;
+    entityId_: number;
 };
 
 type Upgrade = {
@@ -84,8 +87,6 @@ type Upgrade = {
     name_: string;
     description_: string;
     kind_: typeof STAT | typeof ABILITY;
-    weight_: number; // higher = more common
-    maxLevel_?: number;
     apply_: () => void;
 };
 

@@ -1,13 +1,13 @@
-Game over at 0 hp
+Add damage value control to enemies
 Make luck do something
-Hook up other stats
-!!Create the 22 abilities!!
-Add GUI area for current abilities and their cooldowns
+!!Finish the 22 abilities!!
+Change cooldown to be fire rate (% increase, not % reduction. 100% is 2x faster, not instant)
+Add GUI area in right gutter to display current abilities, their levels, their dmg, and their cooldowns
 
-Extend mobile control areas of the d-pad
-Add lightning strikes during midnight
-add boss and boss hp bar
-More enemy types
+spawn boss and boss hp bar during midnight
+transition back to morning
 Sound effects
 Music or beat
-Meta Progression
+
+More enemy types
+Meta Progression???

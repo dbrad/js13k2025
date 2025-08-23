@@ -54,7 +54,7 @@ let createBuffer = (bufferType: number, size: number, usage: number): WebGLBuffe
     return buffer;
 };
 
-export let glInit = (canvas: HTMLCanvasElement) => {
+export let glInit = (canvas: HTMLCanvasElement): void => {
     let ctx = canvas.getContext("webgl2");
     assert(ctx !== null, "failed to get webgl2 context");
     glContext = ctx;

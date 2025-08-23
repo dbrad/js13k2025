@@ -1,17 +1,17 @@
 import { cameraPos } from "./camera";
-import { pushQuad, pushTexturedQuad } from "./draw";
+import { BLACK, lightningFlash, pushQuad, pushTexturedQuad } from "./draw";
 import { gameState } from "./gameState";
-import { floor, ceil, max, min, clamp } from "./math";
+import { ceil, clamp, floor, max, min } from "./math";
 
-export let WORLD_WIDTH = 2048;
-export let WORLD_HEIGHT = 2048;
+export let WORLD_WIDTH = 4096;
+export let WORLD_HEIGHT = 4096;
 
 export let WORLD_TILE_WIDTH = WORLD_WIDTH / 16;
 export let WORLD_TILE_HEIGHT = WORLD_HEIGHT / 16;
 
 export let worldMap = new Uint8Array(WORLD_TILE_WIDTH * WORLD_TILE_WIDTH);
 
-export let generateWorld = () => {
+export let generateWorld = (): void => {
     for (let x = 0; x < WORLD_TILE_WIDTH; x++) {
         for (let y = 0; y < WORLD_TILE_WIDTH; y++) {
             if (x < 3 || y < 3 || x > WORLD_TILE_WIDTH - 4 || y > WORLD_TILE_WIDTH - 4) {
@@ -27,7 +27,7 @@ export let generateWorld = () => {
     }
 };
 
-export let drawWorld = () => {
+export let drawWorld = (): void => {
     let camLeft = floor((cameraPos[0] - SCREEN_HALF) / 16);
     let camRight = ceil((cameraPos[0] + SCREEN_HALF) / 16);
     let camTop = floor((cameraPos[1] - SCREEN_HALF) / 16);
@@ -46,14 +46,15 @@ export let drawWorld = () => {
             let screenY = y * 16 - (cameraPos[1] - SCREEN_HALF);
 
             if (tile === 1) {
-                pushQuad(screenX, screenY, 16, 16, 0xff000000);
+                pushQuad(screenX, screenY, 16, 16, BLACK);
             } else if (tile > 1) {
                 pushTexturedQuad(TEXTURE_DITH_15 - (tile - 2), screenX, screenY);
             }
+
             if (offset <= 15) {
-                pushTexturedQuad(TEXTURE_DITH_00 + offset, screenX, screenY, 1, 0xff000000);
-            } else {
-                pushQuad(screenX, screenY, 16, 16, 0xff000000);
+                pushTexturedQuad(TEXTURE_DITH_00 + offset, screenX, screenY, 1, BLACK);
+            } else if (!lightningFlash) {
+                pushQuad(screenX, screenY, 16, 16, BLACK);
             }
         }
     }

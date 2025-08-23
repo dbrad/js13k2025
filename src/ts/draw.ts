@@ -1,10 +1,12 @@
 import { assert } from "./__debug/debug";
+import { thunder, zzfxPlay } from "./audio";
 import { glClear, glFlush, glPushQuad } from "./gl";
-import { clamp, floor } from "./math";
+import { clamp, floor, randInt } from "./math";
 import { TEXTURE_CACHE } from "./texture";
 
 // Colour
-export let WHITE = 0xffffffff;
+export let WHITE = 0xfff5f5f5;
+export let BLACK = 0xff000000;
 
 export let toABGR = (r: number, g: number, b: number, a: number): number => {
     let out = (0 | (clamp(a, 0, 255) & 0xff)) << 8 >>> 0;
@@ -33,12 +35,31 @@ export let v4fToABGR = (colour: V4f): number => {
 // Animation Timing
 let idleAnimationTimer = 0;
 export let animationFrame = 0;
-export let updateAnimationFrame = (delta: number) => {
+export let updateAnimationFrame = (delta: number): void => {
     idleAnimationTimer += delta;
     if (idleAnimationTimer > 500) {
         if (idleAnimationTimer > 1000) idleAnimationTimer = 0;
         idleAnimationTimer -= 500;
         animationFrame = ++animationFrame % 2;
+    }
+};
+
+let nextInter = 1000;
+let nextDur = 50;
+export let lightningFlash = false;
+export let updateLightning = (delta: number): void => {
+    if (nextInter <= 0) {
+        lightningFlash = true;
+        if (nextDur <= 0) {
+            zzfxPlay(thunder);
+            lightningFlash = false;
+            nextInter = randInt(50, 8000);
+            nextDur = randInt(50, 200);
+        } else {
+            nextDur -= delta;
+        }
+    } else {
+        nextInter -= delta;
     }
 };
 
@@ -59,7 +80,7 @@ export let initDrawQueue = (): void => {
     }
 };
 
-let queueDraw = (x: number, y: number, w: number, h: number, sx: number, sy: number, u0: number, v0: number, u1: number, v1: number, colour: number, hFlip: boolean, vFlip: boolean) => {
+let queueDraw = (x: number, y: number, w: number, h: number, sx: number, sy: number, u0: number, v0: number, u1: number, v1: number, colour: number, hFlip: boolean, vFlip: boolean): void => {
     let call: DrawCall = drawQueue[index];
     call.x_ = x;
     call.y_ = y;
@@ -117,6 +138,7 @@ export let pushQuad = (x: number, y: number, w: number, h: number, colour: numbe
 
 export let pushTexturedQuad = (textureId: number, x: number, y: number, scale: number = 1, colour: number = WHITE, hFlip: boolean = false, vFlip: boolean = false, idleAnimation: boolean = false, customAnimation: boolean = false): void => {
     let t = TEXTURE_CACHE[textureId + (customAnimation ? animationFrame : 0)];
+    assert(t !== undefined, `missing texture id: ${textureId}`);
     queueDraw(
         x, y + (idleAnimation ? animationFrame : 0),
         t.w_, t.h_ - (idleAnimation ? animationFrame : 0),
