@@ -2,9 +2,9 @@ import { assert } from "./__debug/debug";
 import { cathit } from "./audio";
 import { cameraPos } from "./camera";
 import { BLACK, pushQuad, pushTexturedQuad, WHITE } from "./draw";
-import { clamp, cos, EULER, floor, math, max, PI, sin, sqrt } from "./math";
+import { clamp, _cos, EULER, _floor, _max, _min, PI, _random, _sin, _sqrt } from "./math";
 import { burstParticle, catParticle, emitParticles, eyeParticle } from "./particle";
-import { player, gainXp } from "./player";
+import { gainXp, player } from "./player";
 import { WORLD_HEIGHT, WORLD_WIDTH } from "./world";
 
 let MAX_ENTITIES = 20_000;
@@ -63,8 +63,8 @@ for (let i = 0; i < MAX_ENTITIES; i++) enemyHitSet[i] = new Uint16Array(256);
 export let nearestEnemyPos = new Float32Array(2);
 
 let gridIndexFor = (x: number, y: number): number => {
-    let cx = floor(x / GRID_CELL_SIZE);
-    let cy = floor(y / GRID_CELL_SIZE);
+    let cx = _floor(x / GRID_CELL_SIZE);
+    let cy = _floor(y / GRID_CELL_SIZE);
     if (cx < 0) cx = 0; else if (cx >= GRID_WIDTH) cx = GRID_WIDTH - 1;
     if (cy < 0) cy = 0; else if (cy >= GRID_HEIGHT) cy = GRID_HEIGHT - 1;
     return cy * GRID_WIDTH + cx;
@@ -85,10 +85,10 @@ export let findNearestEnemy = (maxDist: number): boolean => {
     }
     let px = posX[0], py = posY[0];
     let maxDist2 = maxDist * maxDist;
-    let cx_min = clamp(floor((px - maxDist) / GRID_CELL_SIZE), 0, GRID_WIDTH - 1);
-    let cx_max = clamp(floor((px + maxDist) / GRID_CELL_SIZE), 0, GRID_WIDTH - 1);
-    let cy_min = clamp(floor((py - maxDist) / GRID_CELL_SIZE), 0, GRID_HEIGHT - 1);
-    let cy_max = clamp(floor((py + maxDist) / GRID_CELL_SIZE), 0, GRID_HEIGHT - 1);
+    let cx_min = clamp(_floor((px - maxDist) / GRID_CELL_SIZE), 0, GRID_WIDTH - 1);
+    let cx_max = clamp(_floor((px + maxDist) / GRID_CELL_SIZE), 0, GRID_WIDTH - 1);
+    let cy_min = clamp(_floor((py - maxDist) / GRID_CELL_SIZE), 0, GRID_HEIGHT - 1);
+    let cy_max = clamp(_floor((py + maxDist) / GRID_CELL_SIZE), 0, GRID_HEIGHT - 1);
     let minDist2 = maxDist2 + 1;
     for (let cy = cy_min; cy <= cy_max; cy++) {
         for (let cx = cx_min; cx <= cx_max; cx++) {
@@ -170,15 +170,15 @@ export let spawnEnemy = (x: number, y: number, r: number = ENEMY_RADIUS, hpVal: 
     return id;
 };
 
-let diag = sqrt(SCREEN_DIM * SCREEN_DIM * 2) / 2 + 84;
+let diag = _sqrt(SCREEN_DIM * SCREEN_DIM * 2) / 2 + 84;
 export let spawnOffscreenEnemy = (hp: number = 3, r: number = 8): number => {
-    let angle = math.random() * PI * 2;
-    let x = cameraPos[X] + cos(angle) * diag;
-    let y = cameraPos[Y] + sin(angle) * diag;
+    let angle = _random() * PI * 2;
+    let x = cameraPos[X] + _cos(angle) * diag;
+    let y = cameraPos[Y] + _sin(angle) * diag;
     if (x < 0 || y < 0 || x > WORLD_WIDTH || y > WORLD_HEIGHT) {
         angle = (angle + PI) % (2 * PI);
-        x = cameraPos[X] + cos(angle) * diag;
-        y = cameraPos[Y] + sin(angle) * diag;
+        x = cameraPos[X] + _cos(angle) * diag;
+        y = cameraPos[Y] + _sin(angle) * diag;
     }
     x = clamp(x, 0, WORLD_WIDTH); y = clamp(y, 0, WORLD_HEIGHT);
     return spawnEnemy(x, y, r, hp);
@@ -219,8 +219,8 @@ export let spawnAura = (r: number = 50, dmg: number = 5, lifeSec: number = -1, a
 export let spawnRadialBurst = (cx: number, cy: number, count: number, speed: number, r: number = PROJECTILE_RADIUS, lifeSec: number = 2, dmg: number = 1): void => {
     for (let k = 0; k < count; k++) {
         let a = (2 * PI * k) / count;
-        let vx = cos(a) * speed;
-        let vy = sin(a) * speed;
+        let vx = _cos(a) * speed;
+        let vy = _sin(a) * speed;
         spawnProjectile(cx, cy, vx, vy, r, dmg, lifeSec, 1);
     }
 };
@@ -228,8 +228,8 @@ export let spawnRadialBurst = (cx: number, cy: number, count: number, speed: num
 export let spawnOrbit = (cx: number, cy: number, count: number, r: number = PROJECTILE_RADIUS, ar: number, lifeSec: number = 2, dmg: number = 1): void => {
     for (let k = 0; k < count; k++) {
         let a = (2 * PI * k) / count;
-        let px = cx + cos(a) * ar;
-        let py = cy + sin(a) * ar;
+        let px = cx + _cos(a) * ar;
+        let py = cy + _sin(a) * ar;
         spawnProjectile(px, py, 0, 0, r, dmg, lifeSec, 999);
     }
 };
@@ -285,7 +285,7 @@ export let updateEntities = (deltaMs: number): void => {
             let dy = pY - posY[id];
             let d2 = dx * dx + dy * dy;
             if (d2 > SEEK_STOP_DIST * SEEK_STOP_DIST) {
-                let inv = 1 / sqrt(max(d2, 1e-8));
+                let inv = 1 / _sqrt(_max(d2, 1e-8));
                 dx *= inv;
                 dy *= inv;
                 velX[id] = dx * ENEMY_SPEED * slowFactor[id];
@@ -368,7 +368,7 @@ export let updateEntities = (deltaMs: number): void => {
                 let d2 = dx * dx + dy * dy;
                 if (d2 >= rsum * rsum || d2 === 0) continue;
 
-                let d = sqrt(d2);
+                let d = _sqrt(d2);
                 let nx = dx / d, ny = dy / d;
                 let overlap = (rsum - d);
 
@@ -428,10 +428,10 @@ export let updateEntities = (deltaMs: number): void => {
         let id = activeIds[n];
         if (!alive[id] || !(type[id] & TYPE_AURA)) continue;
         let ar = radius[id];
-        let cx_min = clamp(floor((pX - ar) / GRID_CELL_SIZE), 0, GRID_WIDTH - 1);
-        let cx_max = clamp(floor((pX + ar) / GRID_CELL_SIZE), 0, GRID_WIDTH - 1);
-        let cy_min = clamp(floor((pY - ar) / GRID_CELL_SIZE), 0, GRID_HEIGHT - 1);
-        let cy_max = clamp(floor((pY + ar) / GRID_CELL_SIZE), 0, GRID_HEIGHT - 1);
+        let cx_min = clamp(_floor((pX - ar) / GRID_CELL_SIZE), 0, GRID_WIDTH - 1);
+        let cx_max = clamp(_floor((pX + ar) / GRID_CELL_SIZE), 0, GRID_WIDTH - 1);
+        let cy_min = clamp(_floor((pY - ar) / GRID_CELL_SIZE), 0, GRID_HEIGHT - 1);
+        let cy_max = clamp(_floor((pY + ar) / GRID_CELL_SIZE), 0, GRID_HEIGHT - 1);
         for (let cy = cy_min; cy <= cy_max; cy++) {
             for (let cx = cx_min; cx <= cx_max; cx++) {
                 let gi = cy * GRID_WIDTH + cx;
@@ -446,7 +446,7 @@ export let updateEntities = (deltaMs: number): void => {
                     let rsum = ar + radius[eid];
                     if (d2 < rsum * rsum) {
                         damageEnemy(eid, damage[id] * dt);
-                        slowFactor[eid] = Math.min(slowFactor[eid], slowFactor[id]);
+                        slowFactor[eid] = _min(slowFactor[eid], slowFactor[id]);
                     }
                 }
             }
@@ -484,7 +484,7 @@ export let drawEntities = (): void => {
     }
 
     if (velX[0] !== 0 || velY[0] !== 0 || lifetime[0] > 0) {
-        if (lifetime[0] > 0 && floor(lifetime[0] * 10) % 2 == 1) {
+        if (lifetime[0] > 0 && _floor(lifetime[0] * 10) % 2 == 1) {
             catParticle.colourBegin_[R] = 1;
         } else {
             catParticle.colourBegin_[R] = 0;

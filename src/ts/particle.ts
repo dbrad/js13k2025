@@ -1,6 +1,6 @@
 import { cameraPos } from "./camera";
 import { pushQuad, pushTexturedQuad, v4fToABGR } from "./draw";
-import { clamp, floor, lerp, math, setV2, setV4fFromV4f, v4f } from "./math";
+import { clamp, _floor, lerp, _random, setV2, setV4fFromV4f, v4f } from "./math";
 
 type ParticleParameters = {
     position_: V2;
@@ -108,7 +108,7 @@ export let updateParticles = (delta: number): void => {
 
         let lifeProgress = clamp(particleLifetimeRemaining[i] / particleLifetime[i], 0, 1);
 
-        particleSize[i] = floor(lerp(particleSizeEnd[i], particleSizeBegin[i], lifeProgress));
+        particleSize[i] = _floor(lerp(particleSizeEnd[i], particleSizeBegin[i], lifeProgress));
 
         let colourBegin = particleColourBegin[i];
         let colourEnd = particleColourEnd[i];
@@ -133,8 +133,8 @@ export let drawParticles = (): void => {
         screenPosition[i][X] = particlePosition[i][X] - cameraPos[X] + SCREEN_HALF + SCREEN_GUTTER;
         screenPosition[i][Y] = particlePosition[i][Y] - cameraPos[Y] + SCREEN_HALF;
         let halfSize = particleSize[i] * 0.5;
-        let x = floor(screenPosition[i][X] - halfSize);
-        let y = floor(screenPosition[i][Y] - halfSize);
+        let x = _floor(screenPosition[i][X] - halfSize);
+        let y = _floor(screenPosition[i][Y] - halfSize);
         if (particleSize[i] < 4) {
             pushQuad(x, y, particleSize[i], particleSize[i], particleColour[i]);
         } else if (particleSize[i] > 3 && particleSize[i] < 9) {
@@ -149,7 +149,7 @@ export let emitParticle = (particleParams: ParticleParameters): void => {
     activeParticles.add(particlePoolIndex);
 
     setV2(particlePosition[particlePoolIndex], particleParams.position_[X], particleParams.position_[Y]);
-    setV2(particleVelocity[particlePoolIndex], particleParams.velocity_[X] + particleParams.velocityVariation_[X] * (math.random() - 0.5), particleParams.velocity_[Y] + particleParams.velocityVariation_[Y] * (math.random() - 0.5));
+    setV2(particleVelocity[particlePoolIndex], particleParams.velocity_[X] + particleParams.velocityVariation_[X] * (_random() - 0.5), particleParams.velocity_[Y] + particleParams.velocityVariation_[Y] * (_random() - 0.5));
 
     setV4fFromV4f(particleColourBegin[particlePoolIndex], particleParams.colourBegin_);
     setV4fFromV4f(particleColourEnd[particlePoolIndex], particleParams.colourEnd_);
@@ -159,7 +159,7 @@ export let emitParticle = (particleParams: ParticleParameters): void => {
     particleLifetime[particlePoolIndex] = particleParams.lifetime_;
     particleLifetimeRemaining[particlePoolIndex] = particleLifetime[particlePoolIndex];
 
-    particleSizeBegin[particlePoolIndex] = floor(particleParams.sizeBegin_ + particleParams.sizeVariation_ * (math.random() - 0.5));
+    particleSizeBegin[particlePoolIndex] = _floor(particleParams.sizeBegin_ + particleParams.sizeVariation_ * (_random() - 0.5));
     particleSizeEnd[particlePoolIndex] = particleParams.sizeEnd_;
     particleSize[particlePoolIndex] = particleSizeBegin[particlePoolIndex];
 
