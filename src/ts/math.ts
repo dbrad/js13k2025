@@ -1,25 +1,25 @@
-export let {
-  floor: _floor,
-  ceil: _ceil,
-  max: _max,
-  min: _min,
-  round: _round,
-  sqrt: _sqrt,
-  cos: _cos,
-  sin: _sin,
-  tan: _tan,
-  abs: _abs,
-  random: _random
-} = { ...Math };
+export let math = Math,
+  floor = math.floor,
+  ceil = math.ceil,
+  abs = math.abs,
+  max = math.max,
+  min = math.min,
+  round = math.round,
+  sqrt = math.sqrt,
+  cos = math.cos,
+  sin = math.sin,
+  tan = math.tan,
+  random = math.random;
+
 export let EULER = 2.71828;
 export let PI = 3.14159;
 
 export let roundTo = (value: number, nearest: number): number => {
-  return _round(value / nearest) * nearest;
+  return round(value / nearest) * nearest;
 };
 
 export let floorTo = (value: number, nearest: number): number => {
-  return _floor(value / nearest) * nearest;
+  return floor(value / nearest) * nearest;
 };
 
 export let lerp = (origin: number, target: number, amount: number): number => {
@@ -121,14 +121,14 @@ let srand = (): number => {
 };
 
 export let srandInt = (min: number, max: number): number => {
-  return _floor(srand() * (max - min + 1)) + min;
+  return floor(srand() * (max - min + 1)) + min;
 };
 
 export let srandShuffle = <T>(array: T[]): T[] => {
   let currentIndex: number = array.length, temporaryValue: T, randomIndex: number;
   let arr: T[] = array.slice();
   while (0 !== currentIndex) {
-    randomIndex = _floor(srand() * currentIndex);
+    randomIndex = floor(srand() * currentIndex);
     currentIndex -= 1;
     temporaryValue = arr[currentIndex];
     arr[currentIndex] = arr[randomIndex];
@@ -138,14 +138,14 @@ export let srandShuffle = <T>(array: T[]): T[] => {
 };
 
 export let randInt = (min: number, max: number): number => {
-  return _floor(_random() * (max - min + 1)) + min;
+  return floor(random() * (max - min + 1)) + min;
 };
 
 export let randShuffle = <T>(array: T[]): T[] => {
   let currentIndex: number = array.length, temporaryValue: T, randomIndex: number;
   let arr: T[] = array.slice();
   while (0 !== currentIndex) {
-    randomIndex = _floor(_random() * currentIndex);
+    randomIndex = floor(random() * currentIndex);
     currentIndex -= 1;
     temporaryValue = arr[currentIndex];
     arr[currentIndex] = arr[randomIndex];

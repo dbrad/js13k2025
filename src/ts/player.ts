@@ -1,6 +1,6 @@
 import { findNearestEnemy, nearestEnemyPos, playerDir, posX, posY, spawnAura, spawnProjectile } from "./entity";
 import { gameState } from "./gameState";
-import { _cos, _max, _min, PI, randInt, _random, roundTo, _sin, _sqrt } from "./math";
+import { cos, max, min, PI, randInt, random, roundTo, sin, sqrt } from "./math";
 
 export let player: Player;
 
@@ -76,7 +76,7 @@ export let UPGRADE_POOL: Upgrade[] = [
                 if (findNearestEnemy(300)) {
                     let dx = nearestEnemyPos[0] - posX[0];
                     let dy = nearestEnemyPos[1] - posY[0];
-                    let dist = _sqrt(dx * dx + dy * dy);
+                    let dist = sqrt(dx * dx + dy * dy);
                     let vx = (dx / dist) * speed;
                     let vy = (dy / dist) * speed;
                     let perpX = -dy / dist * 10;
@@ -100,10 +100,10 @@ export let UPGRADE_POOL: Upgrade[] = [
         apply_: (): void => {
             upgradeAbility(UP_FOOL, BULLET, 300, (a: Ability): void => {
                 for (let i = 0; i < a.level_ + 1; i++) {
-                    let a = _random() * PI * 2;
+                    let a = random() * PI * 2;
                     let speed = randInt(150, 200);
-                    let vx = _cos(a) * speed;
-                    let vy = _sin(a) * speed;
+                    let vx = cos(a) * speed;
+                    let vy = sin(a) * speed;
                     spawnProjectile(posX[0], posY[0], vx, vy, 3, 5, 2);
                 }
             });
@@ -121,7 +121,7 @@ export let UPGRADE_POOL: Upgrade[] = [
                 if (findNearestEnemy(300)) {
                     let dx = nearestEnemyPos[0] - posX[0];
                     let dy = nearestEnemyPos[1] - posY[0];
-                    let dist = _sqrt(dx * dx + dy * dy);
+                    let dist = sqrt(dx * dx + dy * dy);
                     let vx = (dx / dist) * speed;
                     let vy = (dy / dist) * speed;
                     spawnProjectile(posX[0], posY[0], vx, vy, size, dmg, 5, 999);
@@ -138,7 +138,7 @@ export let UPGRADE_POOL: Upgrade[] = [
         kind_: ABILITY,
         apply_: (): void => {
             upgradeAbility(UP_PRST, AURA, 5000, (a: Ability): void => {
-                let slow = _max(0.7 - (a.level_ - 1) * 0.1, 0.3);
+                let slow = max(0.7 - (a.level_ - 1) * 0.1, 0.3);
                 let radius = 50 + a.level_ * 10;
                 a.entityId_ = spawnAura(radius, 0, -1, 0x22ff8888, slow, a.entityId_);
             });
@@ -150,7 +150,7 @@ export let UPGRADE_POOL: Upgrade[] = [
         kind_: ABILITY,
         apply_: (): void => {
             upgradeAbility(UP_EMPS, AURA, 1000, (a: Ability): void => {
-                player.hp_ = _min(player.maxHP_, player.hp_ + (0.1 * a.level_));
+                player.hp_ = min(player.maxHP_, player.hp_ + (0.1 * a.level_));
             });
         },
     }, {
@@ -163,7 +163,7 @@ export let UPGRADE_POOL: Upgrade[] = [
                 if (findNearestEnemy(300)) {
                     let dx = nearestEnemyPos[0] - posX[0];
                     let dy = nearestEnemyPos[1] - posY[0];
-                    let dist = _sqrt(dx * dx + dy * dy);
+                    let dist = sqrt(dx * dx + dy * dy);
                     let speed = 300;
                     let vx = (dx / dist) * speed;
                     let vy = (dy / dist) * speed;
@@ -184,7 +184,7 @@ export let UPGRADE_POOL: Upgrade[] = [
                 if (findNearestEnemy(300)) {
                     let dx = nearestEnemyPos[0] - posX[0];
                     let dy = nearestEnemyPos[1] - posY[0];
-                    let dist = _sqrt(dx * dx + dy * dy);
+                    let dist = sqrt(dx * dx + dy * dy);
                     let speed = 300;
                     let vx = (dx / dist) * speed;
                     let vy = (dy / dist) * speed;
@@ -214,7 +214,7 @@ export let UPGRADE_POOL: Upgrade[] = [
                 if (findNearestEnemy(300)) {
                     let dx = nearestEnemyPos[0] - posX[0];
                     let dy = nearestEnemyPos[1] - posY[0];
-                    let dist = _sqrt(dx * dx + dy * dy);
+                    let dist = sqrt(dx * dx + dy * dy);
                     let speed = 300;
                     let vx = (dx / dist) * speed;
                     let vy = (dy / dist) * speed;
@@ -235,7 +235,7 @@ export let UPGRADE_POOL: Upgrade[] = [
                 if (findNearestEnemy(300)) {
                     let dx = nearestEnemyPos[0] - posX[0];
                     let dy = nearestEnemyPos[1] - posY[0];
-                    let dist = _sqrt(dx * dx + dy * dy);
+                    let dist = sqrt(dx * dx + dy * dy);
                     let speed = 300;
                     let vx = (dx / dist) * speed;
                     let vy = (dy / dist) * speed;
@@ -256,7 +256,7 @@ export let UPGRADE_POOL: Upgrade[] = [
                 if (findNearestEnemy(300)) {
                     let dx = nearestEnemyPos[0] - posX[0];
                     let dy = nearestEnemyPos[1] - posY[0];
-                    let dist = _sqrt(dx * dx + dy * dy);
+                    let dist = sqrt(dx * dx + dy * dy);
                     let speed = 300;
                     let vx = (dx / dist) * speed;
                     let vy = (dy / dist) * speed;
@@ -277,7 +277,7 @@ export let UPGRADE_POOL: Upgrade[] = [
                 if (findNearestEnemy(300)) {
                     let dx = nearestEnemyPos[0] - posX[0];
                     let dy = nearestEnemyPos[1] - posY[0];
-                    let dist = _sqrt(dx * dx + dy * dy);
+                    let dist = sqrt(dx * dx + dy * dy);
                     let speed = 300;
                     let vx = (dx / dist) * speed;
                     let vy = (dy / dist) * speed;
@@ -298,7 +298,7 @@ export let UPGRADE_POOL: Upgrade[] = [
                 if (findNearestEnemy(300)) {
                     let dx = nearestEnemyPos[0] - posX[0];
                     let dy = nearestEnemyPos[1] - posY[0];
-                    let dist = _sqrt(dx * dx + dy * dy);
+                    let dist = sqrt(dx * dx + dy * dy);
                     let speed = 300;
                     let vx = (dx / dist) * speed;
                     let vy = (dy / dist) * speed;
@@ -319,7 +319,7 @@ export let UPGRADE_POOL: Upgrade[] = [
                 if (findNearestEnemy(300)) {
                     let dx = nearestEnemyPos[0] - posX[0];
                     let dy = nearestEnemyPos[1] - posY[0];
-                    let dist = _sqrt(dx * dx + dy * dy);
+                    let dist = sqrt(dx * dx + dy * dy);
                     let speed = 300;
                     let vx = (dx / dist) * speed;
                     let vy = (dy / dist) * speed;
@@ -340,7 +340,7 @@ export let UPGRADE_POOL: Upgrade[] = [
                 if (findNearestEnemy(300)) {
                     let dx = nearestEnemyPos[0] - posX[0];
                     let dy = nearestEnemyPos[1] - posY[0];
-                    let dist = _sqrt(dx * dx + dy * dy);
+                    let dist = sqrt(dx * dx + dy * dy);
                     let speed = 300;
                     let vx = (dx / dist) * speed;
                     let vy = (dy / dist) * speed;
@@ -361,7 +361,7 @@ export let UPGRADE_POOL: Upgrade[] = [
                 if (findNearestEnemy(300)) {
                     let dx = nearestEnemyPos[0] - posX[0];
                     let dy = nearestEnemyPos[1] - posY[0];
-                    let dist = _sqrt(dx * dx + dy * dy);
+                    let dist = sqrt(dx * dx + dy * dy);
                     let speed = 300;
                     let vx = (dx / dist) * speed;
                     let vy = (dy / dist) * speed;
@@ -382,7 +382,7 @@ export let UPGRADE_POOL: Upgrade[] = [
                 if (findNearestEnemy(300)) {
                     let dx = nearestEnemyPos[0] - posX[0];
                     let dy = nearestEnemyPos[1] - posY[0];
-                    let dist = _sqrt(dx * dx + dy * dy);
+                    let dist = sqrt(dx * dx + dy * dy);
                     let speed = 300;
                     let vx = (dx / dist) * speed;
                     let vy = (dy / dist) * speed;
@@ -403,7 +403,7 @@ export let UPGRADE_POOL: Upgrade[] = [
                 if (findNearestEnemy(300)) {
                     let dx = nearestEnemyPos[0] - posX[0];
                     let dy = nearestEnemyPos[1] - posY[0];
-                    let dist = _sqrt(dx * dx + dy * dy);
+                    let dist = sqrt(dx * dx + dy * dy);
                     let speed = 300;
                     let vx = (dx / dist) * speed;
                     let vy = (dy / dist) * speed;
@@ -424,7 +424,7 @@ export let UPGRADE_POOL: Upgrade[] = [
                 if (findNearestEnemy(300)) {
                     let dx = nearestEnemyPos[0] - posX[0];
                     let dy = nearestEnemyPos[1] - posY[0];
-                    let dist = _sqrt(dx * dx + dy * dy);
+                    let dist = sqrt(dx * dx + dy * dy);
                     let speed = 300;
                     let vx = (dx / dist) * speed;
                     let vy = (dy / dist) * speed;
@@ -445,7 +445,7 @@ export let UPGRADE_POOL: Upgrade[] = [
                 if (findNearestEnemy(300)) {
                     let dx = nearestEnemyPos[0] - posX[0];
                     let dy = nearestEnemyPos[1] - posY[0];
-                    let dist = _sqrt(dx * dx + dy * dy);
+                    let dist = sqrt(dx * dx + dy * dy);
                     let speed = 300;
                     let vx = (dx / dist) * speed;
                     let vy = (dy / dist) * speed;
@@ -466,7 +466,7 @@ export let UPGRADE_POOL: Upgrade[] = [
                 if (findNearestEnemy(300)) {
                     let dx = nearestEnemyPos[0] - posX[0];
                     let dy = nearestEnemyPos[1] - posY[0];
-                    let dist = _sqrt(dx * dx + dy * dy);
+                    let dist = sqrt(dx * dx + dy * dy);
                     let speed = 300;
                     let vx = (dx / dist) * speed;
                     let vy = (dy / dist) * speed;
@@ -487,7 +487,7 @@ export let UPGRADE_POOL: Upgrade[] = [
                 if (findNearestEnemy(300)) {
                     let dx = nearestEnemyPos[0] - posX[0];
                     let dy = nearestEnemyPos[1] - posY[0];
-                    let dist = _sqrt(dx * dx + dy * dy);
+                    let dist = sqrt(dx * dx + dy * dy);
                     let speed = 300;
                     let vx = (dx / dist) * speed;
                     let vy = (dy / dist) * speed;
@@ -508,7 +508,7 @@ export let UPGRADE_POOL: Upgrade[] = [
                 if (findNearestEnemy(300)) {
                     let dx = nearestEnemyPos[0] - posX[0];
                     let dy = nearestEnemyPos[1] - posY[0];
-                    let dist = _sqrt(dx * dx + dy * dy);
+                    let dist = sqrt(dx * dx + dy * dy);
                     let speed = 300;
                     let vx = (dx / dist) * speed;
                     let vy = (dy / dist) * speed;

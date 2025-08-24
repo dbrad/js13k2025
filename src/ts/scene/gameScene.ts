@@ -3,7 +3,7 @@ import { BLACK, pushQuad, pushText, updateLightning, WHITE } from "../draw";
 import { drawEntities, initEntities, posX, posY, spawnOffscreenEnemy, spawnPlayer, updateEntities, updatePlayerVel } from "../entity";
 import { gameState, newGame } from "../gameState";
 import { A_PRESSED, DOWN_IS_DOWN, DOWN_PRESSED, LEFT_IS_DOWN, RIGHT_IS_DOWN, UP_IS_DOWN, UP_PRESSED } from "../input";
-import { _ceil, clamp, EULER, _floor, _max, _min } from "../math";
+import { ceil, clamp, EULER, floor, max, min } from "../math";
 import { getRandomUpgrades, player, resetPlayer, updatePlayerAbilities, UPGRADE_POOL, xpTable } from "../player";
 import { createScene, switchToScene } from "../scene";
 import { drawWorld, generateWorld, WORLD_HEIGHT, WORLD_WIDTH } from "../world";
@@ -48,9 +48,9 @@ let update = (delta: number): void => {
                 gameState[GS_LEVELUP_PENDING] = 0;
             }
             if (DOWN_PRESSED) {
-                upgradeSelectRow = _min(upgradeSelectRow + 1, 3);
+                upgradeSelectRow = min(upgradeSelectRow + 1, 3);
             } else if (UP_PRESSED) {
-                upgradeSelectRow = _max(upgradeSelectRow - 1, 0);
+                upgradeSelectRow = max(upgradeSelectRow - 1, 0);
             }
         } else {
             gameState[GS_TIME] += dt;
@@ -99,11 +99,11 @@ let draw = (delta: number): void => {
 };
 
 let drawGUI = (delta: number): void => {
-    let hpPer = _ceil(player.hp_ / player.maxHP_ * 100);
+    let hpPer = ceil(player.hp_ / player.maxHP_ * 100);
     let xpNext = xpTable[player.level_];
-    let xpPer = clamp(_floor(player.xp_ / xpNext * 100), 0, 100);
+    let xpPer = clamp(floor(player.xp_ / xpNext * 100), 0, 100);
     pushText(`lvl  ${player.level_}`, 0, 0);
-    pushText(`hp   ${_ceil(player.hp_)}/${player.maxHP_}`, 0, 10);
+    pushText(`hp   ${ceil(player.hp_)}/${player.maxHP_}`, 0, 10);
     pushQuad(0, 20, 100, 8, WHITE);
     pushQuad(0, 21, hpPer, 6, 0xff0000aa);
     pushText(`xp   ${player.xp_}/${xpNext}`, 0, 30);

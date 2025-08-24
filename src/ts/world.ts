@@ -1,7 +1,7 @@
 import { cameraPos } from "./camera";
 import { BLACK, lightningFlash, pushQuad, pushTexturedQuad } from "./draw";
 import { gameState } from "./gameState";
-import { _ceil, clamp, _floor, _max, _min } from "./math";
+import { ceil, clamp, floor, max, min } from "./math";
 
 export let WORLD_WIDTH = 4096;
 export let WORLD_HEIGHT = 4096;
@@ -28,20 +28,20 @@ export let generateWorld = (): void => {
 };
 
 export let drawWorld = (): void => {
-    let camLeft = _floor((cameraPos[0] - SCREEN_HALF) / 16);
-    let camRight = _ceil((cameraPos[0] + SCREEN_HALF) / 16);
-    let camTop = _floor((cameraPos[1] - SCREEN_HALF) / 16);
-    let camBottom = _ceil((cameraPos[1] + SCREEN_HALF) / 16);
+    let camLeft = floor((cameraPos[0] - SCREEN_HALF) / 16);
+    let camRight = ceil((cameraPos[0] + SCREEN_HALF) / 16);
+    let camTop = floor((cameraPos[1] - SCREEN_HALF) / 16);
+    let camBottom = ceil((cameraPos[1] + SCREEN_HALF) / 16);
 
-    let startX = _max(0, camLeft);
-    let endX = _min(WORLD_TILE_WIDTH - 1, camRight);
-    let startY = _max(0, camTop);
-    let endY = _min(WORLD_TILE_HEIGHT - 1, camBottom);
+    let startX = max(0, camLeft);
+    let endX = min(WORLD_TILE_WIDTH - 1, camRight);
+    let startY = max(0, camTop);
+    let endY = min(WORLD_TILE_HEIGHT - 1, camBottom);
 
     for (let y = startY; y <= endY; y++) {
         for (let x = startX; x <= endX; x++) {
             let tile = worldMap[x + y * WORLD_TILE_WIDTH];
-            let offset = clamp(_floor(gameState[GS_TIME] / 2), 0, 16);
+            let offset = clamp(floor(gameState[GS_TIME] / 2), 0, 16);
             let screenX = x * 16 - (cameraPos[0] - SCREEN_HALF) + SCREEN_GUTTER;
             let screenY = y * 16 - (cameraPos[1] - SCREEN_HALF);
 

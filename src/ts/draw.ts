@@ -1,7 +1,7 @@
 import { assert } from "./__debug/debug";
 import { thunder, zzfxPlay } from "./audio";
 import { glClear, glFlush, glPushQuad } from "./gl";
-import { clamp, _floor, randInt } from "./math";
+import { clamp, floor, randInt } from "./math";
 import { TEXTURE_CACHE } from "./texture";
 
 // Colour
@@ -159,7 +159,7 @@ export let pushText = (text: string | number, x: number, y: number, colour: numb
     let lineCount: number = lines.length;
     let totalHeight: number = (letterSize * lineCount) + ((scale * 2) * (lineCount - 1));
     let xOffset: number = 0;
-    let yOffset: number = verticalAlign === TEXT_ALIGN_MIDDLE ? _floor(totalHeight / 2) : verticalAlign === TEXT_ALIGN_BOTTOM ? totalHeight : 0;
+    let yOffset: number = verticalAlign === TEXT_ALIGN_MIDDLE ? floor(totalHeight / 2) : verticalAlign === TEXT_ALIGN_BOTTOM ? totalHeight : 0;
     let alignmentOffset: number = 0;
     let characterCount: number = 0;
     let lineWidth: number = 0;
@@ -169,7 +169,7 @@ export let pushText = (text: string | number, x: number, y: number, colour: numb
         characterCount = line.length;
         lineWidth = characterCount * letterSize;
         if (horizontalAlign === TEXT_ALIGN_CENTER) {
-            alignmentOffset = _floor(lineWidth / 2);
+            alignmentOffset = floor(lineWidth / 2);
         } else if (horizontalAlign === TEXT_ALIGN_RIGHT) {
             alignmentOffset = lineWidth;
         }

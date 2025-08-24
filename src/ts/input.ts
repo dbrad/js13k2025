@@ -1,4 +1,4 @@
-import { _floor, isPointInCircle, isPointInRect } from "./math";
+import { floor, isPointInCircle, isPointInRect } from "./math";
 import { requestFullscreen } from "./canvas";
 import { pushText, pushTexturedQuad, WHITE } from "./draw";
 
@@ -58,8 +58,8 @@ let setTouchPosition = (e: TouchEvent): void => {
     for (let i = 0; i < 6; i++) {
         let touch = e.touches[i];
         if (touch) {
-            touches[i][0] = _floor((touch.clientX - canvasBounds.left) / (canvasBounds.width / SCREEN_WIDTH));
-            touches[i][1] = _floor((touch.clientY - canvasBounds.top) / (canvasBounds.height / SCREEN_HEIGHT));
+            touches[i][0] = floor((touch.clientX - canvasBounds.left) / (canvasBounds.width / SCREEN_WIDTH));
+            touches[i][1] = floor((touch.clientY - canvasBounds.top) / (canvasBounds.height / SCREEN_HEIGHT));
         } else {
             touches[i][0] = 0;
             touches[i][1] = 0;
@@ -101,7 +101,7 @@ export let initializeInput = (canvas: HTMLCanvasElement): void => {
 
 let dpadScale = 7;
 let dpadSize = 16 * dpadScale;
-let dpadTouchCenter = _floor(dpadSize / 3);
+let dpadTouchCenter = floor(dpadSize / 3);
 let [dpadX, dpadY] = [20, SCREEN_HEIGHT - dpadSize - 100];
 
 let buttonScale = 3;
