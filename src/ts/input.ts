@@ -208,7 +208,7 @@ export let updateInputState = (delta: number): void => {
 let getButtonTexture = (key: number, baseTexture: number): number => keyState[key] === KEY_IS_UP ? baseTexture : baseTexture + 2;
 export let drawControls = (): void => {
     let helpText = "";
-    if (isTouch) {
+    if (true) {
         pushTexturedQuad(TEXTURE_D_PAD, dpadX, dpadY, dpadScale, WHITE);
 
         if (keyState[D_UP] !== KEY_IS_UP) {

@@ -1,11 +1,13 @@
-Add damage value control to enemies
-Make luck do something
-!!Finish the 22 abilities!!
-Change cooldown to be fire rate (% increase, not % reduction. 100% is 2x faster, not instant)
-Add GUI area in right gutter to display current abilities, their levels, their dmg, and their cooldowns
+Game over Screen
 
-spawn boss and boss hp bar during midnight
-transition back to morning
+!!Finish the 22 abilities!!
+Make luck do something
+    Karma System
+    Good Luck (Taking upgrades)
+        - spawn more enemies?
+    Back Luck (Skip upgrade)
+        - Do more damage?
+
 Sound effects
 Music or beat
 

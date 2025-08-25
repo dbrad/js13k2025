@@ -24,7 +24,7 @@ declare const SCREEN_CENTER_X: 320;
 declare const SCREEN_CENTER_Y: 180;
 
 declare const ATLAS_WIDTH: 256;
-declare const ATLAS_HEIGHT: 80;
+declare const ATLAS_HEIGHT: 48;
 
 declare const GL_TRIANGLES: 4;
 declare const GL_TRIANGLES_FAN: 6;
@@ -111,7 +111,8 @@ declare const TEXTURE_DITH_14: 31;
 declare const TEXTURE_DITH_15: 32;
 
 declare const GS_TIME: 0;
-declare const GS_LEVELUP_PENDING: 1;
+declare const GS_RUNTIME: 1;
+declare const GS_LEVELUP_PENDING: 2;
 
 declare const UP_HP: 0;
 declare const UP_ATK: 1;
@@ -144,6 +145,7 @@ declare const UP_WORLD: 27;
 
 declare const BULLET: 0;
 declare const AURA: 1;
+declare const PASSIVE: 2;
 
 declare const STAT: 0;
 declare const ABILITY: 1;

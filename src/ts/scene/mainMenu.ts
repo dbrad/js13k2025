@@ -40,7 +40,7 @@ let update = (delta: number): void => {
     }
 };
 
-let draw = (delta: number): void => {
+let draw = (): void => {
     if (lightningFlash) {
         pushQuad(SCREEN_LEFT, 0, SCREEN_DIM, SCREEN_DIM, WHITE);
     }

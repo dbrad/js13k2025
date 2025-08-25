@@ -41,19 +41,19 @@ export let drawWorld = (): void => {
     for (let y = startY; y <= endY; y++) {
         for (let x = startX; x <= endX; x++) {
             let tile = worldMap[x + y * WORLD_TILE_WIDTH];
-            let offset = clamp(floor(gameState[GS_TIME] / 2), 0, 16);
+            let offset = clamp(floor(gameState[GS_TIME] / 12), 0, 16);
             let screenX = x * 16 - (cameraPos[0] - SCREEN_HALF) + SCREEN_GUTTER;
             let screenY = y * 16 - (cameraPos[1] - SCREEN_HALF);
 
             if (tile === 1) {
                 pushQuad(screenX, screenY, 16, 16, BLACK);
             } else if (tile > 1) {
-                pushTexturedQuad(TEXTURE_DITH_15 - (tile - 2), screenX, screenY);
+                pushTexturedQuad(TEXTURE_DITH_15 - (tile - 2), screenX, screenY, 1, BLACK);
             }
 
             if (offset <= 15) {
                 pushTexturedQuad(TEXTURE_DITH_00 + offset, screenX, screenY, 1, BLACK);
-            } else if (!lightningFlash) {
+            } else if (offset > 15 && !lightningFlash) {
                 pushQuad(screenX, screenY, 16, 16, BLACK);
             }
         }

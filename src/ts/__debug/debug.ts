@@ -1,5 +1,6 @@
 import { pushQuad, pushText, WHITE } from "../draw";
 import { activeCount, freeTop } from "../entity";
+import { gameState } from "../gameState";
 
 let frameCount: number = 0;
 let fps: number = 60;
@@ -50,6 +51,10 @@ export let drawPerformanceMeter = (): void => {
         if (showPerformance) {
             pushQuad(0, 0, SCREEN_WIDTH, 85, background);
 
+            let m = gameState[GS_RUNTIME] / 60;
+            let s = gameState[GS_RUNTIME] % 60;
+            let runtime = `${m.toFixed(0).padStart(2, "0")}:${s.toFixed(0).padStart(2, "0")}`;
+
             pushText(`fps ${fps.toFixed(0).padStart(7, " ")} hz`, col1, 5, WHITE, 1, TEXT_ALIGN_RIGHT);
             pushText(`frame ${displayMs} ms`, col1, 18, WHITE, 1, TEXT_ALIGN_RIGHT);
             pushText(`actual ${displayFrameTime} us`, col1, 31, WHITE, 1, TEXT_ALIGN_RIGHT);
@@ -57,6 +62,7 @@ export let drawPerformanceMeter = (): void => {
             pushText(`draw ${displayDrawTime} us`, col1, 57, WHITE, 1, TEXT_ALIGN_RIGHT);
             pushText(`render ${displayRenderTime} us`, col1, 70, WHITE, 1, TEXT_ALIGN_RIGHT);
 
+            pushText(`runtime    ${runtime.padStart(7, " ")}`, col2, 31, WHITE, 1, TEXT_ALIGN_RIGHT);
             pushText(`free top   ${freeTop.toFixed(0).padStart(7, " ")}`, col2, 44, WHITE, 1, TEXT_ALIGN_RIGHT);
             pushText(`active ent ${activeCount.toFixed(0).padStart(7, " ")}`, col2, 57, WHITE, 1, TEXT_ALIGN_RIGHT);
             pushText(`draw calls ${displayDrawCount}`, col2, 70, WHITE, 1, TEXT_ALIGN_RIGHT);

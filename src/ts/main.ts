@@ -76,7 +76,7 @@ window.addEventListener("load", async (): Promise<void> => {
 
             performanceMark("draw_start");
             {
-                drawScene(delta, now);
+                drawScene();
                 pushQuad(0, 0, SCREEN_LEFT, SCREEN_DIM, BLACK);
                 pushQuad(SCREEN_RIGHT, 0, SCREEN_GUTTER, SCREEN_DIM, BLACK);
                 pushQuad(0, SCREEN_DIM, SCREEN_WIDTH, 24, BLACK);
@@ -85,7 +85,7 @@ window.addEventListener("load", async (): Promise<void> => {
                 pushQuad(SCREEN_RIGHT, 0, 1, SCREEN_DIM, WHITE);
                 pushQuad(SCREEN_LEFT, 0, SCREEN_DIM, 1, WHITE);
                 pushQuad(SCREEN_LEFT, SCREEN_DIM - 1, SCREEN_DIM, 1, WHITE);
-                drawGUI(delta);
+                drawGUI();
                 drawControls();
                 if (DEBUG) {
                     drawCalls = drawCount();

@@ -62,6 +62,11 @@ export let updateLightning = (delta: number): void => {
         nextInter -= delta;
     }
 };
+export let clearLightning = (): void => {
+    nextInter = 1000;
+    nextDur = 50;
+    lightningFlash = false;
+};
 
 // Draw Queue
 let drawQueue: DrawCall[] = [];

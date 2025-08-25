@@ -7,21 +7,15 @@ import { burstParticle, catParticle, emitParticles, eyeParticle } from "./partic
 import { gainXp, player } from "./player";
 import { WORLD_HEIGHT, WORLD_WIDTH } from "./world";
 
-let MAX_ENTITIES = 20_000;
+let MAX_ENTITIES = 20_000 as const;
 
-let GRID_CELL_SIZE = 128;
-let GRID_WIDTH = 256;
-let GRID_HEIGHT = 256;
-let MAX_PER_CELL = 64;
+let GRID_CELL_SIZE = 64 as const;
+let GRID_WIDTH = 256 as const;
+let GRID_HEIGHT = 256 as const;
+let MAX_PER_CELL = 128 as const;
 
-let ENEMY_SPEED = 50;
-let SEEK_STOP_DIST = 14;
-let PLAYER_RADIUS = 8;
-
-let ENEMY_RADIUS = 8;
+let ENEMY_SPEED = 50 as const;
 let PROJECTILE_RADIUS = 2;
-
-let DEFAULT_ENEMY_HP = 3;
 
 let TYPE_PLAYER = 1 << 0;
 let TYPE_ENEMY = 1 << 1;
@@ -30,9 +24,10 @@ let TYPE_AURA = 1 << 3;
 
 export let playerDir = 0;
 
-let type = new Uint8Array(MAX_ENTITIES);
-let alive = new Uint8Array(MAX_ENTITIES);
-let radius = new Float32Array(MAX_ENTITIES);
+export let type = new Uint8Array(MAX_ENTITIES);
+export let alive = new Uint8Array(MAX_ENTITIES);
+export let radius = new Float32Array(MAX_ENTITIES);
+
 export let posX = new Float32Array(MAX_ENTITIES);
 export let posY = new Float32Array(MAX_ENTITIES);
 export let velX = new Float32Array(MAX_ENTITIES);
@@ -40,7 +35,7 @@ export let velY = new Float32Array(MAX_ENTITIES);
 export let sPosX = new Float32Array(MAX_ENTITIES);
 export let sPosY = new Float32Array(MAX_ENTITIES);
 
-let hp = new Float32Array(MAX_ENTITIES);
+export let hp = new Float32Array(MAX_ENTITIES);
 let damage = new Float32Array(MAX_ENTITIES);
 let lifetime = new Float32Array(MAX_ENTITIES);
 let color = new Uint32Array(MAX_ENTITIES);
@@ -144,7 +139,7 @@ let free = (id: number): void => {
     freeList[freeTop++] = id;
 };
 
-export let spawnPlayer = (x: number, y: number, r: number = PLAYER_RADIUS): void => {
+export let spawnPlayer = (x: number, y: number, r: number = 8): void => {
     let id = alloc();
     assert(id === 0, "player got non-zero id");
     type[id] = TYPE_PLAYER;
@@ -156,7 +151,7 @@ export let spawnPlayer = (x: number, y: number, r: number = PLAYER_RADIUS): void
     lifetime[id] = 0;
 };
 
-export let spawnEnemy = (x: number, y: number, r: number = ENEMY_RADIUS, hpVal: number = DEFAULT_ENEMY_HP, dmg: number = 1, rgba: number = BLACK): number => {
+export let spawnEnemy = (x: number, y: number, r: number = 8, hpVal: number = 3, dmg: number = 1, rgba: number = BLACK): number => {
     let id = alloc();
     if (id < 1) return -1;
     type[id] = TYPE_ENEMY;
@@ -217,24 +212,6 @@ export let spawnAura = (r: number = 50, dmg: number = 5, lifeSec: number = -1, a
     return id;
 };
 
-export let spawnRadialBurst = (cx: number, cy: number, count: number, speed: number, r: number = PROJECTILE_RADIUS, lifeSec: number = 2, dmg: number = 1): void => {
-    for (let k = 0; k < count; k++) {
-        let a = (2 * PI * k) / count;
-        let vx = cos(a) * speed;
-        let vy = sin(a) * speed;
-        spawnProjectile(cx, cy, vx, vy, r, dmg, lifeSec, 1);
-    }
-};
-
-export let spawnOrbit = (cx: number, cy: number, count: number, r: number = PROJECTILE_RADIUS, ar: number, lifeSec: number = 2, dmg: number = 1): void => {
-    for (let k = 0; k < count; k++) {
-        let a = (2 * PI * k) / count;
-        let px = cx + cos(a) * ar;
-        let py = cy + sin(a) * ar;
-        spawnProjectile(px, py, 0, 0, r, dmg, lifeSec, 999);
-    }
-};
-
 let damageEnemy = (id: number, amt: number): void => {
     hp[id] -= amt;
     if (hp[id] <= 0) {
@@ -263,13 +240,14 @@ export let updatePlayerVel = (x: number, y: number): void => {
 };
 
 export let updateEntities = (deltaMs: number): void => {
-    let dt = deltaMs * 0.001;
     if (activeCount === 0 || alive[0] === 0) return;
     gridCounts.fill(0);
 
     nearestEnemyPos[X] = -1;
     nearestEnemyPos[Y] = -1;
+
     let pX = posX[0], pY = posY[0];
+    let dt = deltaMs * 0.001;
 
     for (let n = activeCount - 1; n >= 0; n--) {
         let id = activeIds[n];
@@ -285,7 +263,7 @@ export let updateEntities = (deltaMs: number): void => {
             let dx = pX - posX[id];
             let dy = pY - posY[id];
             let d2 = dx * dx + dy * dy;
-            if (d2 > SEEK_STOP_DIST * SEEK_STOP_DIST) {
+            if (d2 > 14 * 14) {
                 let inv = 1 / sqrt(max(d2, 1e-8));
                 dx *= inv;
                 dy *= inv;
@@ -456,6 +434,18 @@ export let updateEntities = (deltaMs: number): void => {
 };
 
 export let drawEntities = (): void => {
+    if (activeCount === 0) return;
+    for (let n = 0; n < activeCount; n++) {
+        let id = activeIds[n];
+        if (type[id] & TYPE_AURA) {
+            let r = radius[id];
+            let d = r * 2;
+            pushTexturedQuad(TEXTURE_C_16x16, sPosX[id] - r, sPosY[id] - r, d * 0.0625, color[id] || 0x33ffffff);
+        } else {
+            continue;
+        }
+    }
+
     for (let n = 0; n < activeCount; n++) {
         let id = activeIds[n];
         sPosX[id] = posX[id] - cameraPos[X] + SCREEN_HALF + SCREEN_GUTTER;
@@ -470,7 +460,7 @@ export let drawEntities = (): void => {
         }
         let t = type[id];
         if (t & TYPE_AURA) {
-            pushTexturedQuad(TEXTURE_C_16x16, sPosX[id] - r, sPosY[id] - r, d * 0.0625, color[id] || 0x33ffffff);
+            continue;
         } else if (t & TYPE_ENEMY) {
             pushTexturedQuad(TEXTURE_RAT, sPosX[id] - r, sPosY[id] - r, d * 0.0625, BLACK, velX[id] < 0, false, true);
         } else {

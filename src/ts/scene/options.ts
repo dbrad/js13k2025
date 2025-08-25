@@ -10,7 +10,6 @@ let update = (delta: number): void => {
     }
 };
 
-let draw = (delta: number): void => {
-};
+let draw = (): void => { };
 
 export let optionsScene = createScene(setup, update, draw, () => { });

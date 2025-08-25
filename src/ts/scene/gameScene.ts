@@ -1,9 +1,9 @@
 import { cameraPos, cameraTarget, updateCamera, vCameraPos } from "../camera";
 import { BLACK, pushQuad, pushText, updateLightning, WHITE } from "../draw";
-import { drawEntities, initEntities, posX, posY, spawnOffscreenEnemy, spawnPlayer, updateEntities, updatePlayerVel } from "../entity";
+import { drawEntities, hp, initEntities, posX, posY, spawnOffscreenEnemy, spawnPlayer, updateEntities, updatePlayerVel } from "../entity";
 import { gameState, newGame } from "../gameState";
 import { A_PRESSED, DOWN_IS_DOWN, DOWN_PRESSED, LEFT_IS_DOWN, RIGHT_IS_DOWN, UP_IS_DOWN, UP_PRESSED } from "../input";
-import { ceil, clamp, EULER, floor, max, min } from "../math";
+import { ceil, clamp, EULER, floor, max, min, randInt } from "../math";
 import { getRandomUpgrades, player, resetPlayer, updatePlayerAbilities, UPGRADE_POOL, xpTable } from "../player";
 import { createScene, switchToScene } from "../scene";
 import { drawWorld, generateWorld, WORLD_HEIGHT, WORLD_WIDTH } from "../world";
@@ -14,6 +14,8 @@ let upgrades: Upgrade[] = [];
 let timer = 0;
 let gameover = false;
 let bossSpawn = false;
+let bossAlive = false;
+let bossId = -1;
 
 let setup = (): void => {
     gameover = bossSpawn = false;
@@ -27,14 +29,18 @@ let setup = (): void => {
 };
 
 let update = (delta: number): void => {
+    let dt = delta * 0.001;
+    gameState[GS_RUNTIME] += dt;
+    if (bossAlive) {
+        bossAlive = hp[bossId] > 0;
+    }
     if (player.hp_ <= 0 && !gameover) {
         switchToScene(mainMenuScene.id_);
         gameover = true;
     } else {
-        let dt = delta * 0.001;
         if (gameState[GS_LEVELUP_PENDING]) {
             if (upgrades.length === 0) {
-                upgrades = getRandomUpgrades(3);
+                upgrades = getRandomUpgrades(3, player.level_ === 1);
             }
             if (A_PRESSED) {
                 if (upgradeSelectRow === 3) {
@@ -53,12 +59,17 @@ let update = (delta: number): void => {
                 upgradeSelectRow = max(upgradeSelectRow - 1, 0);
             }
         } else {
-            gameState[GS_TIME] += dt;
-            if (gameState[GS_TIME] > 32) {
+            if (!bossSpawn) {
+                gameState[GS_TIME] += dt;
+            } else if (bossSpawn && !bossAlive) {
+                gameState[GS_TIME] -= dt;
+            }
+            if (gameState[GS_TIME] >= 192) {
                 updateLightning(delta);
                 if (!bossSpawn) {
-                    spawnOffscreenEnemy(100, 64);
+                    bossId = spawnOffscreenEnemy(500, 64, 25);
                     bossSpawn = true;
+                    bossAlive = true;
                 }
             }
             let acc = EULER ** (player.speed_ * dt);
@@ -79,10 +90,11 @@ let update = (delta: number): void => {
 
             timer += delta;
             if (timer >= 500) {
-                // TODO: Better enemy spawning (offscreen, and ramp up and down)
                 timer -= 500;
-                spawnOffscreenEnemy(3, 8);
-                spawnOffscreenEnemy(3, 8);
+                let s = randInt(0, floor(gameState[GS_TIME] / 12));
+                spawnOffscreenEnemy(3 + s, 8 + s, 1 + s);
+                spawnOffscreenEnemy(3 + s, 8 + s, 1 + s);
+                spawnOffscreenEnemy(3 + s, 8 + s, 1 + s);
             }
 
             updateEntities(delta);
@@ -92,38 +104,43 @@ let update = (delta: number): void => {
     }
 };
 
-let draw = (delta: number): void => {
+let draw = (): void => {
     pushQuad(SCREEN_LEFT, 0, SCREEN_DIM, SCREEN_DIM, WHITE);
     drawWorld();
     drawEntities();
 };
 
-let drawGUI = (delta: number): void => {
-    let hpPer = ceil(player.hp_ / player.maxHP_ * 100);
+let w = SCREEN_GUTTER - 4;
+let drawGUI = (): void => {
+    let hpPer = ceil(player.hp_ / player.maxHP_ * w);
     let xpNext = xpTable[player.level_];
-    let xpPer = clamp(floor(player.xp_ / xpNext * 100), 0, 100);
-    pushText(`lvl  ${player.level_}`, 0, 0);
-    pushText(`hp   ${ceil(player.hp_)}/${player.maxHP_}`, 0, 10);
-    pushQuad(0, 20, 100, 8, WHITE);
-    pushQuad(0, 21, hpPer, 6, 0xff0000aa);
-    pushText(`xp   ${player.xp_}/${xpNext}`, 0, 30);
-    pushQuad(0, 40, 100, 8, WHITE);
-    pushQuad(0, 41, xpPer, 6, 0xff336600);
-    // pushText(`luck ${player.luck_}`, 0, 50);
-    // pushText(`atk  ${player.damage_}`, 0, 60);
-    // pushText(`def  ${player.defense_}`, 0, 70);
-    // pushText(`cd   ${player.cooldown_}`, 0, 80);
-    // pushText(`ms   ${player.speed_}`, 0, 90);
+    let xpPer = clamp(floor(player.xp_ / xpNext * w), 0, w);
+    pushText(`lvl  ${player.level_}`, 1, 0);
+    pushText(`hp`, 1, 10);
+    pushQuad(2, 20, w, 8, WHITE);
+    pushQuad(2, 21, hpPer, 6, 0xff0000aa);
+    pushText(`xp`, 1, 30);
+    pushQuad(2, 40, w, 8, WHITE);
+    pushQuad(2, 41, xpPer, 6, 0xff336600);
+    pushText(`luck   ${player.luck_}`, 1, 50); // TODO WHAT DO YOU DOOOOO
+    pushText(`damage ${player.damage_}`, 2, 60);
+    pushText(`armor  ${player.defense_}`, 1, 70);
+    pushText(`rate   ${100 + player.cooldown_}%`, 1, 80);
+    pushText(`move   ${player.speed_}`, 1, 90);
 
+    pushQuad(SCREEN_RIGHT + 2, 0, w, 1, WHITE);
     for (let i = 0; i < player.abilities_.length; i++) {
         let a = player.abilities_[i];
-        pushText(UPGRADE_POOL[a.id_].name_, SCREEN_RIGHT + 5, i * 20);
-        if (a.type_ === BULLET) {
-            pushQuad(SCREEN_RIGHT + 5, 10 + i * 20, 100, 8, WHITE);
-            pushQuad(SCREEN_RIGHT + 5, 10 + i * 20 + 1, clamp((1 - a.timer_ / (a.cooldown_ * (1 - (0.01 * player.cooldown_)))) * 100, 0, 100), 6, 0xff0000aa);
+        let offset = 4 + i * 35;
+        pushText(UPGRADE_POOL[a.id_].name_, SCREEN_RIGHT + 1, offset);
+        if (a.type_ === BULLET || a.type_ === PASSIVE) {
+            pushQuad(SCREEN_RIGHT + 2, 10 + offset, w, 8, WHITE);
+            pushQuad(SCREEN_RIGHT + 2, 10 + offset + 1, clamp((1 - a.timer_ / (a.cooldown_ * (100 / (100 + player.cooldown_)))) * w, 0, w), 6, 0xff0000aa);
         } else {
-            pushText("passive", SCREEN_RIGHT + 5, 10 + i * 20, 0xff666666);
+            pushText("aura", SCREEN_RIGHT + 1, 10 + offset, 0xff666666);
         }
+        pushText(`lvl ${a.level_}`, SCREEN_RIGHT + 1, 20 + offset, 0xff666666);
+        pushQuad(SCREEN_RIGHT + 2, 31 + offset, w, 1, WHITE);
     }
 
     if (gameState[GS_LEVELUP_PENDING]) {
@@ -141,6 +158,12 @@ let drawGUI = (delta: number): void => {
         }
         pushQuad(SCREEN_LEFT + 84, 1 + (84 * 3), SCREEN_DIM - 168, 82, BLACK);
         pushText("SKIP", SCREEN_CENTER_X, 1 + 42 + (84 * 3), WHITE, 2, TEXT_ALIGN_CENTER, TEXT_ALIGN_MIDDLE);
+    }
+
+    if (bossAlive) {
+        pushText("r.o.u.s", SCREEN_CENTER_X, SCREEN_DIM - 14, WHITE, 2, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM);
+        pushQuad(SCREEN_CENTER_X - 50, SCREEN_DIM - 12, 100, 8, WHITE);
+        pushQuad(SCREEN_CENTER_X - 50, SCREEN_DIM - 11, hp[bossId] / 500 * 100, 6, 0xff0000aa);
     }
 };
 
