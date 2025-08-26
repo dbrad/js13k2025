@@ -1,6 +1,7 @@
 Game over Screen
+Timer
 
-!!Finish the 22 abilities!!
+Finishing adding the 12-15 abilities
 Make luck do something
     Karma System
     Good Luck (Taking upgrades)

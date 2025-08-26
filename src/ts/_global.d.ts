@@ -21,9 +21,7 @@ declare module '*.webp' {
 }
 
 type GameState = [
-    GS_TIME: number,
     GS_RUNTIME: number,
-    GS_LEVELUP_PENDING: number,
 ];
 
 type TextureDefinition = [number, number[], number, number, number, number];
@@ -102,4 +100,5 @@ type Player = {
     abilities_: Ability[];
     xp_: number;
     level_: number;
+    levelUpPending_: boolean;
 };

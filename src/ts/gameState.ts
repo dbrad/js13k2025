@@ -2,7 +2,7 @@
 let saveFileName = "js13k2025dbrad";
 let storage = window.localStorage;
 
-export let gameState: GameState = [0, 0, 1,];
+export let gameState: GameState = [0];
 
 export let saveFileExists = (): boolean => {
     return storage.getItem(saveFileName) !== null;
@@ -10,9 +10,7 @@ export let saveFileExists = (): boolean => {
 
 export let newGame = (): void => {
     gameState = [
-        0, // GS_TIME
         0, // GS_RUNTIME
-        1, // GS_LEVELUP_PENDING
     ];
 };
 

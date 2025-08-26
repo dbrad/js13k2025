@@ -1,7 +1,14 @@
 import { cameraPos } from "./camera";
 import { BLACK, lightningFlash, pushQuad, pushTexturedQuad } from "./draw";
-import { gameState } from "./gameState";
 import { ceil, clamp, floor, max, min } from "./math";
+
+export let timeOfDay = 0;
+export let gameStage = 0;
+
+export let updateTime = (dt: number): void => {
+    timeOfDay += dt;
+    gameStage = clamp(floor(timeOfDay / 12), 0, 16);
+};
 
 export let WORLD_WIDTH = 4096;
 export let WORLD_HEIGHT = 4096;
@@ -12,6 +19,8 @@ export let WORLD_TILE_HEIGHT = WORLD_HEIGHT / 16;
 export let worldMap = new Uint8Array(WORLD_TILE_WIDTH * WORLD_TILE_WIDTH);
 
 export let generateWorld = (): void => {
+    timeOfDay = 0;
+    gameStage = 0;
     for (let x = 0; x < WORLD_TILE_WIDTH; x++) {
         for (let y = 0; y < WORLD_TILE_WIDTH; y++) {
             if (x < 3 || y < 3 || x > WORLD_TILE_WIDTH - 4 || y > WORLD_TILE_WIDTH - 4) {
@@ -23,6 +32,7 @@ export let generateWorld = (): void => {
             } else if (x < 6 || y < 6 || x > WORLD_TILE_WIDTH - 7 || y > WORLD_TILE_WIDTH - 7) {
                 worldMap[x + y * WORLD_TILE_WIDTH] = 4;
             }
+            // TODO: Generate 8 more tile numbers to place 8x8 grasses at random in 1 of the 4 corners of a 16x16 block
         }
     }
 };
@@ -41,7 +51,6 @@ export let drawWorld = (): void => {
     for (let y = startY; y <= endY; y++) {
         for (let x = startX; x <= endX; x++) {
             let tile = worldMap[x + y * WORLD_TILE_WIDTH];
-            let offset = clamp(floor(gameState[GS_TIME] / 12), 0, 16);
             let screenX = x * 16 - (cameraPos[0] - SCREEN_HALF) + SCREEN_GUTTER;
             let screenY = y * 16 - (cameraPos[1] - SCREEN_HALF);
 
@@ -51,9 +60,9 @@ export let drawWorld = (): void => {
                 pushTexturedQuad(TEXTURE_DITH_15 - (tile - 2), screenX, screenY, 1, BLACK);
             }
 
-            if (offset <= 15) {
-                pushTexturedQuad(TEXTURE_DITH_00 + offset, screenX, screenY, 1, BLACK);
-            } else if (offset > 15 && !lightningFlash) {
+            if (gameStage <= 15) {
+                pushTexturedQuad(TEXTURE_DITH_00 + gameStage, screenX, screenY, 1, BLACK);
+            } else if (gameStage > 15 && !lightningFlash) {
                 pushQuad(screenX, screenY, 16, 16, BLACK);
             }
         }

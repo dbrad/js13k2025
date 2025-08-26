@@ -2,10 +2,10 @@ import { assert } from "./__debug/debug";
 import { cathit } from "./audio";
 import { cameraPos } from "./camera";
 import { BLACK, pushQuad, pushTexturedQuad, WHITE } from "./draw";
+import { WORLD_HEIGHT, WORLD_WIDTH } from "./gameMap";
 import { clamp, cos, EULER, floor, max, min, PI, random, sin, sqrt } from "./math";
 import { burstParticle, catParticle, emitParticles, eyeParticle } from "./particle";
 import { gainXp, player } from "./player";
-import { WORLD_HEIGHT, WORLD_WIDTH } from "./world";
 
 let MAX_ENTITIES = 20_000 as const;
 
@@ -23,6 +23,7 @@ let TYPE_PROJECTILE = 1 << 2;
 let TYPE_AURA = 1 << 3;
 
 export let playerDir = 0;
+let enemyCount = 0;
 
 export let type = new Uint8Array(MAX_ENTITIES);
 export let alive = new Uint8Array(MAX_ENTITIES);
@@ -117,6 +118,7 @@ export let initEntities = (): void => {
         freeList[i] = MAX_ENTITIES - 1 - i;
     }
     freeTop = MAX_ENTITIES;
+    enemyCount = 0;
 };
 
 let alloc = (): number => {
@@ -151,7 +153,8 @@ export let spawnPlayer = (x: number, y: number, r: number = 8): void => {
     lifetime[id] = 0;
 };
 
-export let spawnEnemy = (x: number, y: number, r: number = 8, hpVal: number = 3, dmg: number = 1, rgba: number = BLACK): number => {
+export let spawnEnemy = (x: number, y: number, r: number = 8, hpVal: number = 3, dmg: number = 1, rgba: number = BLACK, forceSpawn: boolean = false): number => {
+    if (!forceSpawn && enemyCount >= 300) return -1;
     let id = alloc();
     if (id < 1) return -1;
     type[id] = TYPE_ENEMY;
@@ -163,11 +166,12 @@ export let spawnEnemy = (x: number, y: number, r: number = 8, hpVal: number = 3,
     hp[id] = hpVal;
     damage[id] = dmg;
     color[id] = rgba;
+    enemyCount++;
     return id;
 };
 
 let diag = sqrt(SCREEN_DIM * SCREEN_DIM * 2) / 2 + 84;
-export let spawnOffscreenEnemy = (hp: number = 3, r: number = 8, dmg: number = 1): number => {
+export let spawnOffscreenEnemy = (hp: number = 3, r: number = 8, dmg: number = 1, forceSpawn: boolean = false): number => {
     let angle = random() * PI * 2;
     let x = cameraPos[X] + cos(angle) * diag;
     let y = cameraPos[Y] + sin(angle) * diag;
@@ -177,7 +181,7 @@ export let spawnOffscreenEnemy = (hp: number = 3, r: number = 8, dmg: number = 1
         y = cameraPos[Y] + sin(angle) * diag;
     }
     x = clamp(x, 0, WORLD_WIDTH); y = clamp(y, 0, WORLD_HEIGHT);
-    return spawnEnemy(x, y, r, hp, dmg);
+    return spawnEnemy(x, y, r, hp, dmg, BLACK, forceSpawn);
 };
 
 export let spawnProjectile = (x: number, y: number, vx: number, vy: number, r: number = PROJECTILE_RADIUS, dmg: number = 1, lifeSec: number = 2, hpVal: number = 1, abgr: number = 0xff0000ff): number => {
@@ -219,6 +223,7 @@ let damageEnemy = (id: number, amt: number): void => {
         burstParticle.position_[X] = posX[id];
         burstParticle.position_[Y] = posY[id];
         emitParticles(burstParticle, 20);
+        enemyCount--;
         alive[id] = 0;
     }
 };
@@ -232,11 +237,6 @@ let damagePlayer = (amt: number): void => {
             alive[0] = 0;
         }
     }
-};
-
-export let updatePlayerVel = (x: number, y: number): void => {
-    velX[0] += x;
-    velY[0] += y;
 };
 
 export let updateEntities = (deltaMs: number): void => {

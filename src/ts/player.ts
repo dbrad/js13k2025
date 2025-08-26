@@ -1,5 +1,4 @@
 import { findNearestEnemy, nearestEnemyPos, playerDir, posX, posY, spawnAura, spawnProjectile } from "./entity";
-import { gameState } from "./gameState";
 import { cos, max, min, PI, randInt, random, roundTo, sin, sqrt } from "./math";
 import { burstParticle, emitParticle } from "./particle";
 
@@ -17,11 +16,12 @@ export let resetPlayer = (): void => {
         abilities_: [],
         xp_: 0,
         level_: 1,
+        levelUpPending_: false
     };
     UPGRADE_POOL[UP_CLAW].apply_();
 };
 
-export let xpTable: number[] = Array.from({ length: 30 }, (_, i) => roundTo(25 * (1.5 ** (i - 1)), 5));
+export let xpTable: number[] = Array.from({ length: 30 }, (_, i) => roundTo(10 * (1.5 ** (i - 1)), 5));
 
 export let gainXp = (val: number): void => {
     player.xp_ += val;
@@ -29,7 +29,7 @@ export let gainXp = (val: number): void => {
     if (player.xp_ >= nextLevel) {
         player.xp_ -= nextLevel;
         player.level_ += 1;
-        gameState[GS_LEVELUP_PENDING] = 1;
+        player.levelUpPending_ = true;
     }
 };
 
@@ -93,12 +93,12 @@ export let UPGRADE_POOL: Upgrade[] = [
             });
         },
     }, {
-        id_: UP_FOOL,
-        name_: "The Fool",
-        description_: "Fire in random directions|upgrade: projectiles+",
+        id_: UP_ZOOMY,
+        name_: "The Zoomies",
+        description_: "Attack in random directions|upgrade: projectiles+",
         kind_: ABILITY,
         apply_: (): void => {
-            upgradeAbility(UP_FOOL, BULLET, 300, (a: Ability): void => {
+            upgradeAbility(UP_ZOOMY, BULLET, 300, (a: Ability): void => {
                 for (let i = 0; i < a.level_ + 1; i++) {
                     let a = random() * PI * 2;
                     let speed = randInt(150, 200);
@@ -109,12 +109,12 @@ export let UPGRADE_POOL: Upgrade[] = [
             });
         },
     }, {
-        id_: UP_MAGI,
-        name_: "The Magician",
-        description_: "Fire a powerful piercing shot|at a nearby enemies|upgrade: damage+ size+",
+        id_: UP_HAIRBAKK,
+        name_: "Hairball",
+        description_: "Let out a powerful piercing attack|upgrade: damage+ size+",
         kind_: ABILITY,
         apply_: (): void => {
-            upgradeAbility(UP_MAGI, BULLET, 2000, (a: Ability): void => {
+            upgradeAbility(UP_HAIRBAKK, BULLET, 2000, (a: Ability): void => {
                 let speed = 300;
                 let dmg = 10 * a.level_;
                 let size = 5 * a.level_;
@@ -132,35 +132,35 @@ export let UPGRADE_POOL: Upgrade[] = [
             });
         },
     }, {
-        id_: UP_PRST,
-        name_: "The High Priestess",
+        id_: UP_MENACE,
+        name_: "Menacing Pressence",
         description_: "Slow nearby enemies|upgrade: slow+ size+",
         kind_: ABILITY,
         apply_: (): void => {
-            upgradeAbility(UP_PRST, AURA, 5000, (a: Ability): void => {
+            upgradeAbility(UP_MENACE, AURA, 5000, (a: Ability): void => {
                 let slow = max(0.7 - (a.level_ - 1) * 0.1, 0.3);
                 let radius = 50 + a.level_ * 10;
                 a.entityId_ = spawnAura(radius, 0, -1, 0x22ff8888, slow, a.entityId_);
             });
         },
     }, {
-        id_: UP_EMPS,
-        name_: "The Empress",
+        id_: UP_NINELIFE,
+        name_: "Nine Lives",
         description_: "Slowly regenerate health|upgrade: frequency+",
         kind_: ABILITY,
         apply_: (): void => {
-            upgradeAbility(UP_EMPS, PASSIVE, 5000, (a: Ability): void => {
+            upgradeAbility(UP_NINELIFE, PASSIVE, 5000, (a: Ability): void => {
                 a.cooldown_ = 5000 - (1000 * (a.level_ - 1));
                 player.hp_ = min(player.maxHP_, player.hp_ + 1);
             });
         },
     }, {
-        id_: UP_EMPR,
-        name_: "The Emperor",
-        description_: "Fire shots in the 4 cardinal directions|upgrade: pierce+ size+",
+        id_: UP_CARDINAL,
+        name_: "Cardinal Assault",
+        description_: "Attack in the 4 cardinal directions|upgrade: pierce+ size+",
         kind_: ABILITY,
         apply_: (): void => {
-            upgradeAbility(UP_EMPR, BULLET, 1000, (a: Ability): void => {
+            upgradeAbility(UP_CARDINAL, BULLET, 1000, (a: Ability): void => {
                 let speed = 300;
                 spawnProjectile(posX[0], posY[0], speed, 0, 1 + a.level_, 1, 2, a.level_);
                 spawnProjectile(posX[0], posY[0], -speed, 0, 1 + a.level_, 1, 2, a.level_);
@@ -169,168 +169,12 @@ export let UPGRADE_POOL: Upgrade[] = [
             });
         },
     }, {
-        id_: UP_HIERO,
-        name_: "The Hierophant",
-        description_: "",
-        kind_: ABILITY,
-        apply_: (): void => {
-            upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability): void => {
-                if (findNearestEnemy(300)) {
-                    let dx = nearestEnemyPos[0] - posX[0];
-                    let dy = nearestEnemyPos[1] - posY[0];
-                    let dist = sqrt(dx * dx + dy * dy);
-                    let speed = 300;
-                    let vx = (dx / dist) * speed;
-                    let vy = (dy / dist) * speed;
-                    spawnProjectile(posX[0], posY[0], vx, vy, 10, 5, 5, 999);
-                } else {
-                    let vx = playerDir === 0 ? -300 : 300;
-                    spawnProjectile(posX[0], posY[0], vx, 0, 10, 5, 5, 999);
-                }
-            });
-        },
-    }, {
-        id_: UP_LOVER,
-        name_: "The Lovers",
-        description_: "",
-        kind_: ABILITY,
-        apply_: (): void => {
-            upgradeAbility(UP_LOVER, AURA, 1000, (a: Ability): void => {
-            });
-        },
-    }, {
-        id_: UP_CHARI,
-        name_: "The Chariot",
-        description_: "",
-        kind_: ABILITY,
-        apply_: (): void => {
-            upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability): void => {
-                if (findNearestEnemy(300)) {
-                    let dx = nearestEnemyPos[0] - posX[0];
-                    let dy = nearestEnemyPos[1] - posY[0];
-                    let dist = sqrt(dx * dx + dy * dy);
-                    let speed = 300;
-                    let vx = (dx / dist) * speed;
-                    let vy = (dy / dist) * speed;
-                    spawnProjectile(posX[0], posY[0], vx, vy, 10, 5, 5, 999);
-                } else {
-                    let vx = playerDir === 0 ? -300 : 300;
-                    spawnProjectile(posX[0], posY[0], vx, 0, 10, 5, 5, 999);
-                }
-            });
-        },
-    }, {
-        id_: UP_STR,
-        name_: "Strength",
-        description_: "",
-        kind_: ABILITY,
-        apply_: (): void => {
-            upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability): void => {
-                if (findNearestEnemy(300)) {
-                    let dx = nearestEnemyPos[0] - posX[0];
-                    let dy = nearestEnemyPos[1] - posY[0];
-                    let dist = sqrt(dx * dx + dy * dy);
-                    let speed = 300;
-                    let vx = (dx / dist) * speed;
-                    let vy = (dy / dist) * speed;
-                    spawnProjectile(posX[0], posY[0], vx, vy, 10, 5, 5, 999);
-                } else {
-                    let vx = playerDir === 0 ? -300 : 300;
-                    spawnProjectile(posX[0], posY[0], vx, 0, 10, 5, 5, 999);
-                }
-            });
-        },
-    }, {
-        id_: UP_HERM,
-        name_: "The Hermit",
-        description_: "",
-        kind_: ABILITY,
-        apply_: (): void => {
-            upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability): void => {
-                if (findNearestEnemy(300)) {
-                    let dx = nearestEnemyPos[0] - posX[0];
-                    let dy = nearestEnemyPos[1] - posY[0];
-                    let dist = sqrt(dx * dx + dy * dy);
-                    let speed = 300;
-                    let vx = (dx / dist) * speed;
-                    let vy = (dy / dist) * speed;
-                    spawnProjectile(posX[0], posY[0], vx, vy, 10, 5, 5, 999);
-                } else {
-                    let vx = playerDir === 0 ? -300 : 300;
-                    spawnProjectile(posX[0], posY[0], vx, 0, 10, 5, 5, 999);
-                }
-            });
-        },
-    }, {
-        id_: UP_WHEEL,
-        name_: "Wheel of Fortune",
-        description_: "",
-        kind_: ABILITY,
-        apply_: (): void => {
-            upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability): void => {
-                if (findNearestEnemy(300)) {
-                    let dx = nearestEnemyPos[0] - posX[0];
-                    let dy = nearestEnemyPos[1] - posY[0];
-                    let dist = sqrt(dx * dx + dy * dy);
-                    let speed = 300;
-                    let vx = (dx / dist) * speed;
-                    let vy = (dy / dist) * speed;
-                    spawnProjectile(posX[0], posY[0], vx, vy, 10, 5, 5, 999);
-                } else {
-                    let vx = playerDir === 0 ? -300 : 300;
-                    spawnProjectile(posX[0], posY[0], vx, 0, 10, 5, 5, 999);
-                }
-            });
-        },
-    }, {
-        id_: UP_JUST,
-        name_: "Justice",
-        description_: "",
-        kind_: ABILITY,
-        apply_: (): void => {
-            upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability): void => {
-                if (findNearestEnemy(300)) {
-                    let dx = nearestEnemyPos[0] - posX[0];
-                    let dy = nearestEnemyPos[1] - posY[0];
-                    let dist = sqrt(dx * dx + dy * dy);
-                    let speed = 300;
-                    let vx = (dx / dist) * speed;
-                    let vy = (dy / dist) * speed;
-                    spawnProjectile(posX[0], posY[0], vx, vy, 10, 5, 5, 999);
-                } else {
-                    let vx = playerDir === 0 ? -300 : 300;
-                    spawnProjectile(posX[0], posY[0], vx, 0, 10, 5, 5, 999);
-                }
-            });
-        },
-    }, {
-        id_: UP_HANG,
-        name_: "The Hanged Man",
-        description_: "",
-        kind_: ABILITY,
-        apply_: (): void => {
-            upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability): void => {
-                if (findNearestEnemy(300)) {
-                    let dx = nearestEnemyPos[0] - posX[0];
-                    let dy = nearestEnemyPos[1] - posY[0];
-                    let dist = sqrt(dx * dx + dy * dy);
-                    let speed = 300;
-                    let vx = (dx / dist) * speed;
-                    let vy = (dy / dist) * speed;
-                    spawnProjectile(posX[0], posY[0], vx, vy, 10, 5, 5, 999);
-                } else {
-                    let vx = playerDir === 0 ? -300 : 300;
-                    spawnProjectile(posX[0], posY[0], vx, 0, 10, 5, 5, 999);
-                }
-            });
-        },
-    }, {
-        id_: UP_DEATH,
-        name_: "Death",
+        id_: UP_SLASH,
+        name_: "Slash",
         description_: "Slash at nearby enemies in an arc|upgrade: ",
         kind_: ABILITY,
         apply_: (): void => {
-            upgradeAbility(UP_DEATH, BULLET, 500, (a: Ability): void => {
+            upgradeAbility(UP_SLASH, BULLET, 500, (a: Ability): void => {
                 let count = 11 + a.level_ * 2;
                 let ang = PI / 2;
                 let baseAngle: number;
@@ -357,175 +201,6 @@ export let UPGRADE_POOL: Upgrade[] = [
             });
         },
     },
-    //{
-    //     id_: UP_TEMPER,
-    //     name_: "Temperance",
-    //     description_: "",
-    //     kind_: ABILITY,
-    //     apply_: (): void => {
-    //         upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability): void => {
-    //             if (findNearestEnemy(300)) {
-    //                 let dx = nearestEnemyPos[0] - posX[0];
-    //                 let dy = nearestEnemyPos[1] - posY[0];
-    //                 let dist = sqrt(dx * dx + dy * dy);
-    //                 let speed = 300;
-    //                 let vx = (dx / dist) * speed;
-    //                 let vy = (dy / dist) * speed;
-    //                 spawnProjectile(posX[0], posY[0], vx, vy, 10, 5, 5, 999);
-    //             } else {
-    //                 let vx = playerDir === 0 ? -300 : 300;
-    //                 spawnProjectile(posX[0], posY[0], vx, 0, 10, 5, 5, 999);
-    //             }
-    //         });
-    //     },
-    // }, {
-    //     id_: UP_DEVIL,
-    //     name_: "The Devil",
-    //     description_: "",
-    //     kind_: ABILITY,
-    //     apply_: (): void => {
-    //         upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability): void => {
-    //             if (findNearestEnemy(300)) {
-    //                 let dx = nearestEnemyPos[0] - posX[0];
-    //                 let dy = nearestEnemyPos[1] - posY[0];
-    //                 let dist = sqrt(dx * dx + dy * dy);
-    //                 let speed = 300;
-    //                 let vx = (dx / dist) * speed;
-    //                 let vy = (dy / dist) * speed;
-    //                 spawnProjectile(posX[0], posY[0], vx, vy, 10, 5, 5, 999);
-    //             } else {
-    //                 let vx = playerDir === 0 ? -300 : 300;
-    //                 spawnProjectile(posX[0], posY[0], vx, 0, 10, 5, 5, 999);
-    //             }
-    //         });
-    //     },
-    // }, {
-    //     id_: UP_TOWER,
-    //     name_: "The Tower",
-    //     description_: "",
-    //     kind_: ABILITY,
-    //     apply_: (): void => {
-    //         upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability): void => {
-    //             if (findNearestEnemy(300)) {
-    //                 let dx = nearestEnemyPos[0] - posX[0];
-    //                 let dy = nearestEnemyPos[1] - posY[0];
-    //                 let dist = sqrt(dx * dx + dy * dy);
-    //                 let speed = 300;
-    //                 let vx = (dx / dist) * speed;
-    //                 let vy = (dy / dist) * speed;
-    //                 spawnProjectile(posX[0], posY[0], vx, vy, 10, 5, 5, 999);
-    //             } else {
-    //                 let vx = playerDir === 0 ? -300 : 300;
-    //                 spawnProjectile(posX[0], posY[0], vx, 0, 10, 5, 5, 999);
-    //             }
-    //         });
-    //     },
-    // }, {
-    //     id_: UP_STAR,
-    //     name_: "The Star",
-    //     description_: "",
-    //     kind_: ABILITY,
-    //     apply_: (): void => {
-    //         upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability): void => {
-    //             if (findNearestEnemy(300)) {
-    //                 let dx = nearestEnemyPos[0] - posX[0];
-    //                 let dy = nearestEnemyPos[1] - posY[0];
-    //                 let dist = sqrt(dx * dx + dy * dy);
-    //                 let speed = 300;
-    //                 let vx = (dx / dist) * speed;
-    //                 let vy = (dy / dist) * speed;
-    //                 spawnProjectile(posX[0], posY[0], vx, vy, 10, 5, 5, 999);
-    //             } else {
-    //                 let vx = playerDir === 0 ? -300 : 300;
-    //                 spawnProjectile(posX[0], posY[0], vx, 0, 10, 5, 5, 999);
-    //             }
-    //         });
-    //     },
-    // }, {
-    //     id_: UP_MOON,
-    //     name_: "The Moon",
-    //     description_: "",
-    //     kind_: ABILITY,
-    //     apply_: (): void => {
-    //         upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability): void => {
-    //             if (findNearestEnemy(300)) {
-    //                 let dx = nearestEnemyPos[0] - posX[0];
-    //                 let dy = nearestEnemyPos[1] - posY[0];
-    //                 let dist = sqrt(dx * dx + dy * dy);
-    //                 let speed = 300;
-    //                 let vx = (dx / dist) * speed;
-    //                 let vy = (dy / dist) * speed;
-    //                 spawnProjectile(posX[0], posY[0], vx, vy, 10, 5, 5, 999);
-    //             } else {
-    //                 let vx = playerDir === 0 ? -300 : 300;
-    //                 spawnProjectile(posX[0], posY[0], vx, 0, 10, 5, 5, 999);
-    //             }
-    //         });
-    //     },
-    // }, {
-    //     id_: UP_SUN,
-    //     name_: "The Sun",
-    //     description_: "",
-    //     kind_: ABILITY,
-    //     apply_: (): void => {
-    //         upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability): void => {
-    //             if (findNearestEnemy(300)) {
-    //                 let dx = nearestEnemyPos[0] - posX[0];
-    //                 let dy = nearestEnemyPos[1] - posY[0];
-    //                 let dist = sqrt(dx * dx + dy * dy);
-    //                 let speed = 300;
-    //                 let vx = (dx / dist) * speed;
-    //                 let vy = (dy / dist) * speed;
-    //                 spawnProjectile(posX[0], posY[0], vx, vy, 10, 5, 5, 999);
-    //             } else {
-    //                 let vx = playerDir === 0 ? -300 : 300;
-    //                 spawnProjectile(posX[0], posY[0], vx, 0, 10, 5, 5, 999);
-    //             }
-    //         });
-    //     },
-    // }, {
-    //     id_: UP_JUDGE,
-    //     name_: "Judgement",
-    //     description_: "",
-    //     kind_: ABILITY,
-    //     apply_: (): void => {
-    //         upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability): void => {
-    //             if (findNearestEnemy(300)) {
-    //                 let dx = nearestEnemyPos[0] - posX[0];
-    //                 let dy = nearestEnemyPos[1] - posY[0];
-    //                 let dist = sqrt(dx * dx + dy * dy);
-    //                 let speed = 300;
-    //                 let vx = (dx / dist) * speed;
-    //                 let vy = (dy / dist) * speed;
-    //                 spawnProjectile(posX[0], posY[0], vx, vy, 10, 5, 5, 999);
-    //             } else {
-    //                 let vx = playerDir === 0 ? -300 : 300;
-    //                 spawnProjectile(posX[0], posY[0], vx, 0, 10, 5, 5, 999);
-    //             }
-    //         });
-    //     },
-    // }, {
-    //     id_: UP_WORLD,
-    //     name_: "The World",
-    //     description_: "",
-    //     kind_: ABILITY,
-    //     apply_: (): void => {
-    //         upgradeAbility(UP_MAGI, BULLET, 1000, (a: Ability): void => {
-    //             if (findNearestEnemy(300)) {
-    //                 let dx = nearestEnemyPos[0] - posX[0];
-    //                 let dy = nearestEnemyPos[1] - posY[0];
-    //                 let dist = sqrt(dx * dx + dy * dy);
-    //                 let speed = 300;
-    //                 let vx = (dx / dist) * speed;
-    //                 let vy = (dy / dist) * speed;
-    //                 spawnProjectile(posX[0], posY[0], vx, vy, 10, 5, 5, 999);
-    //             } else {
-    //                 let vx = playerDir === 0 ? -300 : 300;
-    //                 spawnProjectile(posX[0], posY[0], vx, 0, 10, 5, 5, 999);
-    //             }
-    //         });
-    //     },
-    // },
 ];
 
 let upgradeAbility = (id_: number, type_: number, cooldown_: number, fire_: (ability: Ability) => void): void => {

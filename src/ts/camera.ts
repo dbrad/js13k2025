@@ -1,5 +1,5 @@
 import { EULER, max, min, round } from "./math";
-import { WORLD_HEIGHT, WORLD_WIDTH } from "./world";
+import { WORLD_HEIGHT, WORLD_WIDTH } from "./gameMap";
 
 export let cameraPos: V2 = [0, 0];
 export let vCameraPos: V2 = [0, 0];

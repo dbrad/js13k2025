@@ -1,12 +1,12 @@
 import { cameraPos, cameraTarget, updateCamera, vCameraPos } from "../camera";
 import { BLACK, pushQuad, pushText, updateLightning, WHITE } from "../draw";
-import { drawEntities, hp, initEntities, posX, posY, spawnOffscreenEnemy, spawnPlayer, updateEntities, updatePlayerVel } from "../entity";
+import { drawEntities, hp, initEntities, posX, posY, spawnOffscreenEnemy, spawnPlayer, updateEntities, velX, velY } from "../entity";
+import { drawWorld, gameStage, generateWorld, updateTime, WORLD_HEIGHT, WORLD_WIDTH } from "../gameMap";
 import { gameState, newGame } from "../gameState";
 import { A_PRESSED, DOWN_IS_DOWN, DOWN_PRESSED, LEFT_IS_DOWN, RIGHT_IS_DOWN, UP_IS_DOWN, UP_PRESSED } from "../input";
 import { ceil, clamp, EULER, floor, max, min, randInt } from "../math";
 import { getRandomUpgrades, player, resetPlayer, updatePlayerAbilities, UPGRADE_POOL, xpTable } from "../player";
 import { createScene, switchToScene } from "../scene";
-import { drawWorld, generateWorld, WORLD_HEIGHT, WORLD_WIDTH } from "../world";
 import { mainMenuScene } from "./mainMenu";
 
 let upgradeSelectRow = 0;
@@ -18,7 +18,8 @@ let bossAlive = false;
 let bossId = -1;
 
 let setup = (): void => {
-    gameover = bossSpawn = false;
+    gameover = bossSpawn = bossAlive = false;
+    bossId = -1;
     resetPlayer();
     newGame();
     generateWorld();
@@ -38,7 +39,7 @@ let update = (delta: number): void => {
         switchToScene(mainMenuScene.id_);
         gameover = true;
     } else {
-        if (gameState[GS_LEVELUP_PENDING]) {
+        if (player.levelUpPending_) {
             if (upgrades.length === 0) {
                 upgrades = getRandomUpgrades(3, player.level_ === 1);
             }
@@ -51,7 +52,7 @@ let update = (delta: number): void => {
                 }
                 upgrades = [];
                 upgradeSelectRow = 0;
-                gameState[GS_LEVELUP_PENDING] = 0;
+                player.levelUpPending_ = false;
             }
             if (DOWN_PRESSED) {
                 upgradeSelectRow = min(upgradeSelectRow + 1, 3);
@@ -60,38 +61,35 @@ let update = (delta: number): void => {
             }
         } else {
             if (!bossSpawn) {
-                gameState[GS_TIME] += dt;
+                updateTime(dt);
             } else if (bossSpawn && !bossAlive) {
-                gameState[GS_TIME] -= dt;
+                updateTime(-dt);
             }
-            if (gameState[GS_TIME] >= 192) {
+            if (gameStage > 15) {
                 updateLightning(delta);
                 if (!bossSpawn) {
-                    bossId = spawnOffscreenEnemy(500, 64, 25);
+                    bossId = spawnOffscreenEnemy(500, 64, 25, true);
                     bossSpawn = true;
                     bossAlive = true;
                 }
             }
+
             let acc = EULER ** (player.speed_ * dt);
-            let velx = 0;
-            let vely = 0;
             if (DOWN_IS_DOWN) {
-                vely += acc;
+                velY[0] += acc;
             } else if (UP_IS_DOWN) {
-                vely -= acc;
+                velY[0] -= acc;
             }
             if (RIGHT_IS_DOWN) {
-                velx += acc;
+                velX[0] += acc;
             } else if (LEFT_IS_DOWN) {
-                velx -= acc;
+                velX[0] -= acc;
             }
-
-            updatePlayerVel(velx, vely);
 
             timer += delta;
             if (timer >= 500) {
                 timer -= 500;
-                let s = randInt(0, floor(gameState[GS_TIME] / 12));
+                let s = randInt(0, gameStage);
                 spawnOffscreenEnemy(3 + s, 8 + s, 1 + s);
                 spawnOffscreenEnemy(3 + s, 8 + s, 1 + s);
                 spawnOffscreenEnemy(3 + s, 8 + s, 1 + s);
@@ -143,7 +141,7 @@ let drawGUI = (): void => {
         pushQuad(SCREEN_RIGHT + 2, 31 + offset, w, 1, WHITE);
     }
 
-    if (gameState[GS_LEVELUP_PENDING]) {
+    if (player.levelUpPending_) {
         pushQuad(SCREEN_LEFT, 0, SCREEN_DIM + 1, SCREEN_DIM + 1, 0xcc000000);
         for (let i = 0; i < upgrades.length; i++) {
             if (upgradeSelectRow === i) {

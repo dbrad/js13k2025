@@ -1,0 +1,25 @@
+Day 13 - 2025-08-25
+
+---
+
+Changing to 12-15 cat themed abilities instead of the major arcana.
+Capping living enemies to 300
+Cleaning up timer and game stage code
+Moving most remaining data out of game state object.
+Started process of adding some textures go world decorating.
+
+---
+
+`-Zab0 -Zlr1000 -Zmc4 -Zmd10 -Zpr14 -S0,1,2,3,6,7,13,21,25,42,50,453`
+
+-------------------------------------------------------------------------------
+Language                     files          blank        comment           code
+-------------------------------------------------------------------------------
+TypeScript                      21            357             24           2464
+-------------------------------------------------------------------------------
+SUM:                            21            357             24           2464
+-------------------------------------------------------------------------------
+
+The file is under the limit.
+USED: 76.01% | 10118 BYTES
+LEFT: 23.99% |  3194 BYTES
