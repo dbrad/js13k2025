@@ -21,8 +21,8 @@ declare module '*.webp' {
 }
 
 type GameState = [
-    GS_TIME: number,
-    GS_LEVELUP_PENDING: number,
+    GS_RUNCOUNT: number,
+    GS_RUNTIME: number,
 ];
 
 type TextureDefinition = [number, number[], number, number, number, number];
@@ -68,8 +68,8 @@ type Scene = {
     id_: number,
     setup_: VoidFunction,
     update_: UpdateFunction,
-    draw_: UpdateFunction,
-    drawGUI_: UpdateFunction,
+    draw_: VoidFunction,
+    drawGUI_: VoidFunction,
 };
 
 type Ability = {
@@ -96,10 +96,10 @@ type Player = {
     speed_: number;
     damage_: number;
     defense_: number;
-    fireRate_: number;
     cooldown_: number;
     luck_: number;
     abilities_: Ability[];
     xp_: number;
     level_: number;
+    levelUpPending_: boolean;
 };

@@ -1,7 +1,14 @@
 import { cameraPos } from "./camera";
 import { BLACK, lightningFlash, pushQuad, pushTexturedQuad } from "./draw";
-import { gameState } from "./gameState";
-import { ceil, clamp, floor, max, min } from "./math";
+import { ceil, clamp, floor, max, min, randInt } from "./math";
+
+export let timeOfDay = 0;
+export let gameStage = 0;
+
+export let updateTime = (dt: number): void => {
+    timeOfDay += dt;
+    gameStage = clamp(floor(timeOfDay / 12), -1, 16);
+};
 
 export let WORLD_WIDTH = 4096;
 export let WORLD_HEIGHT = 4096;
@@ -12,6 +19,8 @@ export let WORLD_TILE_HEIGHT = WORLD_HEIGHT / 16;
 export let worldMap = new Uint8Array(WORLD_TILE_WIDTH * WORLD_TILE_WIDTH);
 
 export let generateWorld = (): void => {
+    timeOfDay = 0;
+    gameStage = 0;
     for (let x = 0; x < WORLD_TILE_WIDTH; x++) {
         for (let y = 0; y < WORLD_TILE_WIDTH; y++) {
             if (x < 3 || y < 3 || x > WORLD_TILE_WIDTH - 4 || y > WORLD_TILE_WIDTH - 4) {
@@ -22,16 +31,21 @@ export let generateWorld = (): void => {
                 worldMap[x + y * WORLD_TILE_WIDTH] = 3;
             } else if (x < 6 || y < 6 || x > WORLD_TILE_WIDTH - 7 || y > WORLD_TILE_WIDTH - 7) {
                 worldMap[x + y * WORLD_TILE_WIDTH] = 4;
+            } else {
+                let rng = randInt(0, 32);
+                if (rng < 8) {
+                    worldMap[x + y * WORLD_TILE_WIDTH] = 5 + rng;
+                }
             }
         }
     }
 };
 
 export let drawWorld = (): void => {
-    let camLeft = floor((cameraPos[0] - SCREEN_HALF) / 16);
-    let camRight = ceil((cameraPos[0] + SCREEN_HALF) / 16);
-    let camTop = floor((cameraPos[1] - SCREEN_HALF) / 16);
-    let camBottom = ceil((cameraPos[1] + SCREEN_HALF) / 16);
+    let camLeft = floor((cameraPos[0] - SCREEN_HALF) / 16) - 1;
+    let camRight = ceil((cameraPos[0] + SCREEN_HALF) / 16) + 1;
+    let camTop = floor((cameraPos[1] - SCREEN_HALF) / 16) - 1;
+    let camBottom = ceil((cameraPos[1] + SCREEN_HALF) / 16) + 1;
 
     let startX = max(0, camLeft);
     let endX = min(WORLD_TILE_WIDTH - 1, camRight);
@@ -41,19 +55,21 @@ export let drawWorld = (): void => {
     for (let y = startY; y <= endY; y++) {
         for (let x = startX; x <= endX; x++) {
             let tile = worldMap[x + y * WORLD_TILE_WIDTH];
-            let offset = clamp(floor(gameState[GS_TIME] / 2), 0, 16);
             let screenX = x * 16 - (cameraPos[0] - SCREEN_HALF) + SCREEN_GUTTER;
             let screenY = y * 16 - (cameraPos[1] - SCREEN_HALF);
 
             if (tile === 1) {
                 pushQuad(screenX, screenY, 16, 16, BLACK);
-            } else if (tile > 1) {
-                pushTexturedQuad(TEXTURE_DITH_15 - (tile - 2), screenX, screenY);
+            } else if (tile > 1 && tile < 5) {
+                pushTexturedQuad(TEXTURE_DITH_15 - (tile - 2), screenX, screenY, 1, BLACK);
+            } else if (tile > 4) {
+                let t = tile - 5;
+                pushTexturedQuad(TEXTURE_GRASS_01 + floor(t / 4), screenX + 8 * (t % 2), screenY + 8 * floor(t / 2));
             }
 
-            if (offset <= 15) {
-                pushTexturedQuad(TEXTURE_DITH_00 + offset, screenX, screenY, 1, BLACK);
-            } else if (!lightningFlash) {
+            if (gameStage <= 15) {
+                pushTexturedQuad(TEXTURE_DITH_00 + gameStage, screenX, screenY, 1, BLACK);
+            } else if (gameStage > 15 && !lightningFlash) {
                 pushQuad(screenX, screenY, 16, 16, BLACK);
             }
         }

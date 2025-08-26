@@ -19,7 +19,7 @@ let sceneCleared: boolean = true;
 
 let nextSceneId: number = 0;
 
-export let createScene = (setup_: VoidFunction, update_: UpdateFunction, draw_: UpdateFunction, drawGUI_: UpdateFunction): Scene => {
+export let createScene = (setup_: VoidFunction, update_: UpdateFunction, draw_: VoidFunction, drawGUI_: VoidFunction): Scene => {
     return {
         id_: -1,
         setup_,
@@ -73,8 +73,8 @@ export let updateScene = (delta: number, now: number): void => {
     scenes[currentSceneId].update_(delta);
 };
 
-export let drawScene = (delta: number, now: number): void => {
-    scenes[currentSceneId].draw_(delta);
+export let drawScene = (): void => {
+    scenes[currentSceneId].draw_();
     drawParticles();
 
     if (transitionInProgress) {
@@ -90,6 +90,6 @@ export let drawScene = (delta: number, now: number): void => {
 };
 
 
-export let drawGUI = (delta: number): void => {
-    scenes[currentSceneId].drawGUI_(delta);
+export let drawGUI = (): void => {
+    scenes[currentSceneId].drawGUI_();
 };

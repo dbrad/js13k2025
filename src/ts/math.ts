@@ -1,12 +1,15 @@
-export let math = Math;
-export let floor = math.floor;
-export let ceil = math.ceil;
-export let max = math.max;
-export let min = math.min;
-export let round = math.round;
-export let sqrt = math.sqrt;
-export let cos = math.cos;
-export let sin = math.sin;
+export let math = Math,
+  floor = math.floor,
+  ceil = math.ceil,
+  abs = math.abs,
+  max = math.max,
+  min = math.min,
+  round = math.round,
+  sqrt = math.sqrt,
+  cos = math.cos,
+  sin = math.sin,
+  tan = math.tan,
+  random = math.random;
 
 export let EULER = 2.71828;
 export let PI = 3.14159;
@@ -135,14 +138,14 @@ export let srandShuffle = <T>(array: T[]): T[] => {
 };
 
 export let randInt = (min: number, max: number): number => {
-  return floor(math.random() * (max - min + 1)) + min;
+  return floor(random() * (max - min + 1)) + min;
 };
 
 export let randShuffle = <T>(array: T[]): T[] => {
   let currentIndex: number = array.length, temporaryValue: T, randomIndex: number;
   let arr: T[] = array.slice();
   while (0 !== currentIndex) {
-    randomIndex = floor(math.random() * currentIndex);
+    randomIndex = floor(random() * currentIndex);
     currentIndex -= 1;
     temporaryValue = arr[currentIndex];
     arr[currentIndex] = arr[randomIndex];

@@ -62,6 +62,11 @@ export let updateLightning = (delta: number): void => {
         nextInter -= delta;
     }
 };
+export let clearLightning = (): void => {
+    nextInter = 1000;
+    nextDur = 50;
+    lightningFlash = false;
+};
 
 // Draw Queue
 let drawQueue: DrawCall[] = [];
@@ -170,8 +175,7 @@ export let pushText = (text: string | number, x: number, y: number, colour: numb
         lineWidth = characterCount * letterSize;
         if (horizontalAlign === TEXT_ALIGN_CENTER) {
             alignmentOffset = floor(lineWidth / 2);
-        }
-        else if (horizontalAlign === TEXT_ALIGN_RIGHT) {
+        } else if (horizontalAlign === TEXT_ALIGN_RIGHT) {
             alignmentOffset = lineWidth;
         }
 

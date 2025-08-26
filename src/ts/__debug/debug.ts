@@ -1,5 +1,6 @@
 import { pushQuad, pushText, WHITE } from "../draw";
 import { activeCount, freeTop } from "../entity";
+import { gameState } from "../gameState";
 
 let frameCount: number = 0;
 let fps: number = 60;
