@@ -1,6 +1,3 @@
-Game over Screen
-Timer
-
 Finishing adding the 12-15 abilities
 Make luck do something
     Karma System

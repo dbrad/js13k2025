@@ -2,12 +2,12 @@ import { cameraPos, cameraTarget, updateCamera, vCameraPos } from "../camera";
 import { BLACK, pushQuad, pushText, updateLightning, WHITE } from "../draw";
 import { drawEntities, hp, initEntities, posX, posY, spawnOffscreenEnemy, spawnPlayer, updateEntities, velX, velY } from "../entity";
 import { drawWorld, gameStage, generateWorld, updateTime, WORLD_HEIGHT, WORLD_WIDTH } from "../gameMap";
-import { gameState, newGame } from "../gameState";
+import { gameState, getRunTime } from "../gameState";
 import { A_PRESSED, DOWN_IS_DOWN, DOWN_PRESSED, LEFT_IS_DOWN, RIGHT_IS_DOWN, UP_IS_DOWN, UP_PRESSED } from "../input";
 import { ceil, clamp, EULER, floor, max, min, randInt } from "../math";
 import { getRandomUpgrades, player, resetPlayer, updatePlayerAbilities, UPGRADE_POOL, xpTable } from "../player";
 import { createScene, switchToScene } from "../scene";
-import { mainMenuScene } from "./mainMenu";
+import { gameoverData, gameOverScene } from "./gameOver";
 
 let upgradeSelectRow = 0;
 let upgrades: Upgrade[] = [];
@@ -21,22 +21,23 @@ let setup = (): void => {
     gameover = bossSpawn = bossAlive = false;
     bossId = -1;
     resetPlayer();
-    newGame();
     generateWorld();
     initEntities();
-    let cx = cameraPos[X] = vCameraPos[X] = cameraTarget[X] = WORLD_WIDTH / 2;
-    let cy = cameraPos[Y] = vCameraPos[Y] = cameraTarget[Y] = WORLD_HEIGHT / 2;
+    let cx = cameraPos[X] = vCameraPos[X] = cameraTarget[X] = WORLD_WIDTH * 0.5;
+    let cy = cameraPos[Y] = vCameraPos[Y] = cameraTarget[Y] = WORLD_HEIGHT * 0.5;
     spawnPlayer(cx, cy, 8);
 };
 
 let update = (delta: number): void => {
+    if (gameover) return;
     let dt = delta * 0.001;
     gameState[GS_RUNTIME] += dt;
     if (bossAlive) {
         bossAlive = hp[bossId] > 0;
     }
-    if (player.hp_ <= 0 && !gameover) {
-        switchToScene(mainMenuScene.id_);
+    if (player.hp_ <= 0) {
+        switchToScene(gameOverScene.id_);
+        gameoverData[0] = "you died";
         gameover = true;
     } else {
         if (player.levelUpPending_) {
@@ -64,6 +65,11 @@ let update = (delta: number): void => {
                 updateTime(dt);
             } else if (bossSpawn && !bossAlive) {
                 updateTime(-dt);
+                if (gameStage === -1) {
+                    switchToScene(gameOverScene.id_);
+                    gameoverData[0] = "you are the night";
+                    gameover = true;
+                }
             }
             if (gameStage > 15) {
                 updateLightning(delta);
@@ -89,7 +95,7 @@ let update = (delta: number): void => {
             timer += delta;
             if (timer >= 500) {
                 timer -= 500;
-                let s = randInt(0, gameStage);
+                let s = randInt(1, gameStage);
                 spawnOffscreenEnemy(3 + s, 8 + s, 1 + s);
                 spawnOffscreenEnemy(3 + s, 8 + s, 1 + s);
                 spawnOffscreenEnemy(3 + s, 8 + s, 1 + s);
@@ -110,6 +116,7 @@ let draw = (): void => {
 
 let w = SCREEN_GUTTER - 4;
 let drawGUI = (): void => {
+    pushText(getRunTime(), SCREEN_GUTTER / 2, SCREEN_HEIGHT - 8, WHITE, 1, TEXT_ALIGN_CENTER);
     let hpPer = ceil(player.hp_ / player.maxHP_ * w);
     let xpNext = xpTable[player.level_];
     let xpPer = clamp(floor(player.xp_ / xpNext * w), 0, w);

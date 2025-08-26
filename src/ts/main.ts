@@ -7,6 +7,7 @@ import { glInit, glSetClearColour } from "./gl";
 import { drawControls, initializeInput, isTouchEvent } from "./input";
 import { initParticles } from "./particle";
 import { drawGUI, drawScene, registerScene, updateScene } from "./scene";
+import { gameOverScene } from "./scene/gameOver";
 import { gameScene } from "./scene/gameScene";
 import { mainMenuScene } from "./scene/mainMenu";
 import { optionsScene } from "./scene/options";
@@ -38,6 +39,7 @@ window.addEventListener("load", async (): Promise<void> => {
             registerScene(mainMenuScene);
             registerScene(optionsScene);
             registerScene(gameScene);
+            registerScene(gameOverScene);
 
             if (DEBUG) {
                 document.addEventListener("keyup", (e: KeyboardEvent): void => {

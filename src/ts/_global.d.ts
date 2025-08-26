@@ -21,6 +21,7 @@ declare module '*.webp' {
 }
 
 type GameState = [
+    GS_RUNCOUNT: number,
     GS_RUNTIME: number,
 ];
 

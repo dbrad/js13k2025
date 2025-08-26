@@ -112,7 +112,8 @@ declare const TEXTURE_DITH_13: 32;
 declare const TEXTURE_DITH_14: 33;
 declare const TEXTURE_DITH_15: 34;
 
-declare const GS_RUNTIME: 0;
+declare const GS_RUNCOUNT: 0;
+declare const GS_RUNTIME: 1;
 
 declare const UP_HP: 0;
 declare const UP_ATK: 1;

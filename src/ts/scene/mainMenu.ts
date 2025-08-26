@@ -1,6 +1,6 @@
 import { boop, boop_good, zzfxPlay } from "../audio";
 import { BLACK, lightningFlash, pushQuad, pushText, pushTexturedQuad, updateLightning, WHITE } from "../draw";
-import { loadGame } from "../gameState";
+import { gameState, loadGame, saveGame } from "../gameState";
 import { A_PRESSED, DOWN_PRESSED, UP_PRESSED } from "../input";
 import { createScene, switchToScene } from "../scene";
 import { gameScene } from "./gameScene";
@@ -31,6 +31,9 @@ let update = (delta: number): void => {
         switch (selected) {
             case 0:
                 loadGame();
+                gameState[GS_RUNCOUNT]++;
+                gameState[GS_RUNTIME] = 0;
+                saveGame();
                 switchToScene(gameScene.id_);
                 break;
             case 1:
