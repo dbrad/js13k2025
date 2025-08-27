@@ -37,19 +37,19 @@ export let UPGRADE_POOL: Upgrade[] = [
     {
         id_: UP_HP,
         name_: "Vitality",
-        description_: "+5 Max HP",
+        description_: "+20 Max HP",
         kind_: STAT,
-        apply_: (): void => { player.maxHP_ += 5; player.hp_ += 5; },
+        apply_: (): void => { player.maxHP_ += 20; player.hp_ += 20; },
     }, {
         id_: UP_ATK,
         name_: "Ferocity",
-        description_: "+1 All Damage",
+        description_: "+1 Damage",
         kind_: STAT,
         apply_: (): void => { player.damage_ += 1; },
     }, {
         id_: UP_DEF,
         name_: "Fortify",
-        description_: "+1 Defense",
+        description_: "+1 Armor",
         kind_: STAT,
         apply_: (): void => { player.defense_ += 1; },
     }, {
@@ -140,7 +140,7 @@ export let UPGRADE_POOL: Upgrade[] = [
             upgradeAbility(UP_MENACE, AURA, 5000, (a: Ability): void => {
                 let slow = max(0.7 - (a.level_ - 1) * 0.1, 0.3);
                 let radius = 50 + a.level_ * 10;
-                a.entityId_ = spawnAura(radius, 0, -1, 0x22ff8888, slow, a.entityId_);
+                a.entityId_ = spawnAura(radius, 0, -1, 0x11ff8888, slow, a.entityId_);
             });
         },
     }, {

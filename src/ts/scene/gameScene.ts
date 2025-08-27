@@ -1,5 +1,5 @@
 import { cameraPos, cameraTarget, updateCamera, vCameraPos } from "../camera";
-import { BLACK, pushQuad, pushText, updateLightning, WHITE } from "../draw";
+import { BLACK, clearLightning, pushQuad, pushText, updateLightning, WHITE } from "../draw";
 import { drawEntities, hp, initEntities, posX, posY, spawnOffscreenEnemy, spawnPlayer, updateEntities, velX, velY } from "../entity";
 import { drawWorld, gameStage, generateWorld, updateTime, WORLD_HEIGHT, WORLD_WIDTH } from "../gameMap";
 import { gameState, getRunTime } from "../gameState";
@@ -23,6 +23,7 @@ let setup = (): void => {
     resetPlayer();
     generateWorld();
     initEntities();
+    clearLightning();
     let cx = cameraPos[X] = vCameraPos[X] = cameraTarget[X] = WORLD_WIDTH * 0.5;
     let cy = cameraPos[Y] = vCameraPos[Y] = cameraTarget[Y] = WORLD_HEIGHT * 0.5;
     spawnPlayer(cx, cy, 8);
@@ -34,6 +35,9 @@ let update = (delta: number): void => {
     gameState[GS_RUNTIME] += dt;
     if (bossAlive) {
         bossAlive = hp[bossId] > 0;
+        if (!bossAlive) {
+            clearLightning();
+        }
     }
     if (player.hp_ <= 0) {
         switchToScene(gameOverScene.id_);
@@ -74,7 +78,7 @@ let update = (delta: number): void => {
             if (gameStage > 15) {
                 updateLightning(delta);
                 if (!bossSpawn) {
-                    bossId = spawnOffscreenEnemy(500, 64, 25, true);
+                    bossId = spawnOffscreenEnemy(500, 64, 25, 0xff3c053c, true);
                     bossSpawn = true;
                     bossAlive = true;
                 }
