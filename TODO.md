@@ -2,7 +2,6 @@ Finishing creating the 13 abilities
     Need 5 more right now...
     - Maybe a slow regenerating single hit shield?
     - Damaging Aura
-Offscreen respawn when at enemy cap
 
 Make luck do something?? Or get rid of it?
     Karma System

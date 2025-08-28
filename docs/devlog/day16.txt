@@ -2,6 +2,22 @@ Day 16 - 2025-08-28
 
 ---
 
+Add radial burst attack.
+Enemy speed scales with game state.
+Enemys will relocate at max enemy count to prevent perma kiting.
 
 ---
 
+`-Zab0 -Zlr743 -Zmc4 -Zmd10 -S0,1,2,3,6,7,13,21,42,228,274,353`
+
+-------------------------------------------------------------------------------
+Language                     files          blank        comment           code
+-------------------------------------------------------------------------------
+TypeScript                      22            365             34           2646
+-------------------------------------------------------------------------------
+SUM:                            22            365             34           2646
+-------------------------------------------------------------------------------
+
+The file is under the limit.
+USED: 80.98% | 10780 BYTES
+LEFT: 19.02% |  2532 BYTES
