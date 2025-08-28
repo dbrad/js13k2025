@@ -6,9 +6,6 @@ Make luck do something
     Back Luck (Skip upgrade)
         - Do more damage?
 
-Add xp orb system?
-Add enemy projectile support
-
 Sound effects
 Music or beat
 

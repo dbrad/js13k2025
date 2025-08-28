@@ -11,8 +11,8 @@ export let math = Math,
   tan = math.tan,
   random = math.random;
 
-export let EULER = 2.71828;
-export let PI = 3.14159;
+export let EULER = 2.71828 as const;
+export let PI = 3.14159 as const;
 
 export let roundTo = (value: number, nearest: number): number => {
   return round(value / nearest) * nearest;

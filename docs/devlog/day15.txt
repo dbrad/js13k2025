@@ -5,5 +5,22 @@ Day 15 - 2025-08-27
 Added support for coloring rats.
 Armor now reduces damage.
 HP Bonus is now 20hp instead of 5hp.
+Added xp orbs
+Add enemy projectiles
+Fixed player diagonal movement
 
 ---
+
+`-Zab0 -Zlr1000 -Zmc4 -Zmd10 -Sx12`
+
+-------------------------------------------------------------------------------
+Language                     files          blank        comment           code
+-------------------------------------------------------------------------------
+TypeScript                      22            365             23           2602
+-------------------------------------------------------------------------------
+SUM:                            22            365             23           2602
+-------------------------------------------------------------------------------
+
+The file is under the limit.
+USED: 80.21% | 10677 BYTES
+LEFT: 19.79% |  2635 BYTES

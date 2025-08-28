@@ -4,7 +4,7 @@ import { drawEntities, hp, initEntities, posX, posY, spawnOffscreenEnemy, spawnP
 import { drawWorld, gameStage, generateWorld, updateTime, WORLD_HEIGHT, WORLD_WIDTH } from "../gameMap";
 import { gameState, getRunTime } from "../gameState";
 import { A_PRESSED, DOWN_IS_DOWN, DOWN_PRESSED, LEFT_IS_DOWN, RIGHT_IS_DOWN, UP_IS_DOWN, UP_PRESSED } from "../input";
-import { ceil, clamp, EULER, floor, max, min, randInt } from "../math";
+import { ceil, clamp, EULER, floor, max, min, randInt, sqrt } from "../math";
 import { getRandomUpgrades, player, resetPlayer, updatePlayerAbilities, UPGRADE_POOL, xpTable } from "../player";
 import { createScene, switchToScene } from "../scene";
 import { gameoverData, gameOverScene } from "./gameOver";
@@ -84,16 +84,24 @@ let update = (delta: number): void => {
                 }
             }
 
-            let acc = EULER ** (player.speed_ * dt);
+            let vx = 0;
+            let vy = 0;
             if (DOWN_IS_DOWN) {
-                velY[0] += acc;
+                vy = 1;
             } else if (UP_IS_DOWN) {
-                velY[0] -= acc;
+                vy = -1;
             }
             if (RIGHT_IS_DOWN) {
-                velX[0] += acc;
+                vx = 1;
             } else if (LEFT_IS_DOWN) {
-                velX[0] -= acc;
+                vx = -1;
+            }
+            if (vx !== 0 || vy !== 0) {
+                let d = sqrt(vx * vx + vy * vy);
+                if (d > 1e-6) {
+                    velX[0] = (vx / d) * player.speed_;
+                    velY[0] = (vy / d) * player.speed_;
+                }
             }
 
             timer += delta;
@@ -102,7 +110,7 @@ let update = (delta: number): void => {
                 let s = randInt(1, gameStage);
                 spawnOffscreenEnemy(3 + s, 8 + s, 1 + s);
                 spawnOffscreenEnemy(3 + s, 8 + s, 1 + s);
-                spawnOffscreenEnemy(3 + s, 8 + s, 1 + s);
+                spawnOffscreenEnemy(3 + s, 8 + s, 1 + s, 0xff3c053c, false, 3);
             }
 
             updateEntities(delta);
