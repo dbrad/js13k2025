@@ -145,6 +145,9 @@ let free = (id: number): void => {
     activeIndex[lastId] = idx;
     activeIndex[id] = -1;
     freeList[freeTop++] = id;
+    if (type[id] & TYPE_ENEMY) {
+        enemyCount--;
+    }
 };
 
 export let spawnPlayer = (x: number, y: number, r: number = 8): void => {
@@ -181,7 +184,7 @@ export let spawnEnemy = (x: number, y: number, r: number = 8, hpVal: number = 3,
 };
 
 let diag = sqrt(SCREEN_DIM * SCREEN_DIM * 2) / 2 + 84;
-export let spawnOffscreenEnemy = (hp: number = 3, r: number = 8, dmg: number = 1, color: number = BLACK, forceSpawn: boolean = false, shootPeriodParam: number = 0): number => {
+export let spawnOffscreenEnemy = (hpVal: number = 3, r: number = 8, dmg: number = 1, abgr: number = BLACK, forceSpawn: boolean = false, shootPeriodParam: number = 0): number => {
     let angle = random() * PI * 2;
     let x = cameraPos[X] + cos(angle) * diag;
     let y = cameraPos[Y] + sin(angle) * diag;
@@ -191,7 +194,41 @@ export let spawnOffscreenEnemy = (hp: number = 3, r: number = 8, dmg: number = 1
         y = cameraPos[Y] + sin(angle) * diag;
     }
     x = clamp(x, 0, WORLD_WIDTH); y = clamp(y, 0, WORLD_HEIGHT);
-    return spawnEnemy(x, y, r, hp, dmg, color, forceSpawn, shootPeriodParam);
+    let id = spawnEnemy(x, y, r, hpVal, dmg, abgr, forceSpawn, shootPeriodParam);
+    if (id === -1 && !forceSpawn) {
+        let px = posX[0];
+        let py = posY[0];
+        let farthestId = -1;
+        let maxD2 = -1;
+        for (let n = 0; n < activeCount; n++) {
+            let eid = activeIds[n];
+            if (alive[eid] && (type[eid] & TYPE_ENEMY)) {
+                let dx = posX[eid] - px;
+                let dy = posY[eid] - py;
+                let d2 = dx * dx + dy * dy;
+                if (d2 > maxD2) {
+                    maxD2 = d2;
+                    farthestId = eid;
+                }
+            }
+        }
+        if (farthestId !== -1) {
+            posX[farthestId] = x;
+            posY[farthestId] = y;
+            // velX[farthestId] = 0;
+            // velY[farthestId] = 0;
+            // hp[farthestId] = hpVal;
+            // damage[farthestId] = dmg;
+            // color[farthestId] = abgr;
+            // radius[farthestId] = r;
+            // shootPeriod[farthestId] = shootPeriodParam;
+            // if (shootPeriodParam > 0) {
+            //     shootTimer[farthestId] = random() * shootPeriodParam;
+            // }
+            id = farthestId;
+        }
+    }
+    return id;
 };
 
 export let spawnProjectile = (x: number, y: number, vx: number, vy: number, r: number = PROJECTILE_RADIUS, dmg: number = 1, lifeSec: number = 2, hpVal: number = 1, abgr: number = 0xff0000ff, hostile: boolean = false): number => {
@@ -247,7 +284,6 @@ let damageEnemy = (id: number, amt: number): void => {
         burstParticle.position_[X] = posX[id];
         burstParticle.position_[Y] = posY[id];
         emitParticles(burstParticle, 20);
-        enemyCount--;
         alive[id] = 0;
     }
 };
@@ -376,7 +412,7 @@ export let updateEntities = (deltaMs: number): void => {
         if (t === TYPE_PLAYER || t === TYPE_ENEMY) {
             posX[id] = clamp(posX[id], 0 + radius[id], WORLD_WIDTH - radius[id]);
             posY[id] = clamp(posY[id], 0 + radius[id], WORLD_HEIGHT - radius[id]);
-        } else if (t === TYPE_PROJECTILE) {
+        } else if (t === TYPE_PROJECTILE || t === TYPE_HOSTILE_PROJECTILE) {
             if (posX[id] < 0 || posX[id] > WORLD_WIDTH || posY[id] < 0 || posY[id] > WORLD_HEIGHT) {
                 free(id);
                 continue;
