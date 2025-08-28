@@ -1,8 +1,8 @@
 import { assert } from "./__debug/debug";
 import { cathit } from "./audio";
 import { cameraPos } from "./camera";
-import { BLACK, pushQuad, pushTexturedQuad, WHITE } from "./draw";
-import { WORLD_HEIGHT, WORLD_WIDTH } from "./gameMap";
+import { BLACK, lightningFlash, pushQuad, pushTexturedQuad, WHITE } from "./draw";
+import { gameStage, WORLD_HEIGHT, WORLD_WIDTH } from "./gameMap";
 import { clamp, cos, EULER, floor, max, min, PI, random, sin, sqrt } from "./math";
 import { burstParticle, catParticle, emitParticles, eyeParticle } from "./particle";
 import { gainXp, player } from "./player";
@@ -171,7 +171,7 @@ export let spawnEnemy = (x: number, y: number, r: number = 8, hpVal: number = 3,
 };
 
 let diag = sqrt(SCREEN_DIM * SCREEN_DIM * 2) / 2 + 84;
-export let spawnOffscreenEnemy = (hp: number = 3, r: number = 8, dmg: number = 1, forceSpawn: boolean = false): number => {
+export let spawnOffscreenEnemy = (hp: number = 3, r: number = 8, dmg: number = 1, color: number = BLACK, forceSpawn: boolean = false): number => {
     let angle = random() * PI * 2;
     let x = cameraPos[X] + cos(angle) * diag;
     let y = cameraPos[Y] + sin(angle) * diag;
@@ -181,7 +181,7 @@ export let spawnOffscreenEnemy = (hp: number = 3, r: number = 8, dmg: number = 1
         y = cameraPos[Y] + sin(angle) * diag;
     }
     x = clamp(x, 0, WORLD_WIDTH); y = clamp(y, 0, WORLD_HEIGHT);
-    return spawnEnemy(x, y, r, hp, dmg, BLACK, forceSpawn);
+    return spawnEnemy(x, y, r, hp, dmg, color, forceSpawn);
 };
 
 export let spawnProjectile = (x: number, y: number, vx: number, vy: number, r: number = PROJECTILE_RADIUS, dmg: number = 1, lifeSec: number = 2, hpVal: number = 1, abgr: number = 0xff0000ff): number => {
@@ -219,7 +219,7 @@ export let spawnAura = (r: number = 50, dmg: number = 5, lifeSec: number = -1, a
 let damageEnemy = (id: number, amt: number): void => {
     hp[id] -= amt;
     if (hp[id] <= 0) {
-        gainXp(1);
+        gainXp(damage[id]);
         burstParticle.position_[X] = posX[id];
         burstParticle.position_[Y] = posY[id];
         emitParticles(burstParticle, 20);
@@ -230,7 +230,7 @@ let damageEnemy = (id: number, amt: number): void => {
 
 let damagePlayer = (amt: number): void => {
     if (lifetime[0] <= 0) {
-        player.hp_ -= amt;
+        player.hp_ -= max(TEXTURE_CAT_01, amt - player.defense_);
         lifetime[0] = 0.8;
         cathit();
         if (player.hp_ <= 0) {
@@ -462,7 +462,7 @@ export let drawEntities = (): void => {
         if (t & TYPE_AURA) {
             continue;
         } else if (t & TYPE_ENEMY) {
-            pushTexturedQuad(TEXTURE_RAT, sPosX[id] - r, sPosY[id] - r, d * 0.0625, BLACK, velX[id] < 0, false, true);
+            pushTexturedQuad(TEXTURE_RAT, sPosX[id] - r, sPosY[id] - r, d * 0.0625, lightningFlash || gameStage < 16 ? color[id] : BLACK, velX[id] < 0, false, true);
         } else {
             if (d < 4) {
                 pushQuad(sPosX[id] - r, sPosY[id] - r, d, d, color[id] || WHITE);
