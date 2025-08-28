@@ -1,15 +1,20 @@
-Finishing adding the 12-15 abilities
-Make luck do something
+Finishing creating the 13 abilities
+    Need 5 more right now...
+    - Maybe a slow regenerating single hit shield?
+    - Damaging Aura
+Offscreen respawn when at enemy cap
+
+Make luck do something?? Or get rid of it?
     Karma System
     Good Luck (Taking upgrades)
         - spawn more enemies?
     Back Luck (Skip upgrade)
         - Do more damage?
 
-Sound effects
-Music or beat
+More Sound effects
+Music or a beat
 
-More enemy types
+Enemy waves + More enemy types
 Meta Progression???
 
 Boss Ideas

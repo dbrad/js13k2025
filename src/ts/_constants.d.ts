@@ -127,6 +127,7 @@ declare const UP_MENACE: 8;
 declare const UP_NINELIFE: 9;
 declare const UP_CARDINAL: 10;
 declare const UP_SLASH: 11;
+declare const UP_SHED: 12;
 
 declare const BULLET: 0;
 declare const AURA: 1;
