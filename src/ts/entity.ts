@@ -21,6 +21,8 @@ let TYPE_PLAYER = 1 << 0;
 let TYPE_ENEMY = 1 << 1;
 let TYPE_PROJECTILE = 1 << 2;
 let TYPE_AURA = 1 << 3;
+let TYPE_XP_ORB = 1 << 4;
+let TYPE_HOSTILE_PROJECTILE = 1 << 5;
 
 export let playerDir = 0;
 let enemyCount = 0;
@@ -41,6 +43,8 @@ let damage = new Float32Array(MAX_ENTITIES);
 let lifetime = new Float32Array(MAX_ENTITIES);
 let color = new Uint32Array(MAX_ENTITIES);
 let slowFactor = new Float32Array(MAX_ENTITIES).fill(1);
+let shootTimer = new Float32Array(MAX_ENTITIES);
+let shootPeriod = new Float32Array(MAX_ENTITIES);
 
 let activeIds = new Uint32Array(MAX_ENTITIES);
 let activeIndex = new Int32Array(MAX_ENTITIES);
@@ -126,6 +130,8 @@ let alloc = (): number => {
     let id = freeList[--freeTop];
     alive[id] = 1;
     slowFactor[id] = 1;
+    shootTimer[id] = 0;
+    shootPeriod[id] = 0;
     activeIndex[id] = activeCount;
     activeIds[activeCount++] = id;
     return id;
@@ -153,7 +159,7 @@ export let spawnPlayer = (x: number, y: number, r: number = 8): void => {
     lifetime[id] = 0;
 };
 
-export let spawnEnemy = (x: number, y: number, r: number = 8, hpVal: number = 3, dmg: number = 1, rgba: number = BLACK, forceSpawn: boolean = false): number => {
+export let spawnEnemy = (x: number, y: number, r: number = 8, hpVal: number = 3, dmg: number = 1, rgba: number = BLACK, forceSpawn: boolean = false, shootPeriodParam: number = 0): number => {
     if (!forceSpawn && enemyCount >= 300) return -1;
     let id = alloc();
     if (id < 1) return -1;
@@ -166,12 +172,16 @@ export let spawnEnemy = (x: number, y: number, r: number = 8, hpVal: number = 3,
     hp[id] = hpVal;
     damage[id] = dmg;
     color[id] = rgba;
+    if (shootPeriodParam > 0) {
+        shootPeriod[id] = shootPeriodParam;
+        shootTimer[id] = random() * shootPeriodParam;
+    }
     enemyCount++;
     return id;
 };
 
 let diag = sqrt(SCREEN_DIM * SCREEN_DIM * 2) / 2 + 84;
-export let spawnOffscreenEnemy = (hp: number = 3, r: number = 8, dmg: number = 1, color: number = BLACK, forceSpawn: boolean = false): number => {
+export let spawnOffscreenEnemy = (hp: number = 3, r: number = 8, dmg: number = 1, color: number = BLACK, forceSpawn: boolean = false, shootPeriodParam: number = 0): number => {
     let angle = random() * PI * 2;
     let x = cameraPos[X] + cos(angle) * diag;
     let y = cameraPos[Y] + sin(angle) * diag;
@@ -181,19 +191,19 @@ export let spawnOffscreenEnemy = (hp: number = 3, r: number = 8, dmg: number = 1
         y = cameraPos[Y] + sin(angle) * diag;
     }
     x = clamp(x, 0, WORLD_WIDTH); y = clamp(y, 0, WORLD_HEIGHT);
-    return spawnEnemy(x, y, r, hp, dmg, color, forceSpawn);
+    return spawnEnemy(x, y, r, hp, dmg, color, forceSpawn, shootPeriodParam);
 };
 
-export let spawnProjectile = (x: number, y: number, vx: number, vy: number, r: number = PROJECTILE_RADIUS, dmg: number = 1, lifeSec: number = 2, hpVal: number = 1, abgr: number = 0xff0000ff): number => {
+export let spawnProjectile = (x: number, y: number, vx: number, vy: number, r: number = PROJECTILE_RADIUS, dmg: number = 1, lifeSec: number = 2, hpVal: number = 1, abgr: number = 0xff0000ff, hostile: boolean = false): number => {
     let id = alloc();
     if (id < 1) return -1;
-    type[id] = TYPE_PROJECTILE;
+    type[id] = TYPE_PROJECTILE | (hostile ? TYPE_HOSTILE_PROJECTILE : 0);
     radius[id] = r;
     posX[id] = x;
     posY[id] = y;
     velX[id] = vx;
     velY[id] = vy;
-    damage[id] = dmg + player.damage_;
+    damage[id] = dmg + (hostile ? 0 : player.damage_);
     lifetime[id] = lifeSec;
     hp[id] = hpVal;
     color[id] = abgr;
@@ -216,10 +226,24 @@ export let spawnAura = (r: number = 50, dmg: number = 5, lifeSec: number = -1, a
     return id;
 };
 
+export let spawnXpOrb = (x: number, y: number, xp: number, r: number = 2, abgr: number = 0xff22ff00): number => {
+    let id = alloc();
+    if (id < 1) return -1;
+    type[id] = TYPE_XP_ORB;
+    radius[id] = r;
+    posX[id] = x;
+    posY[id] = y;
+    velX[id] = 0;
+    velY[id] = 0;
+    damage[id] = xp;
+    color[id] = abgr;
+    return id;
+};
+
 let damageEnemy = (id: number, amt: number): void => {
     hp[id] -= amt;
     if (hp[id] <= 0) {
-        gainXp(damage[id]);
+        spawnXpOrb(posX[id], posY[id], damage[id]);
         burstParticle.position_[X] = posX[id];
         burstParticle.position_[Y] = posY[id];
         emitParticles(burstParticle, 20);
@@ -230,7 +254,7 @@ let damageEnemy = (id: number, amt: number): void => {
 
 let damagePlayer = (amt: number): void => {
     if (lifetime[0] <= 0) {
-        player.hp_ -= max(TEXTURE_CAT_01, amt - player.defense_);
+        player.hp_ -= max(1, amt - player.defense_);
         lifetime[0] = 0.8;
         cathit();
         if (player.hp_ <= 0) {
@@ -274,6 +298,22 @@ export let updateEntities = (deltaMs: number): void => {
                 velX[id] = 0;
                 velY[id] = 0;
             }
+            if (shootPeriod[id] > 0) {
+                shootTimer[id] -= dt;
+                if (shootTimer[id] <= 0) {
+                    let dx = pX - posX[id];
+                    let dy = pY - posY[id];
+                    let d2 = dx * dx + dy * dy;
+                    if (d2 > 0) {
+                        let inv = 1 / sqrt(d2);
+                        dx *= inv;
+                        dy *= inv;
+                        let speed = 100;
+                        spawnProjectile(posX[id], posY[id], dx * speed, dy * speed, PROJECTILE_RADIUS, 1, 5, 1, 0xff8c0d8c, true);
+                    }
+                    shootTimer[id] += shootPeriod[id];
+                }
+            }
         } else if (t & TYPE_PROJECTILE) {
             lifetime[id] -= dt;
             if (lifetime[id] <= 0) {
@@ -310,6 +350,23 @@ export let updateEntities = (deltaMs: number): void => {
             }
             posX[id] = posX[0];
             posY[id] = posY[0];
+        } else if (t & TYPE_XP_ORB) {
+            velX[id] *= EULER ** (-2 * dt);
+            velY[id] *= EULER ** (-2 * dt);
+            let dx = pX - posX[id];
+            let dy = pY - posY[id];
+            let d2 = dx * dx + dy * dy;
+            let inv = 1 / sqrt(d2);
+            dx *= inv;
+            dy *= inv;
+            let speed = 10;
+            if (d2 < 625) {
+                speed = 200;
+            } else if (d2 < 10000) {
+                speed = 100;
+            }
+            velX[id] = dx * speed;
+            velY[id] = dy * speed;
         }
 
         posX[id] += velX[id] * dt;
@@ -374,7 +431,7 @@ export let updateEntities = (deltaMs: number): void => {
                     continue;
                 }
 
-                if ((ti & TYPE_PROJECTILE) && (tj & TYPE_ENEMY)) {
+                if ((ti & TYPE_PROJECTILE) && !(ti & TYPE_HOSTILE_PROJECTILE) && (tj & TYPE_ENEMY)) {
                     if (enemyHitSet[j].includes(i)) {
                         continue;
                     }
@@ -387,7 +444,7 @@ export let updateEntities = (deltaMs: number): void => {
                     continue;
                 }
 
-                if ((tj & TYPE_PROJECTILE) && (ti & TYPE_ENEMY)) {
+                if ((tj & TYPE_PROJECTILE) && !(tj & TYPE_HOSTILE_PROJECTILE) && (ti & TYPE_ENEMY)) {
                     if (enemyHitSet[i].includes(j)) {
                         continue;
                     }
@@ -397,6 +454,31 @@ export let updateEntities = (deltaMs: number): void => {
                     if (hp[j] <= 0) {
                         alive[j] = 0;
                     }
+                    continue;
+                }
+
+                if ((ti & TYPE_PROJECTILE) && (ti & TYPE_HOSTILE_PROJECTILE) && (tj & TYPE_PLAYER)) {
+                    damagePlayer(damage[i]);
+                    hp[i] -= 1;
+                    if (hp[i] <= 0) {
+                        alive[i] = 0;
+                    }
+                    continue;
+                }
+
+                if ((tj & TYPE_PROJECTILE) && (tj & TYPE_HOSTILE_PROJECTILE) && (ti & TYPE_PLAYER)) {
+                    damagePlayer(damage[j]);
+                    hp[j] -= 1;
+                    if (hp[j] <= 0) {
+                        alive[j] = 0;
+                    }
+                    continue;
+                }
+
+                if (((ti & TYPE_PLAYER) && (tj & TYPE_XP_ORB)) || ((ti & TYPE_XP_ORB) && (tj & TYPE_PLAYER))) {
+                    let orbId = ti & TYPE_XP_ORB ? i : j;
+                    gainXp(damage[orbId]);
+                    alive[orbId] = 0;
                     continue;
                 }
             }
