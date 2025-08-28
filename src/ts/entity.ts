@@ -14,7 +14,7 @@ let GRID_WIDTH = 256 as const;
 let GRID_HEIGHT = 256 as const;
 let MAX_PER_CELL = 128 as const;
 
-let ENEMY_SPEED = 50 as const;
+let ENEMY_SPEED = 35 + gameStage * 2.5;
 let PROJECTILE_RADIUS = 2;
 
 let TYPE_PLAYER = 1 << 0;
@@ -308,8 +308,9 @@ export let updateEntities = (deltaMs: number): void => {
                         let inv = 1 / sqrt(d2);
                         dx *= inv;
                         dy *= inv;
-                        let speed = 100;
-                        spawnProjectile(posX[id], posY[id], dx * speed, dy * speed, PROJECTILE_RADIUS, 1, 5, 1, 0xff8c0d8c, true);
+                        let speed = 160;
+                        let dmg = floor(damage[id] * .5);
+                        spawnProjectile(posX[id], posY[id], dx * speed, dy * speed, max(2, dmg), dmg, 3, 1, 0xff8c0d8c, true);
                     }
                     shootTimer[id] += shootPeriod[id];
                 }

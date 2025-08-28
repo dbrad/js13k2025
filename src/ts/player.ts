@@ -98,7 +98,7 @@ export let UPGRADE_POOL: Upgrade[] = [
         description_: "Attack in random directions|upgrade: projectiles+",
         kind_: ABILITY,
         apply_: (): void => {
-            upgradeAbility(UP_ZOOMY, BULLET, 300, (a: Ability): void => {
+            upgradeAbility(UP_ZOOMY, BULLET, 250, (a: Ability): void => {
                 for (let i = 0; i < a.level_ + 1; i++) {
                     let a = random() * PI * 2;
                     let speed = randInt(150, 200);
@@ -171,12 +171,12 @@ export let UPGRADE_POOL: Upgrade[] = [
     }, {
         id_: UP_SLASH,
         name_: "Slash",
-        description_: "Slash at nearby enemies in an arc|upgrade: ",
+        description_: "Slash at nearby enemies in an arc|upgrade: count+ size+",
         kind_: ABILITY,
         apply_: (): void => {
             upgradeAbility(UP_SLASH, BULLET, 500, (a: Ability): void => {
-                let count = 11 + a.level_ * 2;
-                let ang = PI / 2;
+                let count = 5 + a.level_ * 6;
+                let ang = PI / (6 - a.level_);
                 let baseAngle: number;
                 let dx: number, dy: number;
 
@@ -193,10 +193,27 @@ export let UPGRADE_POOL: Upgrade[] = [
                     let angle = baseAngle - ang / 2 + t * ang;
                     let px = posX[0] + cos(angle) * 64;
                     let py = posY[0] + sin(angle) * 64;
-                    spawnProjectile(px, py, 0, 0, 3, 1, .1, 999);
+                    spawnProjectile(px, py, 0, 0, a.level_, 1, .1, 999);
                     burstParticle.position_[X] = px;
                     burstParticle.position_[Y] = py;
                     emitParticle(burstParticle);
+                }
+            });
+        },
+    }, {
+        id_: UP_SHED,
+        name_: "Agressive Shedding",
+        description_: "Periodically attack in all directions|upgrade: count+",
+        kind_: ABILITY,
+        apply_: (): void => {
+            upgradeAbility(UP_SHED, BULLET, 3000, (a: Ability): void => {
+                let speed = 300;
+                let count = 4 + a.level_ * 4;
+                for (let k = 0; k < 8 + count; k++) {
+                    let angle = (2 * PI * k) / count;
+                    let vx = cos(angle) * speed;
+                    let vy = sin(angle) * speed;
+                    spawnProjectile(posX[0], posY[0], vx, vy, 2, 1, 2, 1);
                 }
             });
         },

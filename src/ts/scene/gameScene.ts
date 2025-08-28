@@ -4,7 +4,7 @@ import { drawEntities, hp, initEntities, posX, posY, spawnOffscreenEnemy, spawnP
 import { drawWorld, gameStage, generateWorld, updateTime, WORLD_HEIGHT, WORLD_WIDTH } from "../gameMap";
 import { gameState, getRunTime } from "../gameState";
 import { A_PRESSED, DOWN_IS_DOWN, DOWN_PRESSED, LEFT_IS_DOWN, RIGHT_IS_DOWN, UP_IS_DOWN, UP_PRESSED } from "../input";
-import { ceil, clamp, EULER, floor, max, min, randInt, sqrt } from "../math";
+import { ceil, clamp, floor, max, min, randInt, sqrt } from "../math";
 import { getRandomUpgrades, player, resetPlayer, updatePlayerAbilities, UPGRADE_POOL, xpTable } from "../player";
 import { createScene, switchToScene } from "../scene";
 import { gameoverData, gameOverScene } from "./gameOver";
@@ -139,7 +139,7 @@ let drawGUI = (): void => {
     pushText(`xp`, 1, 30);
     pushQuad(2, 40, w, 8, WHITE);
     pushQuad(2, 41, xpPer, 6, 0xff336600);
-    pushText(`luck   ${player.luck_}`, 1, 50); // TODO WHAT DO YOU DOOOOO
+    // pushText(`luck   ${player.luck_}`, 1, 50); // TODO WHAT DO YOU DOOOOO
     pushText(`damage ${player.damage_}`, 2, 60);
     pushText(`armor  ${player.defense_}`, 1, 70);
     pushText(`rate   ${100 + player.cooldown_}%`, 1, 80);
