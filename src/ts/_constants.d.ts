@@ -128,6 +128,8 @@ declare const UP_NINELIFE: 9;
 declare const UP_CARDINAL: 10;
 declare const UP_SLASH: 11;
 declare const UP_SHED: 12;
+declare const UP_FELD1: 13;
+declare const UP_REFLEX: 14;
 
 declare const BULLET: 0;
 declare const AURA: 1;

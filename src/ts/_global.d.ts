@@ -93,6 +93,7 @@ type Upgrade = {
 type Player = {
     hp_: number;
     maxHP_: number;
+    shield_: number;
     speed_: number;
     damage_: number;
     defense_: number;
