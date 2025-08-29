@@ -8,6 +8,7 @@ export let resetPlayer = (): void => {
     player = {
         hp_: 100,
         maxHP_: 100,
+        shield_: 0,
         speed_: 140,
         damage_: 0,
         defense_: 0,
@@ -16,7 +17,7 @@ export let resetPlayer = (): void => {
         abilities_: [],
         xp_: 0,
         level_: 1,
-        levelUpPending_: false
+        levelUpPending_: true
     };
     UPGRADE_POOL[UP_CLAW].apply_();
 };
@@ -215,6 +216,27 @@ export let UPGRADE_POOL: Upgrade[] = [
                     let vy = sin(angle) * speed;
                     spawnProjectile(posX[0], posY[0], vx, vy, 2, 1, 2, 1);
                 }
+            });
+        },
+    }, {
+        id_: UP_FELD1,
+        name_: "Fel d 1",
+        description_: "A damaging aura of allergens|upgrade: size+",
+        kind_: ABILITY,
+        apply_: (): void => {
+            upgradeAbility(UP_FELD1, AURA, 5000, (a: Ability): void => {
+                let radius = 50 + a.level_ * 10;
+                a.entityId_ = spawnAura(radius, 1 + player.damage_, -1, 0x118888ff, 1, a.entityId_);
+            });
+        },
+    }, {
+        id_: UP_REFLEX,
+        name_: "Extreme Reflexes",
+        description_: "Periodically nullify an incoming attack|upgrade: cooldown-",
+        kind_: ABILITY,
+        apply_: (): void => {
+            upgradeAbility(UP_REFLEX, PASSIVE, 10000, (a: Ability): void => {
+                player.shield_ = min(1, player.shield_ + 1);
             });
         },
     },

@@ -290,9 +290,13 @@ let damageEnemy = (id: number, amt: number): void => {
 
 let damagePlayer = (amt: number): void => {
     if (lifetime[0] <= 0) {
-        player.hp_ -= max(1, amt - player.defense_);
+        if (player.shield_ <= 0) {
+            player.hp_ -= max(1, amt - player.defense_);
+            cathit();
+        } else {
+            player.shield_ = max(0, player.shield_ - 1);
+        }
         lifetime[0] = 0.8;
-        cathit();
         if (player.hp_ <= 0) {
             alive[0] = 0;
         }
@@ -595,7 +599,7 @@ export let drawEntities = (): void => {
 
     if (velX[0] !== 0 || velY[0] !== 0 || lifetime[0] > 0) {
         if (lifetime[0] > 0 && floor(lifetime[0] * 10) % 2 == 1) {
-            catParticle.colourBegin_[R] = 1;
+            catParticle.colourBegin_[R] = 0.8;
         } else {
             catParticle.colourBegin_[R] = 0;
         }
@@ -610,5 +614,8 @@ export let drawEntities = (): void => {
         emitParticles(eyeParticle, 2);
     } else {
         pushTexturedQuad(TEXTURE_CAT_01, sPosX[0] - 8, sPosY[0] - 8, 1, BLACK, playerDir === 0, false, false, true);
+    }
+    if (player.shield_ > 0) {
+        pushTexturedQuad(TEXTURE_C_16x16, sPosX[0] - 16, sPosY[0] - 16, 2, 0x33aa0000);
     }
 };
