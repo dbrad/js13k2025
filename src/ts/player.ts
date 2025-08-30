@@ -1,5 +1,6 @@
+import { BLACK } from "./draw";
 import { findNearestEnemy, nearestEnemyPos, playerDir, posX, posY, spawnAura, spawnProjectile } from "./entity";
-import { cos, max, min, PI, randInt, random, roundTo, sin, sqrt } from "./math";
+import { calcVec, cos, max, min, PI, randInt, random, roundTo, sin, vecCalc } from "./math";
 import { burstParticle, emitParticle } from "./particle";
 
 export let player: Player;
@@ -75,13 +76,11 @@ export let UPGRADE_POOL: Upgrade[] = [
                 let speed = 500;
                 let range = 0.1 + (a.level_ - 1) * 0.1;
                 if (findNearestEnemy(300)) {
-                    let dx = nearestEnemyPos[0] - posX[0];
-                    let dy = nearestEnemyPos[1] - posY[0];
-                    let dist = sqrt(dx * dx + dy * dy);
-                    let vx = (dx / dist) * speed;
-                    let vy = (dy / dist) * speed;
-                    let perpX = -dy / dist * 10;
-                    let perpY = dx / dist * 10;
+                    calcVec(posX[0], posY[0], nearestEnemyPos[X], nearestEnemyPos[Y]);
+                    let vx = vecCalc[NX] * speed;
+                    let vy = vecCalc[NY] * speed;
+                    let perpX = -vecCalc[NY] * 10;
+                    let perpY = vecCalc[NX] * 10;
                     spawnProjectile(posX[0], posY[0], vx, vy, 2, 1, range, a.level_);
                     spawnProjectile(posX[0] + perpX, posY[0] + perpY, vx, vy, 2, 1, range, a.level_);
                     spawnProjectile(posX[0] - perpX, posY[0] - perpY, vx, vy, 2, 1, range, a.level_);
@@ -110,21 +109,19 @@ export let UPGRADE_POOL: Upgrade[] = [
             });
         },
     }, {
-        id_: UP_HAIRBAKK,
+        id_: UP_HAIRBALL,
         name_: "Hairball",
         description_: "Let out a powerful piercing attack|upgrade: damage+ size+",
         kind_: ABILITY,
         apply_: (): void => {
-            upgradeAbility(UP_HAIRBAKK, BULLET, 2000, (a: Ability): void => {
+            upgradeAbility(UP_HAIRBALL, BULLET, 2000, (a: Ability): void => {
                 let speed = 300;
                 let dmg = 10 * a.level_;
                 let size = 5 * a.level_;
                 if (findNearestEnemy(300)) {
-                    let dx = nearestEnemyPos[0] - posX[0];
-                    let dy = nearestEnemyPos[1] - posY[0];
-                    let dist = sqrt(dx * dx + dy * dy);
-                    let vx = (dx / dist) * speed;
-                    let vy = (dy / dist) * speed;
+                    calcVec(posX[0], posY[0], nearestEnemyPos[X], nearestEnemyPos[Y]);
+                    let vx = vecCalc[DX] * speed;
+                    let vy = vecCalc[DY] * speed;
                     spawnProjectile(posX[0], posY[0], vx, vy, size, dmg, 5, 999);
                 } else {
                     let vx = playerDir === 0 ? -speed : speed;
@@ -237,6 +234,37 @@ export let UPGRADE_POOL: Upgrade[] = [
         apply_: (): void => {
             upgradeAbility(UP_REFLEX, PASSIVE, 10000, (a: Ability): void => {
                 player.shield_ = min(1, player.shield_ + 1);
+            });
+        },
+    }, {
+        id_: UP_HISS,
+        name_: "Hiss",
+        description_: "Knock back and harm nearby enemies|upgrade: count+ knock+",
+        kind_: ABILITY,
+        apply_: (): void => {
+            upgradeAbility(UP_HISS, BULLET, 1500, (a: Ability): void => {
+                let count = 8 + a.level_ * 4;
+                let ang = PI / 4;
+                let baseAngle: number;
+                if (findNearestEnemy(300)) {
+                    let dx = nearestEnemyPos[0] - posX[0];
+                    let dy = nearestEnemyPos[1] - posY[0];
+                    baseAngle = Math.atan2(dy, dx);
+                } else {
+                    baseAngle = playerDir === 0 ? PI : 0;
+                }
+                let speed = 500;
+                let life = 0.2;
+                let dmg = 1;
+                let kb = 10 + a.level_ * 5;
+                for (let i = 0; i < count; i++) {
+                    let t = count > 1 ? i / (count - 1) : 0.5;
+                    let angle = baseAngle - ang / 2 + t * ang;
+                    angle += (random() - 0.5) * (PI / 12);
+                    let vx = cos(angle) * speed;
+                    let vy = sin(angle) * speed;
+                    spawnProjectile(posX[0], posY[0], vx, vy, 2, dmg, life, 1, BLACK, false, kb);
+                }
             });
         },
     },

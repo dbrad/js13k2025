@@ -6,6 +6,7 @@ export let math = Math,
   min = math.min,
   round = math.round,
   sqrt = math.sqrt,
+  hypot = math.hypot,
   cos = math.cos,
   sin = math.sin,
   tan = math.tan,
@@ -13,6 +14,21 @@ export let math = Math,
 
 export let EULER = 2.71828 as const;
 export let PI = 3.14159 as const;
+
+export let vecCalc = new Float32Array(5);
+export let calcVec = (x1: number, y1: number, x2: number, y2: number): boolean => {
+  vecCalc[DX] = x2 - x1;
+  vecCalc[DY] = y2 - y1;
+  vecCalc[DIST] = hypot(vecCalc[0], vecCalc[1]);
+  if (vecCalc[DIST] === 0) {
+    vecCalc[NX] = 0;
+    vecCalc[NY] = 0;
+    return false;
+  }
+  vecCalc[NX] = vecCalc[DX] / vecCalc[DIST];
+  vecCalc[NY] = vecCalc[DY] / vecCalc[DIST];
+  return true;
+};
 
 export let roundTo = (value: number, nearest: number): number => {
   return round(value / nearest) * nearest;
@@ -38,12 +54,6 @@ export let clamp = (value: number, min: number, max: number): number => {
 
 export let isPointInRect = (x0: number, y0: number, x1: number, y1: number, w: number, h: number): boolean => {
   return x0 >= x1 && x0 < x1 + w && y0 >= y1 && y0 < y1 + h;
-};
-
-export let distanceBetweenPoints = (ax: number, ay: number, bx: number, by: number): number => {
-  let dx = bx - ax;
-  let dy = by - ay;
-  return dx * dx + dy * dy;
 };
 
 export let isPointInCircle = (x0: number, y0: number, x1: number, y1: number, radius: number): boolean => {
