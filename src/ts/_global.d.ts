@@ -23,6 +23,7 @@ declare module '*.webp' {
 type GameState = [
     GS_RUNCOUNT: number,
     GS_RUNTIME: number,
+    GS_MUTEMUSIC: number,
 ];
 
 type TextureDefinition = [number, number[], number, number, number, number];

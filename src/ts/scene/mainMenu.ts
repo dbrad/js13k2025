@@ -1,7 +1,7 @@
-import { boop, boop_good, zzfxPlay } from "../audio";
+import { boop, boopGood, zzfxPlay } from "../audio";
 import { BLACK, lightningFlash, pushQuad, pushText, pushTexturedQuad, updateLightning, WHITE } from "../draw";
 import { gameState, loadGame, saveGame } from "../gameState";
-import { A_PRESSED, DOWN_PRESSED, UP_PRESSED } from "../input";
+import { A_PRESSED, buttonActions, DOWN_PRESSED, UP_PRESSED } from "../input";
 import { createScene, switchToScene } from "../scene";
 import { gameScene } from "./gameScene";
 import { optionsScene } from "./options";
@@ -10,7 +10,10 @@ let selected = 0;
 let options = ["new game", "options"];
 
 let setup = (): void => {
+    loadGame();
     selected = 0;
+    buttonActions[0] = "accept";
+    buttonActions[1] = "cancel";
 };
 
 let update = (delta: number): void => {
@@ -27,10 +30,9 @@ let update = (delta: number): void => {
             zzfxPlay(boop);
         }
     } else if (A_PRESSED) {
-        zzfxPlay(boop_good);
+        zzfxPlay(boopGood);
         switch (selected) {
             case 0:
-                loadGame();
                 gameState[GS_RUNCOUNT]++;
                 gameState[GS_RUNTIME] = 0;
                 saveGame();

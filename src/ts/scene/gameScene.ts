@@ -1,10 +1,11 @@
+import { playMusic } from "../audio";
 import { cameraPos, cameraTarget, updateCamera, vCameraPos } from "../camera";
 import { BLACK, clearLightning, pushQuad, pushText, updateLightning, WHITE } from "../draw";
 import { drawEntities, hp, initEntities, posX, posY, spawnOffscreenEnemy, spawnPlayer, updateEntities, velX, velY } from "../entity";
-import { drawWorld, gameStage, generateWorld, updateTime, WORLD_HEIGHT, WORLD_WIDTH } from "../gameMap";
+import { drawWorld, gameStage, generateWorld, timeOfDay, updateTime, WORLD_HEIGHT, WORLD_WIDTH } from "../gameMap";
 import { gameState, getRunTime } from "../gameState";
-import { A_PRESSED, DOWN_IS_DOWN, DOWN_PRESSED, LEFT_IS_DOWN, RIGHT_IS_DOWN, UP_IS_DOWN, UP_PRESSED } from "../input";
-import { ceil, clamp, floor, hypot, max, min, randInt } from "../math";
+import { A_PRESSED, B_PRESSED, buttonActions, DOWN_IS_DOWN, DOWN_PRESSED, LEFT_IS_DOWN, RIGHT_IS_DOWN, UP_IS_DOWN, UP_PRESSED } from "../input";
+import { ceil, clamp, floor, hypot, max, min, randInt, random } from "../math";
 import { getRandomUpgrades, player, resetPlayer, updatePlayerAbilities, UPGRADE_POOL, xpTable } from "../player";
 import { createScene, switchToScene } from "../scene";
 import { gameoverData, gameOverScene } from "./gameOver";
@@ -16,8 +17,47 @@ let gameover = false;
 let bossSpawn = false;
 let bossAlive = false;
 let bossId = -1;
+let paused = false;
+
+type WaveDef = { hp_: number, radius_: number, dmg_: number, color_: number, shootPeriod_: number, speed_: number, count_: number; }; // SpawnConfig: hp, radius, dmg, color, shootPeriod, speed, count
+let waves: WaveDef[][] = [ // Waves: time implied by index (30s intervals)
+    [
+        { hp_: 3, radius_: 8, dmg_: 1, color_: BLACK, shootPeriod_: 0, speed_: 1.5, count_: 10 }
+    ], // Fast
+    [
+        { hp_: 10, radius_: 16, dmg_: 3, color_: BLACK, shootPeriod_: 0, speed_: 0.7, count_: 5 },
+        { hp_: 5, radius_: 10, dmg_: 1, color_: 0xfff21d6b, shootPeriod_: 3, speed_: 1, count_: 5 },
+    ], // Big+shooters
+    [
+        { hp_: 4, radius_: 8, dmg_: 1, color_: BLACK, shootPeriod_: 0, speed_: 1.2, count_: 15 }
+    ], // Medium
+    [
+        { hp_: 15, radius_: 20, dmg_: 4, color_: 0xfff21d6b, shootPeriod_: 5, speed_: 0.6, count_: 3 },
+        { hp_: 3, radius_: 8, dmg_: 1, color_: BLACK, shootPeriod_: 0, speed_: 1, count_: 10 },
+    ], // Big+fodder
+    [
+        { hp_: 6, radius_: 12, dmg_: 2, color_: 0xfff21d6b, shootPeriod_: 2, speed_: 0.9, count_: 8 }
+    ], // Shooters
+    [
+        { hp_: 8, radius_: 14, dmg_: 2, color_: BLACK, shootPeriod_: 0, speed_: 1.3, count_: 12 }
+    ], // Fast medium
+    [
+        { hp_: 20, radius_: 24, dmg_: 5, color_: BLACK, shootPeriod_: 0, speed_: 0.5, count_: 4 }
+    ], // Very big
+    [
+        { hp_: 7, radius_: 10, dmg_: 1, color_: 0xfff21d6b, shootPeriod_: 4, speed_: 1, count_: 10 }
+    ], // Many shooters
+    [
+        { hp_: 5, radius_: 8, dmg_: 1, color_: BLACK, shootPeriod_: 0, speed_: 1.5, count_: 20 }
+    ], // Swarm
+    [
+        { hp_: 12, radius_: 18, dmg_: 3, color_: 0xfff21d6b, shootPeriod_: 3, speed_: 0.8, count_: 6 }
+    ], // Balanced
+];
+let waveIdx = 0; // Current wave index
 
 let setup = (): void => {
+    buttonActions[1] = "pause";
     gameover = bossSpawn = bossAlive = false;
     bossId = -1;
     resetPlayer();
@@ -30,9 +70,16 @@ let setup = (): void => {
 };
 
 let update = (delta: number): void => {
+    playMusic(delta);
     if (gameover) return;
+    if (paused) {
+        if (B_PRESSED) {
+            paused = false;
+            buttonActions[1] = "pause";
+        }
+        return;
+    }
     let dt = delta * 0.001;
-    gameState[GS_RUNTIME] += dt;
     if (bossAlive) {
         bossAlive = hp[bossId] > 0;
         if (!bossAlive) {
@@ -65,8 +112,30 @@ let update = (delta: number): void => {
                 upgradeSelectRow = max(upgradeSelectRow - 1, 0);
             }
         } else {
+            if (B_PRESSED) {
+                paused = true;
+                buttonActions[1] = "unpause";
+                return;
+            }
+            gameState[GS_RUNTIME] += dt;
             if (!bossSpawn) {
                 updateTime(dt);
+                if (waveIdx < waves.length && timeOfDay >= waveIdx * 30) {
+                    for (let enemy of waves[waveIdx]) {
+                        let scaling = randInt(1, gameStage);
+                        for (let i = 0; i < enemy.count_; i++) {
+                            spawnOffscreenEnemy(
+                                enemy.hp_ + scaling,
+                                enemy.radius_ + scaling * 0.5,
+                                enemy.dmg_ + scaling * 0.5,
+                                enemy.color_,
+                                false,
+                                enemy.shootPeriod_,
+                                enemy.speed_);
+                        }
+                    }
+                    waveIdx++;
+                }
             } else if (bossSpawn && !bossAlive) {
                 updateTime(-dt);
                 if (gameStage === -1) {
@@ -78,7 +147,7 @@ let update = (delta: number): void => {
             if (gameStage > 15) {
                 updateLightning(delta);
                 if (!bossSpawn) {
-                    bossId = spawnOffscreenEnemy(500, 64, 25, 0xff3c053c, true);
+                    bossId = spawnOffscreenEnemy(500, 64, 25, 0xfff21d6b, true);
                     bossSpawn = true;
                     bossAlive = true;
                 }
@@ -105,12 +174,14 @@ let update = (delta: number): void => {
             }
 
             timer += delta;
-            if (timer >= 500) {
-                timer -= 500;
-                let s = randInt(1, gameStage);
-                spawnOffscreenEnemy(3 + s, 8 + s, 1 + s);
-                spawnOffscreenEnemy(3 + s, 8 + s, 1 + s);
-                spawnOffscreenEnemy(3 + s, 8 + s, 1 + s, 0xff3c053c, false, 3);
+            if (timer >= 1000) {
+                timer -= 1000;
+                let scaling = randInt(1, gameStage);
+                let count = randInt(1, 2 + ~~(gameStage / 5));
+                for (let i = 0; i < count; i++) {
+                    if (random() < 0.3) spawnOffscreenEnemy(3 + scaling, 8 + scaling, 1 + scaling, 0xfff21d6b, false, 3);
+                    else spawnOffscreenEnemy(3 + scaling, 8 + scaling, 1 + scaling);
+                }
             }
 
             updateEntities(delta);
@@ -160,6 +231,12 @@ let drawGUI = (): void => {
         pushQuad(SCREEN_RIGHT + 2, 31 + offset, w, 1, WHITE);
     }
 
+    if (bossAlive) {
+        pushText("r.o.u.s", SCREEN_CENTER_X, SCREEN_DIM - 14, WHITE, 2, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM);
+        pushQuad(SCREEN_CENTER_X - 50, SCREEN_DIM - 12, 100, 8, WHITE);
+        pushQuad(SCREEN_CENTER_X - 50, SCREEN_DIM - 11, hp[bossId] / 500 * 100, 6, 0xff0000aa);
+    }
+
     if (player.levelUpPending_) {
         pushQuad(SCREEN_LEFT, 0, SCREEN_DIM + 1, SCREEN_DIM + 1, 0xcc000000);
         for (let i = 0; i < upgrades.length; i++) {
@@ -177,10 +254,9 @@ let drawGUI = (): void => {
         pushText("SKIP", SCREEN_CENTER_X, 1 + 42 + (84 * 3), WHITE, 2, TEXT_ALIGN_CENTER, TEXT_ALIGN_MIDDLE);
     }
 
-    if (bossAlive) {
-        pushText("r.o.u.s", SCREEN_CENTER_X, SCREEN_DIM - 14, WHITE, 2, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM);
-        pushQuad(SCREEN_CENTER_X - 50, SCREEN_DIM - 12, 100, 8, WHITE);
-        pushQuad(SCREEN_CENTER_X - 50, SCREEN_DIM - 11, hp[bossId] / 500 * 100, 6, 0xff0000aa);
+    if (paused) {
+        pushQuad(SCREEN_LEFT + 8, SCREEN_DIM * .333, SCREEN_DIM - 16, SCREEN_DIM * .333, 0xaa000000);
+        pushText("paused", SCREEN_CENTER_X, SCREEN_DIM * .5, WHITE, 2, TEXT_ALIGN_CENTER, TEXT_ALIGN_MIDDLE);
     }
 };
 

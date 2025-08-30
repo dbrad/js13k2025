@@ -1,11 +1,13 @@
 import { animationFrame, pushText, WHITE } from "../draw";
 import { getRunTime } from "../gameState";
-import { A_PRESSED, B_PRESSED } from "../input";
+import { A_PRESSED, B_PRESSED, buttonActions } from "../input";
 import { createScene, switchToScene } from "../scene";
 import { mainMenuScene } from "./mainMenu";
 
 export let gameoverData = [""];
-let setup = (): void => { };
+let setup = (): void => {
+    buttonActions[0] = buttonActions[1] = "continue";
+};
 
 let update = (delta: number): void => {
     if (A_PRESSED || B_PRESSED) {

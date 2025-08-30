@@ -1,5 +1,5 @@
 import { assert } from "./__debug/debug";
-import { cathit } from "./audio";
+import { catHit, ratDie } from "./audio";
 import { cameraPos } from "./camera";
 import { BLACK, lightningFlash, pushQuad, pushTexturedQuad, WHITE } from "./draw";
 import { gameStage, WORLD_HEIGHT, WORLD_WIDTH } from "./gameMap";
@@ -14,7 +14,6 @@ let GRID_WIDTH = 256 as const;
 let GRID_HEIGHT = 256 as const;
 let MAX_PER_CELL = 128 as const;
 
-let ENEMY_SPEED = 35 + gameStage * 2.5;
 let PROJECTILE_RADIUS = 2;
 
 let TYPE_PLAYER = 1 << 0;
@@ -46,6 +45,7 @@ let slowFactor = new Float32Array(MAX_ENTITIES).fill(1);
 let shootTimer = new Float32Array(MAX_ENTITIES);
 let shootPeriod = new Float32Array(MAX_ENTITIES);
 let knockback = new Float32Array(MAX_ENTITIES);
+let speedMult = new Float32Array(MAX_ENTITIES).fill(1);
 
 let activeIds = new Uint32Array(MAX_ENTITIES);
 let activeIndex = new Int32Array(MAX_ENTITIES);
@@ -160,7 +160,7 @@ export let spawnPlayer = (x: number, y: number, r: number = 8): void => {
     lifetime[id] = 0;
 };
 
-export let spawnEnemy = (x: number, y: number, r: number = 8, hpVal: number = 3, dmg: number = 1, rgba: number = BLACK, forceSpawn: boolean = false, shootPeriodParam: number = 0): number => {
+export let spawnEnemy = (x: number, y: number, r: number = 8, hpVal: number = 3, dmg: number = 1, rgba: number = BLACK, forceSpawn: boolean = false, shootPeriodVal: number = 0, speed: number = 1): number => {
     if (!forceSpawn && enemyCount >= 300) return -1;
     let id = alloc();
     if (id < 1) return -1;
@@ -168,21 +168,21 @@ export let spawnEnemy = (x: number, y: number, r: number = 8, hpVal: number = 3,
     radius[id] = r;
     posX[id] = x;
     posY[id] = y;
-    velX[id] = 0;
-    velY[id] = 0;
+    velX[id] = velY[id] = 0;
     hp[id] = hpVal;
     damage[id] = dmg;
     color[id] = rgba;
-    if (shootPeriodParam > 0) {
-        shootPeriod[id] = shootPeriodParam;
-        shootTimer[id] = random() * shootPeriodParam;
+    if (shootPeriodVal) {
+        shootPeriod[id] = shootPeriodVal;
+        shootTimer[id] = random() * shootPeriodVal;
     }
+    speedMult[id] = speed;
     enemyCount++;
     return id;
 };
 
 let diagDist = sqrt(SCREEN_DIM * SCREEN_DIM * 2) / 2 + 84;
-export let spawnOffscreenEnemy = (hpVal: number = 3, r: number = 8, dmg: number = 1, abgr: number = BLACK, forceSpawn: boolean = false, shootPeriodParam: number = 0): number => {
+export let spawnOffscreenEnemy = (hpVal: number = 3, r: number = 8, dmg: number = 1, abgr: number = BLACK, forceSpawn: boolean = false, shootPeriodParam: number = 0, speedMult: number = 1): number => {
     let angle = random() * PI * 2;
     let x = cameraPos[X] + cos(angle) * diagDist;
     let y = cameraPos[Y] + sin(angle) * diagDist;
@@ -192,7 +192,7 @@ export let spawnOffscreenEnemy = (hpVal: number = 3, r: number = 8, dmg: number 
         y = cameraPos[Y] + sin(angle) * diagDist;
     }
     x = clamp(x, 0, WORLD_WIDTH); y = clamp(y, 0, WORLD_HEIGHT);
-    let id = spawnEnemy(x, y, r, hpVal, dmg, abgr, forceSpawn, shootPeriodParam);
+    let id = spawnEnemy(x, y, r, hpVal, dmg, abgr, forceSpawn, shootPeriodParam, speedMult);
     if (id === -1 && !forceSpawn) {
         let px = posX[0];
         let py = posY[0];
@@ -217,7 +217,7 @@ export let spawnOffscreenEnemy = (hpVal: number = 3, r: number = 8, dmg: number 
     return id;
 };
 
-export let spawnProjectile = (x: number, y: number, vx: number, vy: number, r: number = PROJECTILE_RADIUS, dmg: number = 1, lifeSec: number = 2, hpVal: number = 1, abgr: number = 0xff0000ff, hostile: boolean = false, kb: number = 0): number => {
+export let spawnProjectile = (x: number, y: number, vx: number, vy: number, r: number = PROJECTILE_RADIUS, dmg: number = 1, lifeSec: number = 2, hpVal: number = 1, abgr: number = 0xff1313ba, hostile: boolean = false, kb: number = 0): number => {
     let id = alloc();
     if (id < 1) return -1;
     type[id] = TYPE_PROJECTILE | (hostile ? TYPE_HOSTILE_PROJECTILE : 0);
@@ -265,9 +265,10 @@ export let spawnXpOrb = (x: number, y: number, xp: number, r: number = 2, abgr: 
 };
 
 let damageEnemy = (id: number, amt: number): void => {
-    hp[id] -= amt;
+    hp[id] -= amt + player.damage_;
     if (hp[id] <= 0) {
         spawnXpOrb(posX[id], posY[id], damage[id]);
+        ratDie();
         burstParticle.position_[X] = posX[id];
         burstParticle.position_[Y] = posY[id];
         emitParticles(burstParticle, 20);
@@ -279,7 +280,7 @@ let damagePlayer = (amt: number): void => {
     if (lifetime[0] <= 0) {
         if (player.shield_ <= 0) {
             player.hp_ -= max(1, amt - player.defense_);
-            cathit();
+            catHit();
         } else {
             player.shield_ = max(0, player.shield_ - 1);
         }
@@ -344,10 +345,11 @@ export let updateEntities = (deltaMs: number): void => {
 
         if (t & TYPE_ENEMY) {
             enemyHitSetCount[id] = 0;
+            let baseSpeed = 35 + gameStage * 2.5;
             calcVec(posX[id], posY[id], pX, pY);
             if (vecCalc[DIST] > 14) {
-                velX[id] = vecCalc[NX] * ENEMY_SPEED * slowFactor[id];
-                velY[id] = vecCalc[NY] * ENEMY_SPEED * slowFactor[id];
+                velX[id] = vecCalc[NX] * baseSpeed * speedMult[id] * slowFactor[id];
+                velY[id] = vecCalc[NY] * baseSpeed * speedMult[id] * slowFactor[id];
                 slowFactor[id] = 1.0;
             } else {
                 velX[id] = 0;
@@ -356,12 +358,14 @@ export let updateEntities = (deltaMs: number): void => {
             if (shootPeriod[id] > 0) {
                 shootTimer[id] -= dt;
                 if (shootTimer[id] <= 0) {
-                    if (vecCalc[DIST] > 0) {
+                    if (vecCalc[DIST] > 0 && vecCalc[DIST] < SCREEN_HALF + 30) {
                         let speed = 160;
                         let dmg = floor(damage[id] * .5);
-                        spawnProjectile(posX[id], posY[id], vecCalc[NX] * speed, vecCalc[NY] * speed, max(2, dmg), dmg, 3, 1, 0xff8c0d8c, true);
+                        spawnProjectile(posX[id], posY[id], vecCalc[NX] * speed, vecCalc[NY] * speed, max(3, dmg), dmg, 5, 1, 0xfff21d6b, true);
+                        shootTimer[id] += shootPeriod[id];
+                    } else {
+                        shootTimer[id] += shootPeriod[id] * .25;
                     }
-                    shootTimer[id] += shootPeriod[id];
                 }
             }
         } else if (t & TYPE_PROJECTILE) {

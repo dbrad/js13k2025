@@ -4,18 +4,8 @@ import { pushText, pushTexturedQuad, WHITE } from "./draw";
 
 let hardwareKeyState = [0, 0, 0, 0, 0, 0];
 let keyState = [0, 0, 0, 0, 0, 0];
-let controlsEnabled = [0, 0, 0, 0, 0, 0];
 let canvasRef: HTMLCanvasElement;
-
-export let setControlsUsed = (...keys: number[]): void => {
-    for (let key = 0; key < 6; key++) {
-        controlsEnabled[key] = 0;
-    }
-
-    for (let key of keys) {
-        controlsEnabled[key] = 1;
-    }
-};
+export let buttonActions: string[] = ["accept", "cancel"];
 
 export let UP_PRESSED: boolean = false;
 export let UP_IS_DOWN: boolean = false;
@@ -228,9 +218,9 @@ export let drawControls = (): void => {
     };
 
     if (!gamepad && !isTouch) {
-        helpText = "arrow keys / x. action / c. cancel";
+        helpText = `arrow keys / x. ${buttonActions[0]} / c. ${buttonActions[1]}`;
     } else {
-        helpText = "dpad / a. action / b. cancel";
+        helpText = `dpad / a. ${buttonActions[0]} / b. ${buttonActions[1]}`;
     }
 
     pushText(helpText, SCREEN_WIDTH / 2, SCREEN_HEIGHT - 8, 0x66ffffff, 1, TEXT_ALIGN_CENTER);

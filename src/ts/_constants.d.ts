@@ -120,6 +120,7 @@ declare const TEXTURE_DITH_15: 34;
 
 declare const GS_RUNCOUNT: 0;
 declare const GS_RUNTIME: 1;
+declare const GS_MUTEMUSIC: 2;
 
 declare const UP_HP: 0;
 declare const UP_ATK: 1;
