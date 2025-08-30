@@ -24,7 +24,7 @@ else
 	node_modules/.bin/html-minifier-terser --collapse-whitespace --remove-comments --remove-attribute-quotes --output build/release/index.html src/www/index.html
 	node build/scripts/version-bump.mjs
 	node build/scripts/release-app.mjs | node_modules/.bin/uglifyjs --config-file build/scripts/minify.config.json -o build/release/main.js
-	node_modules/.bin/roadroller build/release/main.js -O2 -o build/release/main.js
+	node_modules/.bin/roadroller build/release/main.js -O1 -o build/release/main.js
 	rm -rf dist
 	mkdir -p dist/src
 	node_modules/.bin/html-inline -i build/release/index.html -o dist/src/index.html

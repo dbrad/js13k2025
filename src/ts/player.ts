@@ -99,7 +99,7 @@ export let UPGRADE_POOL: Upgrade[] = [
         kind_: ABILITY,
         apply_: (): void => {
             upgradeAbility(UP_ZOOMY, BULLET, 250, (a: Ability): void => {
-                for (let i = 0; i < a.level_ + 1; i++) {
+                for (let i = 0; i < a.level_; i++) {
                     let a = random() * PI * 2;
                     let speed = randInt(150, 200);
                     let vx = cos(a) * speed;
@@ -120,8 +120,8 @@ export let UPGRADE_POOL: Upgrade[] = [
                 let size = 5 * a.level_;
                 if (findNearestEnemy(300)) {
                     calcVec(posX[0], posY[0], nearestEnemyPos[X], nearestEnemyPos[Y]);
-                    let vx = vecCalc[DX] * speed;
-                    let vy = vecCalc[DY] * speed;
+                    let vx = vecCalc[NX] * speed;
+                    let vy = vecCalc[NY] * speed;
                     spawnProjectile(posX[0], posY[0], vx, vy, size, dmg, 5, 999);
                 } else {
                     let vx = playerDir === 0 ? -speed : speed;
@@ -223,7 +223,7 @@ export let UPGRADE_POOL: Upgrade[] = [
         apply_: (): void => {
             upgradeAbility(UP_FELD1, AURA, 5000, (a: Ability): void => {
                 let radius = 50 + a.level_ * 10;
-                a.entityId_ = spawnAura(radius, 1 + player.damage_, -1, 0x118888ff, 1, a.entityId_);
+                a.entityId_ = spawnAura(radius, 1 + player.damage_, -1, 0x668888ff, 1, a.entityId_);
             });
         },
     }, {
@@ -254,8 +254,6 @@ export let UPGRADE_POOL: Upgrade[] = [
                     baseAngle = playerDir === 0 ? PI : 0;
                 }
                 let speed = 500;
-                let life = 0.2;
-                let dmg = 1;
                 let kb = 10 + a.level_ * 5;
                 for (let i = 0; i < count; i++) {
                     let t = count > 1 ? i / (count - 1) : 0.5;
@@ -263,7 +261,7 @@ export let UPGRADE_POOL: Upgrade[] = [
                     angle += (random() - 0.5) * (PI / 12);
                     let vx = cos(angle) * speed;
                     let vy = sin(angle) * speed;
-                    spawnProjectile(posX[0], posY[0], vx, vy, 2, dmg, life, 1, BLACK, false, kb);
+                    spawnProjectile(posX[0], posY[0], vx, vy, 2, 1, .2, 1, BLACK, false, kb);
                 }
             });
         },
