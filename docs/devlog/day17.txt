@@ -2,7 +2,25 @@ Day 17 - 2025-08-29
 
 ---
 
-
+Added shield ability
+Added damage aura
+Added in knockaway cone attack
+Cleaned up some repeatitive code and clawed back 100-150 bytes on final size
+Researched some more sound effects
+Have a better final plan of attack
 
 ---
 
+`-Zab0 -Zlr930 -Zmc4 -Zmd10 -S0,1,2,3,6,13,21,50,74,113,211,420`
+
+-------------------------------------------------------------------------------
+Language                     files          blank        comment           code
+-------------------------------------------------------------------------------
+TypeScript                      22            366             23           2705
+-------------------------------------------------------------------------------
+SUM:                            22            366             23           2705
+-------------------------------------------------------------------------------
+
+The file is under the limit.
+USED: 82.58% | 10993 BYTES
+LEFT: 17.42% |  2319 BYTES

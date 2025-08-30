@@ -9,15 +9,21 @@ Make luck do something?? Or get rid of it?
         - Do more damage?
 
 More Sound effects
-    - Shield hit
+    - shield hit
     - rat die
     - projectile sound
-Music or a beat
+    - boss spawn sound
+
+Add music or a beat
 
 Enemy waves + More enemy types
-Meta Progression???
+  - fast little rats?
+  - big slow rats
+  - vary the speed and damage of projectile rats
+
+Meta Progression or achievements?
 
 Boss Ideas
-R.O.U.S. - Huge rat, high hp high dmg
-Rat King - Small high hp rat that spawns a lot of weak rats rapidly
-Ratromancer - Rat that shoots projectiles?
+    R.O.U.S. - Huge rat, high hp, high dmg
+    Rat King - Small high hp rat that spawns a lot of weak, fast rats rapidly
+    Ratromancer - Bullet hell big rat that shoots projectiles

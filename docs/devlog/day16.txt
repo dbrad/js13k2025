@@ -2,7 +2,7 @@ Day 16 - 2025-08-28
 
 ---
 
-Add radial burst attack.
+Added radial burst attack.
 Enemy speed scales with game state.
 Enemys will relocate at max enemy count to prevent perma kiting.
 

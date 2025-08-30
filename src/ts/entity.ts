@@ -3,7 +3,7 @@ import { cathit } from "./audio";
 import { cameraPos } from "./camera";
 import { BLACK, lightningFlash, pushQuad, pushTexturedQuad, WHITE } from "./draw";
 import { gameStage, WORLD_HEIGHT, WORLD_WIDTH } from "./gameMap";
-import { clamp, cos, EULER, floor, max, min, PI, random, sin, sqrt } from "./math";
+import { calcVec, clamp, cos, EULER, floor, hypot, max, min, PI, random, sin, sqrt, vecCalc } from "./math";
 import { burstParticle, catParticle, emitParticles, eyeParticle } from "./particle";
 import { gainXp, player } from "./player";
 
@@ -45,6 +45,7 @@ let color = new Uint32Array(MAX_ENTITIES);
 let slowFactor = new Float32Array(MAX_ENTITIES).fill(1);
 let shootTimer = new Float32Array(MAX_ENTITIES);
 let shootPeriod = new Float32Array(MAX_ENTITIES);
+let knockback = new Float32Array(MAX_ENTITIES);
 
 let activeIds = new Uint32Array(MAX_ENTITIES);
 let activeIndex = new Int32Array(MAX_ENTITIES);
@@ -84,12 +85,11 @@ export let findNearestEnemy = (maxDist: number): boolean => {
         return true;
     }
     let px = posX[0], py = posY[0];
-    let maxDist2 = maxDist * maxDist;
     let cx_min = clamp(floor((px - maxDist) / GRID_CELL_SIZE), 0, GRID_WIDTH - 1);
     let cx_max = clamp(floor((px + maxDist) / GRID_CELL_SIZE), 0, GRID_WIDTH - 1);
     let cy_min = clamp(floor((py - maxDist) / GRID_CELL_SIZE), 0, GRID_HEIGHT - 1);
     let cy_max = clamp(floor((py + maxDist) / GRID_CELL_SIZE), 0, GRID_HEIGHT - 1);
-    let minDist2 = maxDist2 + 1;
+    let minDist = maxDist + 1;
     for (let cy = cy_min; cy <= cy_max; cy++) {
         for (let cx = cx_min; cx <= cx_max; cx++) {
             let gi = cy * GRID_WIDTH + cx;
@@ -98,18 +98,16 @@ export let findNearestEnemy = (maxDist: number): boolean => {
             for (let k = 0; k < gc; k++) {
                 let id = gridIds[gbase + k];
                 if (!alive[id] || !(type[id] & TYPE_ENEMY)) continue;
-                let dx = posX[id] - px;
-                let dy = posY[id] - py;
-                let d2 = dx * dx + dy * dy;
-                if (d2 < minDist2 && d2 <= maxDist2) {
-                    minDist2 = d2;
+                calcVec(px, py, posX[id], posY[id]);
+                if (vecCalc[DIST] < minDist && vecCalc[DIST] <= maxDist) {
+                    minDist = vecCalc[DIST];
                     nearestEnemyPos[X] = posX[id];
                     nearestEnemyPos[Y] = posY[id];
                 }
             }
         }
     }
-    return minDist2 <= maxDist2;
+    return minDist <= maxDist;
 };
 
 export let initEntities = (): void => {
@@ -183,15 +181,15 @@ export let spawnEnemy = (x: number, y: number, r: number = 8, hpVal: number = 3,
     return id;
 };
 
-let diag = sqrt(SCREEN_DIM * SCREEN_DIM * 2) / 2 + 84;
+let diagDist = sqrt(SCREEN_DIM * SCREEN_DIM * 2) / 2 + 84;
 export let spawnOffscreenEnemy = (hpVal: number = 3, r: number = 8, dmg: number = 1, abgr: number = BLACK, forceSpawn: boolean = false, shootPeriodParam: number = 0): number => {
     let angle = random() * PI * 2;
-    let x = cameraPos[X] + cos(angle) * diag;
-    let y = cameraPos[Y] + sin(angle) * diag;
+    let x = cameraPos[X] + cos(angle) * diagDist;
+    let y = cameraPos[Y] + sin(angle) * diagDist;
     if (x < 0 || y < 0 || x > WORLD_WIDTH || y > WORLD_HEIGHT) {
         angle = (angle + PI) % (2 * PI);
-        x = cameraPos[X] + cos(angle) * diag;
-        y = cameraPos[Y] + sin(angle) * diag;
+        x = cameraPos[X] + cos(angle) * diagDist;
+        y = cameraPos[Y] + sin(angle) * diagDist;
     }
     x = clamp(x, 0, WORLD_WIDTH); y = clamp(y, 0, WORLD_HEIGHT);
     let id = spawnEnemy(x, y, r, hpVal, dmg, abgr, forceSpawn, shootPeriodParam);
@@ -199,15 +197,13 @@ export let spawnOffscreenEnemy = (hpVal: number = 3, r: number = 8, dmg: number 
         let px = posX[0];
         let py = posY[0];
         let farthestId = -1;
-        let maxD2 = -1;
+        let max = -1;
         for (let n = 0; n < activeCount; n++) {
             let eid = activeIds[n];
             if (alive[eid] && (type[eid] & TYPE_ENEMY)) {
-                let dx = posX[eid] - px;
-                let dy = posY[eid] - py;
-                let d2 = dx * dx + dy * dy;
-                if (d2 > maxD2) {
-                    maxD2 = d2;
+                calcVec(px, py, posX[eid], posY[eid]);
+                if (vecCalc[DIST] > max) {
+                    max = vecCalc[DIST];
                     farthestId = eid;
                 }
             }
@@ -215,23 +211,13 @@ export let spawnOffscreenEnemy = (hpVal: number = 3, r: number = 8, dmg: number 
         if (farthestId !== -1) {
             posX[farthestId] = x;
             posY[farthestId] = y;
-            // velX[farthestId] = 0;
-            // velY[farthestId] = 0;
-            // hp[farthestId] = hpVal;
-            // damage[farthestId] = dmg;
-            // color[farthestId] = abgr;
-            // radius[farthestId] = r;
-            // shootPeriod[farthestId] = shootPeriodParam;
-            // if (shootPeriodParam > 0) {
-            //     shootTimer[farthestId] = random() * shootPeriodParam;
-            // }
             id = farthestId;
         }
     }
     return id;
 };
 
-export let spawnProjectile = (x: number, y: number, vx: number, vy: number, r: number = PROJECTILE_RADIUS, dmg: number = 1, lifeSec: number = 2, hpVal: number = 1, abgr: number = 0xff0000ff, hostile: boolean = false): number => {
+export let spawnProjectile = (x: number, y: number, vx: number, vy: number, r: number = PROJECTILE_RADIUS, dmg: number = 1, lifeSec: number = 2, hpVal: number = 1, abgr: number = 0xff0000ff, hostile: boolean = false, kb: number = 0): number => {
     let id = alloc();
     if (id < 1) return -1;
     type[id] = TYPE_PROJECTILE | (hostile ? TYPE_HOSTILE_PROJECTILE : 0);
@@ -240,10 +226,11 @@ export let spawnProjectile = (x: number, y: number, vx: number, vy: number, r: n
     posY[id] = y;
     velX[id] = vx;
     velY[id] = vy;
-    damage[id] = dmg + (hostile ? 0 : player.damage_);
-    lifetime[id] = lifeSec;
     hp[id] = hpVal;
+    damage[id] = dmg;
+    lifetime[id] = lifeSec;
     color[id] = abgr;
+    knockback[id] = kb;
     return id;
 };
 
@@ -303,6 +290,39 @@ let damagePlayer = (amt: number): void => {
     }
 };
 
+let handlePlayerEnemyCollision = (enemyId: number, nx: number, ny: number, overlap: number) => {
+    posX[enemyId] += nx * overlap; posY[enemyId] += ny * overlap;
+    posX[0] -= nx * (overlap * 0.25); posY[0] -= ny * (overlap * 0.25);
+    damagePlayer(damage[enemyId]);
+};
+
+let handleProjectileEnemyCollision = (projectileId: number, enemyId: number) => {
+    if (enemyHitSet[enemyId].includes(projectileId)) return;
+    enemyHitSet[enemyId][enemyHitSetCount[enemyId]++] = projectileId;
+    damageEnemy(enemyId, damage[projectileId]);
+    if (knockback[projectileId] > 0) {
+        let pv = hypot(velX[projectileId], velY[projectileId]);
+        let kx: number, ky: number;
+        if (pv > 0) {
+            kx = velX[projectileId] / pv;
+            ky = velY[projectileId] / pv;
+        } else {
+            if (calcVec(posX[projectileId], posY[projectileId], posX[enemyId], posY[enemyId])) {
+                kx = vecCalc[NX];
+                ky = vecCalc[NY];
+            } else {
+                return;
+            }
+        }
+        posX[enemyId] += kx * knockback[projectileId];
+        posY[enemyId] += ky * knockback[projectileId];
+    }
+    hp[projectileId] -= 1;
+    if (hp[projectileId] <= 0) {
+        alive[projectileId] = 0;
+    }
+};
+
 export let updateEntities = (deltaMs: number): void => {
     if (activeCount === 0 || alive[0] === 0) return;
     gridCounts.fill(0);
@@ -324,15 +344,10 @@ export let updateEntities = (deltaMs: number): void => {
 
         if (t & TYPE_ENEMY) {
             enemyHitSetCount[id] = 0;
-            let dx = pX - posX[id];
-            let dy = pY - posY[id];
-            let d2 = dx * dx + dy * dy;
-            if (d2 > 14 * 14) {
-                let inv = 1 / sqrt(max(d2, 1e-8));
-                dx *= inv;
-                dy *= inv;
-                velX[id] = dx * ENEMY_SPEED * slowFactor[id];
-                velY[id] = dy * ENEMY_SPEED * slowFactor[id];
+            calcVec(posX[id], posY[id], pX, pY);
+            if (vecCalc[DIST] > 14) {
+                velX[id] = vecCalc[NX] * ENEMY_SPEED * slowFactor[id];
+                velY[id] = vecCalc[NY] * ENEMY_SPEED * slowFactor[id];
                 slowFactor[id] = 1.0;
             } else {
                 velX[id] = 0;
@@ -341,16 +356,10 @@ export let updateEntities = (deltaMs: number): void => {
             if (shootPeriod[id] > 0) {
                 shootTimer[id] -= dt;
                 if (shootTimer[id] <= 0) {
-                    let dx = pX - posX[id];
-                    let dy = pY - posY[id];
-                    let d2 = dx * dx + dy * dy;
-                    if (d2 > 0) {
-                        let inv = 1 / sqrt(d2);
-                        dx *= inv;
-                        dy *= inv;
+                    if (vecCalc[DIST] > 0) {
                         let speed = 160;
                         let dmg = floor(damage[id] * .5);
-                        spawnProjectile(posX[id], posY[id], dx * speed, dy * speed, max(2, dmg), dmg, 3, 1, 0xff8c0d8c, true);
+                        spawnProjectile(posX[id], posY[id], vecCalc[NX] * speed, vecCalc[NY] * speed, max(2, dmg), dmg, 3, 1, 0xff8c0d8c, true);
                     }
                     shootTimer[id] += shootPeriod[id];
                 }
@@ -361,7 +370,6 @@ export let updateEntities = (deltaMs: number): void => {
                 free(id);
                 continue;
             }
-            // NOTE: (velocity already set on spawn; homing/projectile logic could modify here)
         } else if (t & TYPE_PLAYER) {
             if (velX[id] !== 0) {
                 playerDir = velX[id] < 0 ? 0 : 1;
@@ -394,20 +402,15 @@ export let updateEntities = (deltaMs: number): void => {
         } else if (t & TYPE_XP_ORB) {
             velX[id] *= EULER ** (-2 * dt);
             velY[id] *= EULER ** (-2 * dt);
-            let dx = pX - posX[id];
-            let dy = pY - posY[id];
-            let d2 = dx * dx + dy * dy;
-            let inv = 1 / sqrt(d2);
-            dx *= inv;
-            dy *= inv;
+            calcVec(posX[id], posY[id], pX, pY);
             let speed = 10;
-            if (d2 < 625) {
+            if (vecCalc[DIST] <= 50) {
                 speed = 200;
-            } else if (d2 < 10000) {
+            } else if (vecCalc[DIST] <= 100) {
                 speed = 100;
             }
-            velX[id] = dx * speed;
-            velY[id] = dy * speed;
+            velX[id] = vecCalc[NX] * speed;
+            velY[id] = vecCalc[NY] * speed;
         }
 
         posX[id] += velX[id] * dt;
@@ -438,67 +441,41 @@ export let updateEntities = (deltaMs: number): void => {
             for (let b = a + 1; b < count; b++) {
                 let j = gridIds[base + b];
                 if (!alive[j]) continue;
-
-                let dx = posX[j] - posX[i];
-                let dy = posY[j] - posY[i];
+                calcVec(posX[i], posY[i], posX[j], posY[j]);
                 let rsum = radius[i] + radius[j];
-                let d2 = dx * dx + dy * dy;
-                if (d2 >= rsum * rsum || d2 === 0) continue;
-
-                let d = sqrt(d2);
-                let nx = dx / d, ny = dy / d;
-                let overlap = (rsum - d);
+                if (vecCalc[DIST] >= rsum || vecCalc[DIST] === 0) continue;
+                let overlap = (rsum - vecCalc[DIST]);
 
                 let ti = type[i], tj = type[j];
 
                 if ((ti & TYPE_ENEMY) && (tj & TYPE_ENEMY)) {
                     let half = overlap * 0.5;
-                    posX[i] -= nx * half; posY[i] -= ny * half;
-                    posX[j] += nx * half; posY[j] += ny * half;
+                    posX[i] -= vecCalc[NX] * half; posY[i] -= vecCalc[NY] * half;
+                    posX[j] += vecCalc[NX] * half; posY[j] += vecCalc[NY] * half;
                     continue;
                 }
 
                 if ((ti & TYPE_PLAYER) && (tj & TYPE_ENEMY)) {
-                    posX[j] += nx * overlap; posY[j] += ny * overlap;
-                    posX[i] -= nx * (overlap * 0.25); posY[i] -= ny * (overlap * 0.25);
-                    damagePlayer(damage[j]);
+                    handlePlayerEnemyCollision(j, vecCalc[NX], vecCalc[NY], overlap);
                     continue;
                 }
 
                 if ((tj & TYPE_PLAYER) && (ti & TYPE_ENEMY)) {
-                    posX[i] -= nx * overlap; posY[i] -= ny * overlap;
-                    posX[j] += nx * (overlap * 0.25); posY[j] += ny * (overlap * 0.25);
-                    damagePlayer(damage[i]);
+                    handlePlayerEnemyCollision(i, vecCalc[NX], vecCalc[NY], overlap);
                     continue;
                 }
 
                 if ((ti & TYPE_PROJECTILE) && !(ti & TYPE_HOSTILE_PROJECTILE) && (tj & TYPE_ENEMY)) {
-                    if (enemyHitSet[j].includes(i)) {
-                        continue;
-                    }
-                    enemyHitSet[j][enemyHitSetCount[j]++] = i;
-                    damageEnemy(j, damage[i]);
-                    hp[i] -= 1;
-                    if (hp[i] <= 0) {
-                        alive[i] = 0;
-                    }
+                    handleProjectileEnemyCollision(i, j);
                     continue;
                 }
 
                 if ((tj & TYPE_PROJECTILE) && !(tj & TYPE_HOSTILE_PROJECTILE) && (ti & TYPE_ENEMY)) {
-                    if (enemyHitSet[i].includes(j)) {
-                        continue;
-                    }
-                    enemyHitSet[i][enemyHitSetCount[i]++] = j;
-                    damageEnemy(i, damage[j]);
-                    hp[j] -= 1;
-                    if (hp[j] <= 0) {
-                        alive[j] = 0;
-                    }
+                    handleProjectileEnemyCollision(j, i);
                     continue;
                 }
 
-                if ((ti & TYPE_PROJECTILE) && (ti & TYPE_HOSTILE_PROJECTILE) && (tj & TYPE_PLAYER)) {
+                if ((ti & TYPE_HOSTILE_PROJECTILE) && (tj & TYPE_PLAYER)) {
                     damagePlayer(damage[i]);
                     hp[i] -= 1;
                     if (hp[i] <= 0) {
@@ -507,7 +484,7 @@ export let updateEntities = (deltaMs: number): void => {
                     continue;
                 }
 
-                if ((tj & TYPE_PROJECTILE) && (tj & TYPE_HOSTILE_PROJECTILE) && (ti & TYPE_PLAYER)) {
+                if ((tj & TYPE_HOSTILE_PROJECTILE) && (ti & TYPE_PLAYER)) {
                     damagePlayer(damage[j]);
                     hp[j] -= 1;
                     if (hp[j] <= 0) {
@@ -542,11 +519,9 @@ export let updateEntities = (deltaMs: number): void => {
                 for (let k = 0; k < gc; k++) {
                     let eid = gridIds[gbase + k];
                     if (!alive[eid] || !(type[eid] & TYPE_ENEMY)) continue;
-                    let dx = posX[eid] - pX;
-                    let dy = posY[eid] - pY;
-                    let d2 = dx * dx + dy * dy;
+                    calcVec(pX, pY, posX[eid], posY[eid]);
                     let rsum = ar + radius[eid];
-                    if (d2 < rsum * rsum) {
+                    if (vecCalc[DIST] < rsum) {
                         damageEnemy(eid, damage[id] * dt);
                         slowFactor[eid] = min(slowFactor[eid], slowFactor[id]);
                     }
@@ -562,8 +537,7 @@ export let drawEntities = (): void => {
         let id = activeIds[n];
         if (type[id] & TYPE_AURA) {
             let r = radius[id];
-            let d = r * 2;
-            pushTexturedQuad(TEXTURE_C_16x16, sPosX[id] - r, sPosY[id] - r, d * 0.0625, color[id] || 0x33ffffff);
+            pushTexturedQuad(TEXTURE_C_16x16, sPosX[id] - r, sPosY[id] - r, r * 0.125, color[id] || 0x33ffffff);
         } else {
             continue;
         }
@@ -587,12 +561,12 @@ export let drawEntities = (): void => {
         } else if (t & TYPE_ENEMY) {
             pushTexturedQuad(TEXTURE_RAT, sPosX[id] - r, sPosY[id] - r, d * 0.0625, lightningFlash || gameStage < 16 ? color[id] : BLACK, velX[id] < 0, false, true);
         } else {
-            if (d < 4) {
-                pushQuad(sPosX[id] - r, sPosY[id] - r, d, d, color[id] || WHITE);
-            } else if (d > 3 && d < 9) {
-                pushTexturedQuad(TEXTURE_C_4x4 + (d - 4), sPosX[id] - r, sPosY[id] - r, 1, color[id] || WHITE);
+            let d = r * 2;
+            let tex = d < 4 ? null : d < 9 ? TEXTURE_C_4x4 + (d - 4) : TEXTURE_C_8x8;
+            if (tex) {
+                pushTexturedQuad(tex, sPosX[id] - r, sPosY[id] - r, d < 9 ? 1 : d * 0.125, color[id] || WHITE);
             } else {
-                pushTexturedQuad(TEXTURE_C_8x8, sPosX[id] - r, sPosY[id] - r, d * 0.125, color[id] || WHITE);
+                pushQuad(sPosX[id] - r, sPosY[id] - r, d, d, color[id] || WHITE);
             }
         }
     }

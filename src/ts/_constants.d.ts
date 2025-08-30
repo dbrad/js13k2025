@@ -9,6 +9,12 @@ declare const G: 1;
 declare const B: 2;
 declare const A: 3;
 
+declare const DX: 0;
+declare const DY: 1;
+declare const DIST: 2;
+declare const NX: 3;
+declare const NY: 4;
+
 declare const SCREEN_WIDTH: 640;
 declare const SCREEN_HEIGHT: 360;
 
@@ -122,7 +128,7 @@ declare const UP_CD: 3;
 declare const UP_MS: 4;
 declare const UP_CLAW: 5;
 declare const UP_ZOOMY: 6;
-declare const UP_HAIRBAKK: 7;
+declare const UP_HAIRBALL: 7;
 declare const UP_MENACE: 8;
 declare const UP_NINELIFE: 9;
 declare const UP_CARDINAL: 10;
@@ -130,6 +136,7 @@ declare const UP_SLASH: 11;
 declare const UP_SHED: 12;
 declare const UP_FELD1: 13;
 declare const UP_REFLEX: 14;
+declare const UP_HISS: 15;
 
 declare const BULLET: 0;
 declare const AURA: 1;
