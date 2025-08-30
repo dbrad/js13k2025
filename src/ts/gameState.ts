@@ -1,3 +1,4 @@
+import { floor } from "./math";
 
 let saveFileName = "js13k2025dbrad";
 let storage = window.localStorage;
@@ -9,8 +10,8 @@ export let saveFileExists = (): boolean => {
 };
 
 export let getRunTime = (): string => {
-    let m = gameState[GS_RUNTIME] / 60;
-    let s = gameState[GS_RUNTIME] % 60;
+    let m = floor(gameState[GS_RUNTIME] / 60);
+    let s = floor(gameState[GS_RUNTIME]) % 60;
     return `${m.toFixed(0).padStart(2, "0")}:${s.toFixed(0).padStart(2, "0")}`;
 };
 
