@@ -27,8 +27,8 @@ export let zzfxInit = (): void => {
     boop = zzfxGenerate(...[, .1, , .05, .05, , , , , , 200, .06, , , , , , .5, .05]);
     boopGood = zzfxGenerate(...[, .1, 440, .05, .05, , , , , , 200, .06, , , , , , .5, .05, 1]);
     thunder = zzfxGenerate(...[2, 4, 25, .06, .31, .35, , 3.9, , -3, , , , .9, 12, .9, .3, .32, .16]);
-    catHit = () => zzfx([, .75, 325, .04, .02, .04, 2, 3, , , , , , .5, 1, .1, , .8, .07]);
-    ratDie = () => zzfx([.4, , 900, .07, .08, .01, 1, .1, , , 109, , .02, , .9, , , .53, , , 662]);
+    catHit = () => zzfx([, .6, 325, .04, .02, .04, 2, 3, , , , , , .5, 1, .1, , .8, .07]);
+    ratDie = () => zzfx([.3, , 900, .07, .08, .01, 1, .1, , , 109, , .02, , .9, , , .53, , , 662]);
 
     zzfxVolume = 0.15;
     snare = zzfxGenerate(...[, 0, 655, , , .09, 3, 1.65, , , , , .02, 3.8, -.1, , .2]);
@@ -41,19 +41,31 @@ let beat = 0;
 let bpm1 = (1 / (120 / 60) * 1000) * 0.25;
 let bpm2 = (1 / (172 / 60) * 1000) * 0.25;
 let timer = bpm1;
-export let playMusic = (delta: number) => {
+export let playMusic = (delta: number, track: number) => {
     if (!gameState[GS_MUTEMUSIC]) {
         timer -= delta;
         if (timer <= 0) {
-            timer = lerp(bpm1, bpm2, gameStage / 15);// + (random() * 20 - 10);
-            if (beat % 2 === 0) {
-                zzfxPlay(hihat);
-            }
-            if (beat === 0 || beat === 10) {
-                zzfxPlay(bass);
-            }
-            if (beat === 4 || beat === 7 || beat === 9 || beat === 12) {
-                zzfxPlay(snare);
+            timer = lerp(bpm1, bpm2, gameStage / 15);
+            if (track === 0) {
+                if (gameStage >= 14 || beat % 2 === 0) {
+                    zzfxPlay(hihat);
+                }
+                if (beat === 0 || beat === 10) {
+                    zzfxPlay(bass);
+                }
+                if (beat === 4 || beat === 7 || beat === 9 || beat === 12) {
+                    zzfxPlay(snare);
+                }
+            } else {
+                if (beat % 2 === 0) {
+                    zzfxPlay(hihat);
+                }
+                if (beat === 0 || beat === 6 || beat === 12) {
+                    zzfxPlay(bass);
+                }
+                if (beat === 4 || beat === 10) {
+                    zzfxPlay(snare);
+                }
             }
             beat = (beat + 1) % 16;
         }
