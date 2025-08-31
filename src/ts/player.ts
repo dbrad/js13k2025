@@ -223,7 +223,7 @@ export let UPGRADE_POOL: Upgrade[] = [
         apply_: (): void => {
             upgradeAbility(UP_FELD1, AURA, 5000, (a: Ability): void => {
                 let radius = 50 + a.level_ * 10;
-                a.entityId_ = spawnAura(radius, 1 + player.damage_, -1, 0x668888ff, 1, a.entityId_);
+                a.entityId_ = spawnAura(radius, 1, -1, 0x668888ff, 1, a.entityId_);
             });
         },
     }, {
