@@ -39,8 +39,8 @@ let particlePoolIndex = particlePoolSize - 1;
 export let catParticle: ParticleParameters = {
     position_: [0, 0],
     velocity_: [0, 0],
-    velocityVariation_: [50, 50],
-    sizeBegin_: 20,
+    velocityVariation_: [75, 75],
+    sizeBegin_: 18,
     sizeEnd_: 0,
     sizeVariation_: 4,
     colourBegin_: v4f(0, 0, 0, 1),
@@ -57,7 +57,7 @@ export let eyeParticle: ParticleParameters = {
     sizeVariation_: 0,
     colourBegin_: v4f(1, 1, 1, 1),
     colourEnd_: v4f(0, 0, 0, 0.1),
-    lifetime_: 16
+    lifetime_: 20
 };
 
 export let burstParticle: ParticleParameters = {

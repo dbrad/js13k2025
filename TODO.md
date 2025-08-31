@@ -1,5 +1,5 @@
 Finishing creating the 13 abilities
-    Need 3 more right now...
+    Need 2 more right now...
 
 Balance the waves
 
@@ -10,9 +10,9 @@ More Sound effects
     - projectile sound
     - boss spawn sound
 
-Meta Progression or achievements?
-
 Boss Ideas
     R.O.U.S. - Huge rat, high hp, high dmg
     Rat King - Small high hp rat that spawns a lot of weak, fast rats rapidly
     Ratromancer - Bullet hell big rat that shoots projectiles
+
+Meta Progression or achievements?

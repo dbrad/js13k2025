@@ -1,8 +1,8 @@
 import { playMusic } from "../audio";
 import { cameraPos, cameraTarget, updateCamera, vCameraPos } from "../camera";
-import { BLACK, clearLightning, pushQuad, pushText, updateLightning, WHITE } from "../draw";
+import { BLACK, clearLightning, PURPLE, pushQuad, pushText, RED, updateLightning, WHITE } from "../draw";
 import { drawEntities, hp, initEntities, posX, posY, spawnOffscreenEnemy, spawnPlayer, updateEntities, velX, velY } from "../entity";
-import { drawWorld, gameStage, generateWorld, timeOfDay, updateTime, WORLD_HEIGHT, WORLD_WIDTH } from "../gameMap";
+import { drawWorld, gameStage, generateWorld, updateTime, WORLD_HEIGHT, WORLD_WIDTH } from "../gameMap";
 import { gameState, getRunTime } from "../gameState";
 import { A_PRESSED, B_PRESSED, buttonActions, DOWN_IS_DOWN, DOWN_PRESSED, LEFT_IS_DOWN, RIGHT_IS_DOWN, UP_IS_DOWN, UP_PRESSED } from "../input";
 import { ceil, clamp, floor, hypot, max, min, randInt, random } from "../math";
@@ -18,45 +18,51 @@ let bossSpawn = false;
 let bossAlive = false;
 let bossId = -1;
 let paused = false;
+let track = 0;
 
 type WaveDef = { hp_: number, radius_: number, dmg_: number, color_: number, shootPeriod_: number, speed_: number, count_: number; }; // SpawnConfig: hp, radius, dmg, color, shootPeriod, speed, count
 let waves: WaveDef[][] = [ // Waves: time implied by index (30s intervals)
     [
-        { hp_: 3, radius_: 8, dmg_: 1, color_: BLACK, shootPeriod_: 0, speed_: 1.5, count_: 10 }
+        { hp_: 3, radius_: 8, dmg_: 1, color_: RED, shootPeriod_: 0, speed_: 1.5, count_: 10 }
     ], // Fast
     [
-        { hp_: 10, radius_: 16, dmg_: 3, color_: BLACK, shootPeriod_: 0, speed_: 0.7, count_: 5 },
-        { hp_: 5, radius_: 10, dmg_: 1, color_: 0xfff21d6b, shootPeriod_: 3, speed_: 1, count_: 5 },
+        { hp_: 10, radius_: 16, dmg_: 3, color_: BLACK, shootPeriod_: 0, speed_: 0.7, count_: 10 },
+        { hp_: 5, radius_: 10, dmg_: 1, color_: PURPLE, shootPeriod_: 3, speed_: 1, count_: 5 },
     ], // Big+shooters
     [
-        { hp_: 4, radius_: 8, dmg_: 1, color_: BLACK, shootPeriod_: 0, speed_: 1.2, count_: 15 }
+        { hp_: 4, radius_: 8, dmg_: 1, color_: RED, shootPeriod_: 0, speed_: 1.2, count_: 15 }
     ], // Medium
     [
-        { hp_: 15, radius_: 20, dmg_: 4, color_: 0xfff21d6b, shootPeriod_: 5, speed_: 0.6, count_: 3 },
-        { hp_: 3, radius_: 8, dmg_: 1, color_: BLACK, shootPeriod_: 0, speed_: 1, count_: 10 },
+        { hp_: 15, radius_: 20, dmg_: 4, color_: PURPLE, shootPeriod_: 5, speed_: 0.6, count_: 4 },
+        { hp_: 3, radius_: 8, dmg_: 1, color_: BLACK, shootPeriod_: 0, speed_: 1, count_: 20 },
     ], // Big+fodder
     [
-        { hp_: 6, radius_: 12, dmg_: 2, color_: 0xfff21d6b, shootPeriod_: 2, speed_: 0.9, count_: 8 }
+        { hp_: 6, radius_: 12, dmg_: 2, color_: PURPLE, shootPeriod_: 2, speed_: 0.9, count_: 10 }
     ], // Shooters
     [
-        { hp_: 8, radius_: 14, dmg_: 2, color_: BLACK, shootPeriod_: 0, speed_: 1.3, count_: 12 }
+        { hp_: 8, radius_: 14, dmg_: 2, color_: RED, shootPeriod_: 0, speed_: 1.3, count_: 30 }
     ], // Fast medium
     [
-        { hp_: 20, radius_: 24, dmg_: 5, color_: BLACK, shootPeriod_: 0, speed_: 0.5, count_: 4 }
+        { hp_: 20, radius_: 24, dmg_: 5, color_: BLACK, shootPeriod_: 0, speed_: 0.5, count_: 6 }
     ], // Very big
     [
-        { hp_: 7, radius_: 10, dmg_: 1, color_: 0xfff21d6b, shootPeriod_: 4, speed_: 1, count_: 10 }
-    ], // Many shooters
+        { hp_: 10, radius_: 10, dmg_: 1, color_: PURPLE, shootPeriod_: 4, speed_: 1, count_: 10 },
+        { hp_: 8, radius_: 8, dmg_: 2, color_: RED, shootPeriod_: 0, speed_: 1.5, count_: 10 }
+    ], // Many shooters + Speeders
     [
-        { hp_: 5, radius_: 8, dmg_: 1, color_: BLACK, shootPeriod_: 0, speed_: 1.5, count_: 20 }
+        { hp_: 10, radius_: 8, dmg_: 1, color_: RED, shootPeriod_: 0, speed_: 1.3, count_: 30 },
+        { hp_: 30, radius_: 32, dmg_: 8, color_: BLACK, shootPeriod_: 0, speed_: 0.5, count_: 5 }
     ], // Swarm
     [
-        { hp_: 12, radius_: 18, dmg_: 3, color_: 0xfff21d6b, shootPeriod_: 3, speed_: 0.8, count_: 6 }
+        { hp_: 12, radius_: 18, dmg_: 3, color_: PURPLE, shootPeriod_: 3, speed_: 0.8, count_: 6 },
+        { hp_: 30, radius_: 32, dmg_: 8, color_: BLACK, shootPeriod_: 0, speed_: 0.5, count_: 5 },
+        { hp_: 10, radius_: 8, dmg_: 1, color_: RED, shootPeriod_: 0, speed_: 1.3, count_: 20 }
     ], // Balanced
 ];
 let waveIdx = 0; // Current wave index
 
 let setup = (): void => {
+    track = 0;
     buttonActions[1] = "pause";
     gameover = bossSpawn = bossAlive = false;
     bossId = -1;
@@ -70,7 +76,7 @@ let setup = (): void => {
 };
 
 let update = (delta: number): void => {
-    playMusic(delta);
+    playMusic(delta, track);
     if (gameover) return;
     if (paused) {
         if (B_PRESSED) {
@@ -83,6 +89,7 @@ let update = (delta: number): void => {
     if (bossAlive) {
         bossAlive = hp[bossId] > 0;
         if (!bossAlive) {
+            track = 1;
             clearLightning();
         }
     }
@@ -120,10 +127,10 @@ let update = (delta: number): void => {
             gameState[GS_RUNTIME] += dt;
             if (!bossSpawn) {
                 updateTime(dt);
-                if (waveIdx < waves.length && timeOfDay >= waveIdx * 30) {
+                if (waveIdx < waves.length && gameState[GS_RUNTIME] >= waveIdx * 30) {
                     for (let enemy of waves[waveIdx]) {
-                        let scaling = randInt(1, gameStage);
                         for (let i = 0; i < enemy.count_; i++) {
+                            let scaling = randInt(1, gameStage);
                             spawnOffscreenEnemy(
                                 enemy.hp_ + scaling,
                                 enemy.radius_ + scaling * 0.5,
@@ -147,7 +154,7 @@ let update = (delta: number): void => {
             if (gameStage > 15) {
                 updateLightning(delta);
                 if (!bossSpawn) {
-                    bossId = spawnOffscreenEnemy(500, 64, 25, 0xfff21d6b, true);
+                    bossId = spawnOffscreenEnemy(500, 64, 25, PURPLE, true);
                     bossSpawn = true;
                     bossAlive = true;
                 }
@@ -179,7 +186,7 @@ let update = (delta: number): void => {
                 let scaling = randInt(1, gameStage);
                 let count = randInt(1, 2 + ~~(gameStage / 5));
                 for (let i = 0; i < count; i++) {
-                    if (random() < 0.3) spawnOffscreenEnemy(3 + scaling, 8 + scaling, 1 + scaling, 0xfff21d6b, false, 3);
+                    if (random() < 0.3) spawnOffscreenEnemy(3 + scaling, 8 + scaling, 1 + scaling, PURPLE, false, 3);
                     else spawnOffscreenEnemy(3 + scaling, 8 + scaling, 1 + scaling);
                 }
             }

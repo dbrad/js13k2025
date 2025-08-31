@@ -7,6 +7,8 @@ import { TEXTURE_CACHE } from "./texture";
 // Colour
 export let WHITE = 0xfff5f5f5;
 export let BLACK = 0xff000000;
+export let PURPLE = 0xfff21d6b;
+export let RED = 0xff1313ba;
 
 export let toABGR = (r: number, g: number, b: number, a: number): number => {
     let out = (0 | (clamp(a, 0, 255) & 0xff)) << 8 >>> 0;

@@ -1,7 +1,7 @@
 import { assert } from "./__debug/debug";
 import { catHit, ratDie } from "./audio";
 import { cameraPos } from "./camera";
-import { BLACK, lightningFlash, pushQuad, pushTexturedQuad, WHITE } from "./draw";
+import { BLACK, lightningFlash, PURPLE, pushQuad, pushTexturedQuad, RED, WHITE } from "./draw";
 import { gameStage, WORLD_HEIGHT, WORLD_WIDTH } from "./gameMap";
 import { calcVec, clamp, cos, EULER, floor, hypot, max, min, PI, random, sin, sqrt, vecCalc } from "./math";
 import { burstParticle, catParticle, emitParticles, eyeParticle } from "./particle";
@@ -217,7 +217,7 @@ export let spawnOffscreenEnemy = (hpVal: number = 3, r: number = 8, dmg: number 
     return id;
 };
 
-export let spawnProjectile = (x: number, y: number, vx: number, vy: number, r: number = PROJECTILE_RADIUS, dmg: number = 1, lifeSec: number = 2, hpVal: number = 1, abgr: number = 0xff1313ba, hostile: boolean = false, kb: number = 0): number => {
+export let spawnProjectile = (x: number, y: number, vx: number, vy: number, r: number = PROJECTILE_RADIUS, dmg: number = 1, lifeSec: number = 2, hpVal: number = 1, abgr: number = RED, hostile: boolean = false, kb: number = 0): number => {
     let id = alloc();
     if (id < 1) return -1;
     type[id] = TYPE_PROJECTILE | (hostile ? TYPE_HOSTILE_PROJECTILE : 0);
@@ -361,7 +361,7 @@ export let updateEntities = (deltaMs: number): void => {
                     if (vecCalc[DIST] > 0 && vecCalc[DIST] < SCREEN_HALF + 30) {
                         let speed = 160;
                         let dmg = floor(damage[id] * .5);
-                        spawnProjectile(posX[id], posY[id], vecCalc[NX] * speed, vecCalc[NY] * speed, max(3, dmg), dmg, 5, 1, 0xfff21d6b, true);
+                        spawnProjectile(posX[id], posY[id], vecCalc[NX] * speed, vecCalc[NY] * speed, max(3, dmg), dmg, 5, 1, PURPLE, true);
                         shootTimer[id] += shootPeriod[id];
                     } else {
                         shootTimer[id] += shootPeriod[id] * .25;

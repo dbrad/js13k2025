@@ -18,7 +18,7 @@ export let resetPlayer = (): void => {
         abilities_: [],
         xp_: 0,
         level_: 1,
-        levelUpPending_: true
+        levelUpPending_: false
     };
     UPGRADE_POOL[UP_CLAW].apply_();
 };
@@ -116,7 +116,7 @@ export let UPGRADE_POOL: Upgrade[] = [
         apply_: (): void => {
             upgradeAbility(UP_HAIRBALL, BULLET, 2000, (a: Ability): void => {
                 let speed = 300;
-                let dmg = 10 * a.level_;
+                let dmg = 5 * a.level_;
                 let size = 5 * a.level_;
                 if (findNearestEnemy(300)) {
                     calcVec(posX[0], posY[0], nearestEnemyPos[X], nearestEnemyPos[Y]);
