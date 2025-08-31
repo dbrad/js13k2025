@@ -31,27 +31,31 @@ export let zzfxInit = (): void => {
     ratDie = () => zzfx([.4, , 900, .07, .08, .01, 1, .1, , , 109, , .02, , .9, , , .53, , , 662]);
 
     zzfxVolume = 0.15;
-    snare = zzfxGenerate(...[.8, .2, 200, .02, .02, .1, 4, 2, , , , , , 1, 10, .1, .1, .7, .03]);
-    hihat = zzfxGenerate(...[.2, 0, 3e3, .02, .02, .08, 3, 2, 1, , , , .05, 1, , , , .3, .05, .25]);
-    bass = zzfxGenerate(...[1, 0, 60, .05, .05, .2, , .5, , -2, , , , , -3, .3, , .25, .15]);
+    snare = zzfxGenerate(...[, 0, 655, , , .09, 3, 1.65, , , , , .02, 3.8, -.1, , .2]);
+    hihat = zzfxGenerate(...[, 0, 2200, , , .04, 3, 2, , , 800, .02, , 4.8, , .01, .1]);
+    bass = zzfxGenerate(...[2, 0, 43, , , .25, , , , , , , , 2]);
     zzfxVolume = 0.3;
 };
 
 let beat = 0;
-let timer = 428;
+let bpm1 = (1 / (120 / 60) * 1000) * 0.25;
+let bpm2 = (1 / (172 / 60) * 1000) * 0.25;
+let timer = bpm1;
 export let playMusic = (delta: number) => {
     if (!gameState[GS_MUTEMUSIC]) {
         timer -= delta;
         if (timer <= 0) {
-            timer = lerp(428, 333, gameStage / 15) + (random() * 20 - 10);
-            zzfxPlay(hihat);
-            if (beat % 3 === 0) {
+            timer = lerp(bpm1, bpm2, gameStage / 15);// + (random() * 20 - 10);
+            if (beat % 2 === 0) {
+                zzfxPlay(hihat);
+            }
+            if (beat === 0 || beat === 10) {
                 zzfxPlay(bass);
             }
-            if (beat % 4 === 0) {
+            if (beat === 4 || beat === 7 || beat === 9 || beat === 12) {
                 zzfxPlay(snare);
             }
-            beat = (beat + 1) % 8;
+            beat = (beat + 1) % 16;
         }
     }
 };

@@ -2,6 +2,7 @@ Finishing creating the 13 abilities
     Need 3 more right now...
 
 Balance the waves
+
 Balance the abilities
 
 More Sound effects
