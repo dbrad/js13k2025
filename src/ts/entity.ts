@@ -234,6 +234,15 @@ export let spawnProjectile = (x: number, y: number, vx: number, vy: number, r: n
     return id;
 };
 
+export let spawnRadialBurst = (x: number, y: number, count: number, speed: number, hostile: boolean = false) => {
+    for (let k = 0; k < 8 + count; k++) {
+        let angle = (2 * PI * k) / count;
+        let vx = cos(angle) * speed;
+        let vy = sin(angle) * speed;
+        spawnProjectile(x, y, vx, vy, 2, 1, 2, 1, hostile ? PURPLE : RED, hostile);
+    }
+};
+
 export let spawnAura = (r: number = 50, dmg: number = 5, lifeSec: number = -1, abgr: number = 0x4000ff80, slow: number = 1.0, existingId: number = -1): number => {
     let id = existingId >= 0 && alive[existingId] && type[existingId] & TYPE_AURA ? existingId : alloc();
     if (id < 1) return -1;
@@ -265,7 +274,7 @@ export let spawnXpOrb = (x: number, y: number, xp: number, r: number = 2, abgr: 
 };
 
 let damageEnemy = (id: number, amt: number): void => {
-    hp[id] -= amt + player.damage_;
+    hp[id] -= amt;
     if (hp[id] <= 0) {
         spawnXpOrb(posX[id], posY[id], damage[id]);
         ratDie();
@@ -293,14 +302,13 @@ let damagePlayer = (amt: number): void => {
 
 let handlePlayerEnemyCollision = (enemyId: number, nx: number, ny: number, overlap: number) => {
     posX[enemyId] += nx * overlap; posY[enemyId] += ny * overlap;
-    posX[0] -= nx * (overlap * 0.25); posY[0] -= ny * (overlap * 0.25);
     damagePlayer(damage[enemyId]);
 };
 
 let handleProjectileEnemyCollision = (projectileId: number, enemyId: number) => {
     if (enemyHitSet[enemyId].includes(projectileId)) return;
     enemyHitSet[enemyId][enemyHitSetCount[enemyId]++] = projectileId;
-    damageEnemy(enemyId, damage[projectileId]);
+    damageEnemy(enemyId, damage[projectileId] + player.damage_);
     if (knockback[projectileId] > 0) {
         let pv = hypot(velX[projectileId], velY[projectileId]);
         let kx: number, ky: number;
@@ -347,7 +355,7 @@ export let updateEntities = (deltaMs: number): void => {
             enemyHitSetCount[id] = 0;
             let baseSpeed = 35 + gameStage * 2.5;
             calcVec(posX[id], posY[id], pX, pY);
-            if (vecCalc[DIST] > 14) {
+            if (vecCalc[DIST] > 1e-6) {
                 velX[id] = vecCalc[NX] * baseSpeed * speedMult[id] * slowFactor[id];
                 velY[id] = vecCalc[NY] * baseSpeed * speedMult[id] * slowFactor[id];
                 slowFactor[id] = 1.0;
@@ -429,7 +437,6 @@ export let updateEntities = (deltaMs: number): void => {
                 continue;
             }
         }
-
         if (alive[id]) gridInsert(id);
     }
 
@@ -453,9 +460,14 @@ export let updateEntities = (deltaMs: number): void => {
                 let ti = type[i], tj = type[j];
 
                 if ((ti & TYPE_ENEMY) && (tj & TYPE_ENEMY)) {
-                    let half = overlap * 0.5;
-                    posX[i] -= vecCalc[NX] * half; posY[i] -= vecCalc[NY] * half;
-                    posX[j] += vecCalc[NX] * half; posY[j] += vecCalc[NY] * half;
+                    let ri = radius[i];
+                    let rj = radius[j];
+                    let total_r = ri + rj;
+                    if (total_r <= 0) total_r = 1;
+                    let push_i = overlap * (rj / total_r);
+                    let push_j = overlap * (ri / total_r);
+                    posX[i] -= vecCalc[NX] * push_i; posY[i] -= vecCalc[NY] * push_i;
+                    posX[j] += vecCalc[NX] * push_j; posY[j] += vecCalc[NY] * push_j;
                     continue;
                 }
 
@@ -465,7 +477,7 @@ export let updateEntities = (deltaMs: number): void => {
                 }
 
                 if ((tj & TYPE_PLAYER) && (ti & TYPE_ENEMY)) {
-                    handlePlayerEnemyCollision(i, vecCalc[NX], vecCalc[NY], overlap);
+                    handlePlayerEnemyCollision(i, vecCalc[NX], vecCalc[NY], -overlap);
                     continue;
                 }
 
