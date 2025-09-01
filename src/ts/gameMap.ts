@@ -7,7 +7,7 @@ export let gameStage = 0;
 
 export let updateTime = (dt: number): void => {
     timeOfDay += dt;
-    gameStage = clamp(floor(timeOfDay / 20), -1, 16);
+    gameStage = clamp(floor(timeOfDay / 18), -1, 16);
 };
 
 export let WORLD_WIDTH = 4096;

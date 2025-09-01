@@ -23,9 +23,9 @@ let bossType = 0;
 
 type BossDef = [string, number, number, number, number, number, number];
 let bosses: BossDef[] = [
-    ["r.o.u.s.", 5000, 96, 25, BLACK, 0, 0.8],
-    ["ratromancer", 2000, 64, 25, PURPLE, 2, 0.1],
-    ["rat king", 2000, 32, 25, RED, 0, 0.2],
+    ["r.o.u.s.", 1000, 96, 25, BLACK, 0, 0.8],
+    ["ratromancer", 500, 64, 25, PURPLE, 2, 0.1],
+    ["rat king", 500, 32, 25, RED, 0, 0.2],
 ];
 
 type WaveDef = { hp_: number, radius_: number, dmg_: number, color_: number, shootPeriod_: number, speed_: number, count_: number; }; // SpawnConfig: hp, radius, dmg, color, shootPeriod, speed, count
@@ -70,6 +70,7 @@ let waves: WaveDef[][] = [ // Waves: time implied by index (30s intervals)
 let waveIdx = 0; // Current wave index
 
 let setup = (): void => {
+    waveIdx = 0;
     bossType = randInt(0, 2);
     track = 0;
     buttonActions[0] = "dash";
@@ -159,7 +160,7 @@ let update = (delta: number): void => {
                     waveIdx++;
                 }
             } else if (bossSpawn && !bossAlive) {
-                updateTime(-dt);
+                updateTime(-dt * 2);
                 if (gameStage === -1) {
                     switchToScene(gameOverScene.id_);
                     gameoverData[0] = "you are the night";
@@ -174,6 +175,15 @@ let update = (delta: number): void => {
                     bossSpawn = true;
                     bossAlive = true;
                 }
+            }
+
+            let dash = false;
+            if (A_PRESSED && player.dash_ >= 1000) {
+                player.dash_ -= 1000;
+                dash = true;
+                player.onDash_();
+            } else {
+                player.dash_ = min(1000, player.dash_ + delta);
             }
 
             let vx = 0;
@@ -191,18 +201,9 @@ let update = (delta: number): void => {
             if (vx !== 0 || vy !== 0) {
                 let d = hypot(vx, vy);
                 if (d > 1e-6) {
-                    velX[0] += (vx / d) * player.speed_;
-                    velY[0] += (vy / d) * player.speed_;
+                    velX[0] += (vx / d) * player.speed_ * (dash ? 50 : 1);
+                    velY[0] += (vy / d) * player.speed_ * (dash ? 50 : 1);
                 }
-            }
-
-            if (A_PRESSED && player.dash_ >= 1000) {
-                player.dash_ -= 1000;
-                velX[0] *= 50;
-                velY[0] *= 50;
-                player.onDash_();
-            } else {
-                player.dash_ = min(1000, player.dash_ + delta);
             }
 
             if (player.stealthed_ <= 0) {
@@ -228,6 +229,7 @@ let update = (delta: number): void => {
                 let scaling = randInt(1, gameStage);
                 let count = randInt(1, 2 + ~~(gameStage / 5));
                 for (let i = 0; i < count; i++) {
+                    if (bossSpawn && !bossAlive) spawnOffscreenEnemy(1 + scaling, 4 + scaling, 1, RED, false, 0, 1.3);
                     if (random() < 0.2) spawnOffscreenEnemy(3 + scaling, 8 + scaling, 1 + scaling, PURPLE, false, 3, 0.3);
                     else spawnOffscreenEnemy(3 + scaling, 8 + scaling, 1 + scaling);
                 }

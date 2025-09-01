@@ -394,14 +394,14 @@ export let updateEntities = (deltaMs: number): void => {
                 if (velX[id] < 1 && velX[id] > -1) {
                     velX[id] = 0;
                 }
-                velX[id] = clamp(velX[id], -200, 200);
+                velX[id] = clamp(velX[id], -300, 300);
             }
             if (velY[id] !== 0) {
                 velY[id] = velY[id] * EULER ** (-5 * dt);
                 if (velY[id] < 1 && velY[id] > -1) {
                     velY[id] = 0;
                 }
-                velY[id] = clamp(velY[id], -200, 200);
+                velY[id] = clamp(velY[id], -300, 300);
             }
             if (lifetime[id] > 0) {
                 lifetime[id] -= dt;
