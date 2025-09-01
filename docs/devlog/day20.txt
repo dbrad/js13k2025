@@ -1,0 +1,10 @@
+Day 20 - 2025-09-01
+
+---
+
+More sound effects
+Final 2 skills: Stealth and pounce
+Added player dash
+
+---
+

@@ -2,8 +2,102 @@ import { gameStage } from "./gameMap";
 import { gameState } from "./gameState";
 import { abs, cos, lerp, max, min, PI, random, round, sin, tan } from "./math";
 
-export let zzfxPlay = (m: number[]): void => { let f = zzfxContext.createBuffer(1, m.length, zzfxSampleRate), d = zzfxContext.createBufferSource(); f.getChannelData(0).set(m); d.buffer = f; d.connect(zzfxContext.destination); d.start(); };
-let zzfxGenerate = (m = 1, f = .05, d = 220, b = 0, n = 0, t = .1, r = 0, D = 1, u = 0, z = 0, v = 0, A = 0, k = 0, E = 0, B = 0, F = 0, e = 0, w = 1, p = 0, C = 0): number[] => { let c = 2 * PI, G = u *= 500 * c / zzfxSampleRate / zzfxSampleRate; f = d *= (1 + 2 * f * random() - f) * c / zzfxSampleRate; let x = [], h = 0, H = 0, a = 0, q = 1, I = 0, J = 0, g = 0, y, l; b = zzfxSampleRate * b + 9; p *= zzfxSampleRate; n *= zzfxSampleRate; t *= zzfxSampleRate; e *= zzfxSampleRate; z *= 500 * c / zzfxSampleRate ** 3; B *= c / zzfxSampleRate; v *= c / zzfxSampleRate; A *= zzfxSampleRate; k = zzfxSampleRate * k | 0; for (l = b + p + n + t + e | 0; a < l; x[a++] = g)++J % (100 * F | 0) || (g = r ? 1 < r ? 2 < r ? 3 < r ? sin((h % c) ** 3) : max(min(tan(h), 1), -1) : 1 - (2 * h / c % 2 + 2) % 2 : 1 - 4 * abs(round(h / c) - h / c) : sin(h), g = (k ? 1 - C + C * sin(c * a / k) : 1) * (0 < g ? 1 : -1) * abs(g) ** D * m * zzfxVolume * (a < b ? a / b : a < b + p ? 1 - (a - b) / p * (1 - w) : a < b + p + n ? w : a < l - e ? (l - a - e) / t * w : 0), g = e ? g / 2 + (e > a ? 0 : (a < l - e ? 1 : (l - a) / e) * x[a - e | 0] / 2) : g), y = (d += u += z) * cos(B * H++), h += y - y * E * (1 - 1E9 * (sin(a) + 1) % 2), q && ++q > A && (d += v, f += v, q = 0), !k || ++I % k || (d = f, u = G, q = q || 1); return x; };
+export let zzfxPlay = (sample: number[], volumeScale = 1, rate = 1, pan = 0, loop = false): void => {
+    let sampleLength = sample.length;
+    let buffer = zzfxContext.createBuffer(1, sampleLength, zzfxSampleRate);
+    let source = zzfxContext.createBufferSource();
+
+    buffer.getChannelData(0).set(sample);
+    source.buffer = buffer;
+    source.playbackRate.value = rate;
+    source.loop = loop;
+
+    let gainNode = zzfxContext.createGain();
+    gainNode.gain.value = zzfxVolume * volumeScale;
+    gainNode.connect(zzfxContext.destination);
+
+    let pannerNode = new StereoPannerNode(zzfxContext, { 'pan': pan });
+    source.connect(pannerNode).connect(gainNode);
+    source.start();
+};
+
+let zzfxGenerate = (volume = 1, randomness = .05, frequency = 220, attack = 0, sustain = 0, release = .1, shape = 0, shapeCurve = 1, slide = 0, deltaSlide = 0, pitchJump = 0, pitchJumpTime = 0, repeatTime = 0, noise = 0, modulation = 0, bitCrush = 0, delay = 0, sustainVolume = 1, decay = 0, tremolo = 0, filter = 0): number[] => {
+    let PI2 = PI * 2, sign = (v: number) => v < 0 ? -1 : 1, sampleRate = zzfxSampleRate,
+        startSlide = slide *= 500 * PI2 / sampleRate / sampleRate,
+        startFrequency = frequency *=
+            (1 + randomness * 2 * random() - randomness) * PI2 / sampleRate,
+        b = [], t = 0, tm = 0, i = 0, j = 1, r = 0, c = 0, s = 0, f, length,
+        quality = 2, w = PI2 * abs(filter) * 2 / sampleRate,
+        cosVal = cos(w), alpha = sin(w) / 2 / quality,
+        a0 = 1 + alpha, a1 = -2 * cosVal / a0, a2 = (1 - alpha) / a0,
+        b0 = (1 + sign(filter) * cosVal) / 2 / a0,
+        b1 = -(sign(filter) + cosVal) / a0, b2 = b0,
+        x2 = 0, x1 = 0, y2 = 0, y1 = 0;
+
+    attack = attack * sampleRate + 9;
+    decay *= sampleRate;
+    sustain *= sampleRate;
+    release *= sampleRate;
+    delay *= sampleRate;
+    deltaSlide *= 500 * PI2 / sampleRate ** 3;
+    modulation *= PI2 / sampleRate;
+    pitchJump *= PI2 / sampleRate;
+    pitchJumpTime *= sampleRate;
+    repeatTime = repeatTime * sampleRate | 0;
+    volume *= zzfxVolume;
+
+    for (length = attack + decay + sustain + release + delay | 0;
+        i < length; b[i++] = s * volume) {
+        if (!(++c % (bitCrush * 100 | 0))) {
+            s = shape ? shape > 1 ? shape > 2 ? shape > 3 ?
+                sin(t ** 3) :
+                max(min(tan(t), 1), -1) :
+                1 - (2 * t / PI2 % 2 + 2) % 2 :
+                1 - 4 * abs(round(t / PI2) - t / PI2) :
+                sin(t);
+
+            s = (repeatTime ?
+                1 - tremolo + tremolo * sin(PI2 * i / repeatTime)
+                : 1) *
+                sign(s) * (abs(s) ** shapeCurve) *
+                (i < attack ? i / attack :
+                    i < attack + decay ?
+                        1 - ((i - attack) / decay) * (1 - sustainVolume) :
+                        i < attack + decay + sustain ?
+                            sustainVolume :
+                            i < length - delay ?
+                                (length - i - delay) / release *
+                                sustainVolume :
+                                0);
+
+            s = delay ? s / 2 + (delay > i ? 0 :
+                (i < length - delay ? 1 : (length - i) / delay) *
+                b[i - delay | 0] / 2 / volume) : s;
+
+            if (filter)
+                s = y1 = b2 * x2 + b1 * (x2 = x1) + b0 * (x1 = s) - a2 * y2 - a1 * (y2 = y1);
+        }
+
+        f = (frequency += slide += deltaSlide) *
+            cos(modulation * tm++);
+        t += f + f * noise * sin(i ** 5);
+
+        if (j && ++j > pitchJumpTime) {
+            frequency += pitchJump;
+            startFrequency += pitchJump;
+            j = 0;
+        }
+
+        if (repeatTime && !(++r % repeatTime)) {
+            frequency = startFrequency;
+            slide = startSlide;
+            j = j || 1;
+        }
+    }
+
+    return b;
+};
+
 let zzfx = (m: (number | undefined)[]) => zzfxPlay(zzfxGenerate(...m));
 
 let zzfxVolume: number = 0.3;
@@ -13,8 +107,12 @@ let zzfxContext: AudioContext;
 export let boop: number[];
 export let boopGood: number[];
 export let thunder: number[];
+export let sheildHit: number[];
 export let catHit: VoidFunction;
 export let ratDie: VoidFunction;
+export let ratHit: number[];
+export let playerShoot: number[];
+export let enemyShoot: number[];
 
 let bass: number[];
 let snare: number[];
@@ -24,22 +122,24 @@ export let zzfxInit = (): void => {
     if (!zzfxContext) {
         zzfxContext = new AudioContext();
     }
-    boop = zzfxGenerate(...[, .1, , .05, .05, , , , , , 200, .06, , , , , , .5, .05]);
-    boopGood = zzfxGenerate(...[, .1, 440, .05, .05, , , , , , 200, .06, , , , , , .5, .05, 1]);
-    thunder = zzfxGenerate(...[2, 4, 25, .06, .31, .35, , 3.9, , -3, , , , .9, 12, .9, .3, .32, .16]);
+    boop = zzfxGenerate(...[, , , .05, .05, , , , , , 200, .06, , , , , , .5, .05]);
+    boopGood = zzfxGenerate(...[, , 440, .05, .05, , , , , , 200, .06, , , , , , .5, .05, 1]);
+    thunder = zzfxGenerate(...[2, , 25, .06, .31, .35, , 3.9, , -3, , , , .9, 12, .9, .3, .32, .16]);
+    sheildHit = zzfxGenerate(...[, , , .05, .05, .3, , 3, -20, , , , , , 200, .2, , .9]);
     catHit = () => zzfx([, .6, 325, .04, .02, .04, 2, 3, , , , , , .5, 1, .1, , .8, .07]);
     ratDie = () => zzfx([.3, , 900, .07, .08, .01, 1, .1, , , 109, , .02, , .9, , , .53, , , 662]);
+    ratHit = zzfxGenerate(...[.3, , 550, .01, .03, .05, 1, 1.5, -2, , 250]);
+    playerShoot = zzfxGenerate(...[, , , .02, , .05, 4, , , , , , , , , , .2, , .01]);
+    enemyShoot = zzfxGenerate(...[2, , 880, .28, , 0, 2, 4, , -83, 45, .06, .08, , , , .3, .7, .08, .3]);
 
-    zzfxVolume = 0.15;
-    snare = zzfxGenerate(...[, 0, 655, , , .09, 3, 1.65, , , , , .02, 3.8, -.1, , .2]);
-    hihat = zzfxGenerate(...[, 0, 2200, , , .04, 3, 2, , , 800, .02, , 4.8, , .01, .1]);
-    bass = zzfxGenerate(...[2, 0, 43, , , .25, , , , , , , , 2]);
-    zzfxVolume = 0.3;
+    snare = zzfxGenerate(...[2, , 655, , , .09, 3, 1.65, , , , , .02, 3.8, -.1, , .2]);
+    hihat = zzfxGenerate(...[1.5, , 2200, , , .04, 3, 2, , , 800, .02, , 4.8, , .01, .1]);
+    bass = zzfxGenerate(...[3, , 43, , , .25, , , , , , , , 2]);
 };
 
 let beat = 0;
-let bpm1 = (1 / (120 / 60) * 1000) * 0.25;
-let bpm2 = (1 / (172 / 60) * 1000) * 0.25;
+let bpm1 = (1 / (100 / 60) * 1000) * 0.25;
+let bpm2 = (1 / (180 / 60) * 1000) * 0.25;
 let timer = bpm1;
 export let playMusic = (delta: number, track: number) => {
     if (!gameState[GS_MUTEMUSIC]) {

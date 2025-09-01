@@ -1,5 +1,5 @@
 import { assert } from "./__debug/debug";
-import { catHit, ratDie } from "./audio";
+import { catHit, enemyShoot, ratDie, ratHit, sheildHit, zzfxPlay } from "./audio";
 import { cameraPos } from "./camera";
 import { BLACK, lightningFlash, PURPLE, pushQuad, pushTexturedQuad, RED, WHITE } from "./draw";
 import { gameStage, WORLD_HEIGHT, WORLD_WIDTH } from "./gameMap";
@@ -235,7 +235,7 @@ export let spawnProjectile = (x: number, y: number, vx: number, vy: number, r: n
 };
 
 export let spawnRadialBurst = (x: number, y: number, count: number, speed: number, hostile: boolean = false) => {
-    for (let k = 0; k < 8 + count; k++) {
+    for (let k = 0; k < count; k++) {
         let angle = (2 * PI * k) / count;
         let vx = cos(angle) * speed;
         let vy = sin(angle) * speed;
@@ -243,7 +243,7 @@ export let spawnRadialBurst = (x: number, y: number, count: number, speed: numbe
     }
 };
 
-export let spawnAura = (r: number = 50, dmg: number = 5, lifeSec: number = -1, abgr: number = 0x4000ff80, slow: number = 1.0, existingId: number = -1): number => {
+export let spawnAura = (existingId: number = -1, r: number = 50, dmg: number = 5, lifeSec: number = -1, abgr: number = 0x4000ff80, slow: number = 1.0): number => {
     let id = existingId >= 0 && alive[existingId] && type[existingId] & TYPE_AURA ? existingId : alloc();
     if (id < 1) return -1;
     type[id] = TYPE_AURA;
@@ -274,7 +274,7 @@ export let spawnXpOrb = (x: number, y: number, xp: number, r: number = 2, abgr: 
 };
 
 let damageEnemy = (id: number, amt: number): void => {
-    hp[id] -= amt;
+    hp[id] -= amt * (player.bonus_ > 0 ? 2 : 1);
     if (hp[id] <= 0) {
         spawnXpOrb(posX[id], posY[id], damage[id]);
         ratDie();
@@ -292,6 +292,7 @@ let damagePlayer = (amt: number): void => {
             catHit();
         } else {
             player.shield_ = max(0, player.shield_ - 1);
+            zzfxPlay(sheildHit);
         }
         lifetime[0] = 0.8;
         if (player.hp_ <= 0) {
@@ -308,6 +309,7 @@ let handlePlayerEnemyCollision = (enemyId: number, nx: number, ny: number, overl
 let handleProjectileEnemyCollision = (projectileId: number, enemyId: number) => {
     if (enemyHitSet[enemyId].includes(projectileId)) return;
     enemyHitSet[enemyId][enemyHitSetCount[enemyId]++] = projectileId;
+    zzfxPlay(ratHit);
     damageEnemy(enemyId, damage[projectileId] + player.damage_);
     if (knockback[projectileId] > 0) {
         let pv = hypot(velX[projectileId], velY[projectileId]);
@@ -354,25 +356,28 @@ export let updateEntities = (deltaMs: number): void => {
         if (t & TYPE_ENEMY) {
             enemyHitSetCount[id] = 0;
             let baseSpeed = 35 + gameStage * 2.5;
-            calcVec(posX[id], posY[id], pX, pY);
-            if (vecCalc[DIST] > 1e-6) {
-                velX[id] = vecCalc[NX] * baseSpeed * speedMult[id] * slowFactor[id];
-                velY[id] = vecCalc[NY] * baseSpeed * speedMult[id] * slowFactor[id];
-                slowFactor[id] = 1.0;
-            } else {
-                velX[id] = 0;
-                velY[id] = 0;
-            }
-            if (shootPeriod[id] > 0) {
-                shootTimer[id] -= dt;
-                if (shootTimer[id] <= 0) {
-                    if (vecCalc[DIST] > 0 && vecCalc[DIST] < SCREEN_HALF + 30) {
-                        let speed = 160;
-                        let dmg = floor(damage[id] * .5);
-                        spawnProjectile(posX[id], posY[id], vecCalc[NX] * speed, vecCalc[NY] * speed, max(3, dmg), dmg, 5, 1, PURPLE, true);
-                        shootTimer[id] += shootPeriod[id];
-                    } else {
-                        shootTimer[id] += shootPeriod[id] * .25;
+            if (player.stealthed_ <= 0) {
+                calcVec(posX[id], posY[id], pX, pY);
+                if (vecCalc[DIST] > 1e-6) {
+                    velX[id] = vecCalc[NX] * baseSpeed * speedMult[id] * slowFactor[id];
+                    velY[id] = vecCalc[NY] * baseSpeed * speedMult[id] * slowFactor[id];
+                    slowFactor[id] = 1.0;
+                } else {
+                    velX[id] = 0;
+                    velY[id] = 0;
+                }
+                if (shootPeriod[id] > 0) {
+                    shootTimer[id] -= dt;
+                    if (shootTimer[id] <= 0) {
+                        if (vecCalc[DIST] > 0 && vecCalc[DIST] < SCREEN_HALF + 30) {
+                            let speed = 160;
+                            let dmg = floor(damage[id] * .5);
+                            spawnProjectile(posX[id], posY[id], vecCalc[NX] * speed, vecCalc[NY] * speed, max(3, dmg), dmg, 5, 1, PURPLE, true);
+                            zzfxPlay(enemyShoot);
+                            shootTimer[id] += shootPeriod[id];
+                        } else {
+                            shootTimer[id] += shootPeriod[id] * .25;
+                        }
                     }
                 }
             }
@@ -389,14 +394,14 @@ export let updateEntities = (deltaMs: number): void => {
                 if (velX[id] < 1 && velX[id] > -1) {
                     velX[id] = 0;
                 }
-                velX[id] = clamp(velX[id], -500, 500);
+                velX[id] = clamp(velX[id], -200, 200);
             }
             if (velY[id] !== 0) {
                 velY[id] = velY[id] * EULER ** (-5 * dt);
                 if (velY[id] < 1 && velY[id] > -1) {
                     velY[id] = 0;
                 }
-                velY[id] = clamp(velY[id], -500, 500);
+                velY[id] = clamp(velY[id], -200, 200);
             }
             if (lifetime[id] > 0) {
                 lifetime[id] -= dt;
