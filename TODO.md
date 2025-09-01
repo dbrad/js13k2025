@@ -10,9 +10,4 @@ More Sound effects
     - projectile sound
     - boss spawn sound
 
-Boss Ideas
-    R.O.U.S. - Huge rat, high hp, high dmg
-    Rat King - Small high hp rat that spawns a lot of weak, fast rats rapidly
-    Ratromancer - Bullet hell big rat that shoots projectiles
-
 Meta Progression or achievements?

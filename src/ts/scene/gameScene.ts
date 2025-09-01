@@ -1,7 +1,7 @@
 import { playMusic } from "../audio";
 import { cameraPos, cameraTarget, updateCamera, vCameraPos } from "../camera";
 import { BLACK, clearLightning, PURPLE, pushQuad, pushText, RED, updateLightning, WHITE } from "../draw";
-import { drawEntities, hp, initEntities, posX, posY, spawnOffscreenEnemy, spawnPlayer, updateEntities, velX, velY } from "../entity";
+import { drawEntities, hp, initEntities, posX, posY, spawnEnemy, spawnOffscreenEnemy, spawnPlayer, spawnRadialBurst, updateEntities, velX, velY } from "../entity";
 import { drawWorld, gameStage, generateWorld, updateTime, WORLD_HEIGHT, WORLD_WIDTH } from "../gameMap";
 import { gameState, getRunTime } from "../gameState";
 import { A_PRESSED, B_PRESSED, buttonActions, DOWN_IS_DOWN, DOWN_PRESSED, LEFT_IS_DOWN, RIGHT_IS_DOWN, UP_IS_DOWN, UP_PRESSED } from "../input";
@@ -19,6 +19,14 @@ let bossAlive = false;
 let bossId = -1;
 let paused = false;
 let track = 0;
+let bossType = 0;
+
+type BossDef = [string, number, number, number, number, number, number];
+let bosses: BossDef[] = [
+    ["r.o.u.s.", 5000, 96, 25, BLACK, 0, 0.8],
+    ["ratromancer", 2000, 64, 25, PURPLE, 2, 0.1],
+    ["rat king", 2000, 32, 25, RED, 0, 0.2],
+];
 
 type WaveDef = { hp_: number, radius_: number, dmg_: number, color_: number, shootPeriod_: number, speed_: number, count_: number; }; // SpawnConfig: hp, radius, dmg, color, shootPeriod, speed, count
 let waves: WaveDef[][] = [ // Waves: time implied by index (30s intervals)
@@ -27,41 +35,42 @@ let waves: WaveDef[][] = [ // Waves: time implied by index (30s intervals)
     ], // Fast
     [
         { hp_: 10, radius_: 16, dmg_: 3, color_: BLACK, shootPeriod_: 0, speed_: 0.7, count_: 10 },
-        { hp_: 5, radius_: 10, dmg_: 1, color_: PURPLE, shootPeriod_: 3, speed_: 1, count_: 5 },
+        { hp_: 5, radius_: 10, dmg_: 1, color_: PURPLE, shootPeriod_: 3, speed_: 0.3, count_: 5 },
     ], // Big+shooters
     [
-        { hp_: 4, radius_: 8, dmg_: 1, color_: RED, shootPeriod_: 0, speed_: 1.2, count_: 15 }
+        { hp_: 6, radius_: 8, dmg_: 2, color_: RED, shootPeriod_: 0, speed_: 1.2, count_: 15 }
     ], // Medium
     [
-        { hp_: 15, radius_: 20, dmg_: 4, color_: PURPLE, shootPeriod_: 5, speed_: 0.6, count_: 4 },
-        { hp_: 3, radius_: 8, dmg_: 1, color_: BLACK, shootPeriod_: 0, speed_: 1, count_: 20 },
+        { hp_: 15, radius_: 20, dmg_: 4, color_: PURPLE, shootPeriod_: 5, speed_: 0.3, count_: 4 },
+        { hp_: 6, radius_: 8, dmg_: 1, color_: BLACK, shootPeriod_: 0, speed_: 1, count_: 20 },
     ], // Big+fodder
     [
-        { hp_: 6, radius_: 12, dmg_: 2, color_: PURPLE, shootPeriod_: 2, speed_: 0.9, count_: 10 }
+        { hp_: 5, radius_: 12, dmg_: 2, color_: PURPLE, shootPeriod_: 1, speed_: 0.2, count_: 10 }
     ], // Shooters
     [
         { hp_: 8, radius_: 14, dmg_: 2, color_: RED, shootPeriod_: 0, speed_: 1.3, count_: 30 }
     ], // Fast medium
     [
-        { hp_: 20, radius_: 24, dmg_: 5, color_: BLACK, shootPeriod_: 0, speed_: 0.5, count_: 6 }
+        { hp_: 30, radius_: 24, dmg_: 10, color_: BLACK, shootPeriod_: 0, speed_: 0.5, count_: 10 }
     ], // Very big
     [
-        { hp_: 10, radius_: 10, dmg_: 1, color_: PURPLE, shootPeriod_: 4, speed_: 1, count_: 10 },
-        { hp_: 8, radius_: 8, dmg_: 2, color_: RED, shootPeriod_: 0, speed_: 1.5, count_: 10 }
+        { hp_: 10, radius_: 10, dmg_: 1, color_: PURPLE, shootPeriod_: 4, speed_: 0.2, count_: 10 },
+        { hp_: 10, radius_: 8, dmg_: 2, color_: RED, shootPeriod_: 0, speed_: 1.5, count_: 15 }
     ], // Many shooters + Speeders
     [
         { hp_: 10, radius_: 8, dmg_: 1, color_: RED, shootPeriod_: 0, speed_: 1.3, count_: 30 },
-        { hp_: 30, radius_: 32, dmg_: 8, color_: BLACK, shootPeriod_: 0, speed_: 0.5, count_: 5 }
+        { hp_: 30, radius_: 32, dmg_: 8, color_: BLACK, shootPeriod_: 0, speed_: 0.5, count_: 10 }
     ], // Swarm
     [
-        { hp_: 12, radius_: 18, dmg_: 3, color_: PURPLE, shootPeriod_: 3, speed_: 0.8, count_: 6 },
-        { hp_: 30, radius_: 32, dmg_: 8, color_: BLACK, shootPeriod_: 0, speed_: 0.5, count_: 5 },
+        { hp_: 12, radius_: 18, dmg_: 3, color_: PURPLE, shootPeriod_: 3, speed_: 0.3, count_: 6 },
+        { hp_: 30, radius_: 32, dmg_: 8, color_: BLACK, shootPeriod_: 0, speed_: 0.5, count_: 10 },
         { hp_: 10, radius_: 8, dmg_: 1, color_: RED, shootPeriod_: 0, speed_: 1.3, count_: 20 }
     ], // Balanced
 ];
 let waveIdx = 0; // Current wave index
 
 let setup = (): void => {
+    bossType = randInt(0, 2);
     track = 0;
     buttonActions[1] = "pause";
     gameover = bossSpawn = bossAlive = false;
@@ -154,7 +163,8 @@ let update = (delta: number): void => {
             if (gameStage > 15) {
                 updateLightning(delta);
                 if (!bossSpawn) {
-                    bossId = spawnOffscreenEnemy(500, 64, 25, PURPLE, true);
+                    let boss = bosses[bossType];
+                    bossId = spawnOffscreenEnemy(boss[1], boss[2], boss[3], boss[4], true, boss[5], boss[6]);
                     bossSpawn = true;
                     bossAlive = true;
                 }
@@ -182,11 +192,22 @@ let update = (delta: number): void => {
 
             timer += delta;
             if (timer >= 1000) {
+                if (bossSpawn && bossAlive) {
+                    switch (bossType) {
+                        case 1:
+                            spawnRadialBurst(posX[bossId], posY[bossId], 8, 200, true);
+                            break;
+                        case 2:
+                            for (let i = 0; i < 5; i++)
+                                spawnEnemy(posX[bossId], posY[bossId], 8, 1, 1, RED, true, 0, 1.5);
+                            break;
+                    }
+                }
                 timer -= 1000;
                 let scaling = randInt(1, gameStage);
                 let count = randInt(1, 2 + ~~(gameStage / 5));
                 for (let i = 0; i < count; i++) {
-                    if (random() < 0.3) spawnOffscreenEnemy(3 + scaling, 8 + scaling, 1 + scaling, PURPLE, false, 3);
+                    if (random() < 0.2) spawnOffscreenEnemy(3 + scaling, 8 + scaling, 1 + scaling, PURPLE, false, 3, 0.3);
                     else spawnOffscreenEnemy(3 + scaling, 8 + scaling, 1 + scaling);
                 }
             }
@@ -239,9 +260,9 @@ let drawGUI = (): void => {
     }
 
     if (bossAlive) {
-        pushText("r.o.u.s", SCREEN_CENTER_X, SCREEN_DIM - 14, WHITE, 2, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM);
+        pushText(bosses[bossType][0], SCREEN_CENTER_X, SCREEN_DIM - 14, WHITE, 2, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM);
         pushQuad(SCREEN_CENTER_X - 50, SCREEN_DIM - 12, 100, 8, WHITE);
-        pushQuad(SCREEN_CENTER_X - 50, SCREEN_DIM - 11, hp[bossId] / 500 * 100, 6, 0xff0000aa);
+        pushQuad(SCREEN_CENTER_X - 50, SCREEN_DIM - 11, hp[bossId] / bosses[bossType][1] * 100, 6, 0xff0000aa);
     }
 
     if (player.levelUpPending_) {

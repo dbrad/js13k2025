@@ -1,5 +1,5 @@
 import { BLACK } from "./draw";
-import { findNearestEnemy, nearestEnemyPos, playerDir, posX, posY, spawnAura, spawnProjectile } from "./entity";
+import { findNearestEnemy, nearestEnemyPos, playerDir, posX, posY, spawnAura, spawnProjectile, spawnRadialBurst } from "./entity";
 import { calcVec, cos, max, min, PI, randInt, random, roundTo, sin, vecCalc } from "./math";
 import { burstParticle, emitParticle } from "./particle";
 
@@ -23,7 +23,7 @@ export let resetPlayer = (): void => {
     UPGRADE_POOL[UP_CLAW].apply_();
 };
 
-export let xpTable: number[] = Array.from({ length: 30 }, (_, i) => roundTo(10 * (1.5 ** (i - 1)), 5));
+export let xpTable: number[] = Array.from({ length: 100 }, (_, i) => roundTo(10 * (1.5 ** (i - 1)), 5));
 
 export let gainXp = (val: number): void => {
     player.xp_ += val;
@@ -207,12 +207,7 @@ export let UPGRADE_POOL: Upgrade[] = [
             upgradeAbility(UP_SHED, BULLET, 3000, (a: Ability): void => {
                 let speed = 300;
                 let count = 4 + a.level_ * 4;
-                for (let k = 0; k < 8 + count; k++) {
-                    let angle = (2 * PI * k) / count;
-                    let vx = cos(angle) * speed;
-                    let vy = sin(angle) * speed;
-                    spawnProjectile(posX[0], posY[0], vx, vy, 2, 1, 2, 1);
-                }
+                spawnRadialBurst(posX[0], posY[0], count, speed);
             });
         },
     }, {
@@ -223,7 +218,7 @@ export let UPGRADE_POOL: Upgrade[] = [
         apply_: (): void => {
             upgradeAbility(UP_FELD1, AURA, 5000, (a: Ability): void => {
                 let radius = 50 + a.level_ * 10;
-                a.entityId_ = spawnAura(radius, 1, -1, 0x668888ff, 1, a.entityId_);
+                a.entityId_ = spawnAura(radius, 1 + player.damage_, -1, 0x668888ff, 1, a.entityId_);
             });
         },
     }, {
