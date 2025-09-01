@@ -69,9 +69,9 @@ export let UPGRADE_POOL: Upgrade[] = [
     }, {
         id_: UP_MS,
         name_: "Agility",
-        description_: "+5 Movement Speed",
+        description_: "+1 Movement Speed",
         kind_: STAT,
-        apply_: (): void => { player.speed_ += 5; },
+        apply_: (): void => { player.speed_ += 1; },
     }, {
         id_: UP_CLAW,
         name_: "Cat Claw",
