@@ -24,7 +24,7 @@ export let resetPlayer = (): void => {
         abilities_: [],
         xp_: 0,
         level_: 1,
-        levelUpPending_: true
+        levelUpPending_: false
     };
     UPGRADE_POOL[UP_CLAW].apply_();
 };
