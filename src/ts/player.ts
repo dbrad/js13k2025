@@ -1,4 +1,5 @@
-import { BLACK } from "./draw";
+import { playerShoot, zzfxPlay } from "./audio";
+import { RED } from "./draw";
 import { findNearestEnemy, nearestEnemyPos, playerDir, posX, posY, spawnAura, spawnProjectile, spawnRadialBurst } from "./entity";
 import { calcVec, cos, max, min, PI, randInt, random, roundTo, sin, vecCalc } from "./math";
 import { burstParticle, emitParticle } from "./particle";
@@ -10,15 +11,20 @@ export let resetPlayer = (): void => {
         hp_: 100,
         maxHP_: 100,
         shield_: 0,
-        speed_: 140,
+        speed_: 10,
+        dash_: 0,
+        onDash_: () => { },
+        stealthed_: 0,
+        stealthedMax_: 0,
+        bonus_: 0,
+        bonusMax_: 0,
         damage_: 0,
         defense_: 0,
         cooldown_: 0,
-        luck_: 0,
         abilities_: [],
         xp_: 0,
         level_: 1,
-        levelUpPending_: false
+        levelUpPending_: true
     };
     UPGRADE_POOL[UP_CLAW].apply_();
 };
@@ -63,16 +69,16 @@ export let UPGRADE_POOL: Upgrade[] = [
     }, {
         id_: UP_MS,
         name_: "Agility",
-        description_: "+10 Movement Speed",
+        description_: "+5 Movement Speed",
         kind_: STAT,
-        apply_: (): void => { player.speed_ += 10; },
+        apply_: (): void => { player.speed_ += 5; },
     }, {
         id_: UP_CLAW,
         name_: "Cat Claw",
-        description_: "Feriously claw at nearby enemies|upgrade: range+ pierce+",
+        description_: "Claw nearby enemies|upgrade: range+ pierce+",
         kind_: ABILITY,
         apply_: (): void => {
-            upgradeAbility(UP_CLAW, BULLET, 500, (a: Ability): void => {
+            upgradeAbility(UP_CLAW, COOLDOWN, 500, (a: Ability): void => {
                 let speed = 500;
                 let range = 0.1 + (a.level_ - 1) * 0.1;
                 if (findNearestEnemy(300)) {
@@ -90,15 +96,16 @@ export let UPGRADE_POOL: Upgrade[] = [
                     spawnProjectile(posX[0], posY[0] + 10, vx, 0, 2, 1, range, a.level_);
                     spawnProjectile(posX[0], posY[0] - 10, vx, 0, 2, 1, range, a.level_);
                 }
+                zzfxPlay(playerShoot);
             });
         },
     }, {
         id_: UP_ZOOMY,
         name_: "The Zoomies",
-        description_: "Attack in random directions|upgrade: projectiles+",
+        description_: "Random direction attack|upgrade: projectiles+",
         kind_: ABILITY,
         apply_: (): void => {
-            upgradeAbility(UP_ZOOMY, BULLET, 250, (a: Ability): void => {
+            upgradeAbility(UP_ZOOMY, COOLDOWN, 250, (a: Ability): void => {
                 for (let i = 0; i < a.level_; i++) {
                     let a = random() * PI * 2;
                     let speed = randInt(150, 200);
@@ -106,15 +113,16 @@ export let UPGRADE_POOL: Upgrade[] = [
                     let vy = sin(a) * speed;
                     spawnProjectile(posX[0], posY[0], vx, vy, 3, 2, 2);
                 }
+                zzfxPlay(playerShoot);
             });
         },
     }, {
         id_: UP_HAIRBALL,
         name_: "Hairball",
-        description_: "Let out a powerful piercing attack|upgrade: damage+ size+",
+        description_: "Piercing attack|upgrade: damage+ size+",
         kind_: ABILITY,
         apply_: (): void => {
-            upgradeAbility(UP_HAIRBALL, BULLET, 2000, (a: Ability): void => {
+            upgradeAbility(UP_HAIRBALL, COOLDOWN, 2000, (a: Ability): void => {
                 let speed = 300;
                 let dmg = 5 * a.level_;
                 let size = 5 * a.level_;
@@ -127,27 +135,28 @@ export let UPGRADE_POOL: Upgrade[] = [
                     let vx = playerDir === 0 ? -speed : speed;
                     spawnProjectile(posX[0], posY[0], vx, 0, size, dmg, 5, 999);
                 }
+                zzfxPlay(playerShoot);
             });
         },
     }, {
         id_: UP_MENACE,
-        name_: "Menacing Pressence",
+        name_: "Menacing Presence",
         description_: "Slow nearby enemies|upgrade: slow+ size+",
         kind_: ABILITY,
         apply_: (): void => {
-            upgradeAbility(UP_MENACE, AURA, 5000, (a: Ability): void => {
+            upgradeAbility(UP_MENACE, AURA, 1e6, (a: Ability): void => {
                 let slow = max(0.7 - (a.level_ - 1) * 0.1, 0.3);
                 let radius = 50 + a.level_ * 10;
-                a.entityId_ = spawnAura(radius, 0, -1, 0x11ff8888, slow, a.entityId_);
+                a.entityId_ = spawnAura(a.entityId_, radius, 0, -1, 0x11ff8888, slow);
             });
         },
     }, {
         id_: UP_NINELIFE,
         name_: "Nine Lives",
-        description_: "Slowly regenerate health|upgrade: frequency+",
+        description_: "Regenerate health|upgrade: frequency+",
         kind_: ABILITY,
         apply_: (): void => {
-            upgradeAbility(UP_NINELIFE, PASSIVE, 5000, (a: Ability): void => {
+            upgradeAbility(UP_NINELIFE, COOLDOWN, 5000, (a: Ability): void => {
                 a.cooldown_ = 5000 - (1000 * (a.level_ - 1));
                 player.hp_ = min(player.maxHP_, player.hp_ + 1);
             });
@@ -155,24 +164,25 @@ export let UPGRADE_POOL: Upgrade[] = [
     }, {
         id_: UP_CARDINAL,
         name_: "Cardinal Assault",
-        description_: "Attack in the 4 cardinal directions|upgrade: pierce+ size+",
+        description_: "4-way attack|upgrade: pierce+ size+",
         kind_: ABILITY,
         apply_: (): void => {
-            upgradeAbility(UP_CARDINAL, BULLET, 1000, (a: Ability): void => {
+            upgradeAbility(UP_CARDINAL, COOLDOWN, 1000, (a: Ability): void => {
                 let speed = 300;
                 spawnProjectile(posX[0], posY[0], speed, 0, 1 + a.level_, 1, 2, a.level_);
                 spawnProjectile(posX[0], posY[0], -speed, 0, 1 + a.level_, 1, 2, a.level_);
                 spawnProjectile(posX[0], posY[0], 0, speed, 1 + a.level_, 1, 2, a.level_);
                 spawnProjectile(posX[0], posY[0], 0, -speed, 1 + a.level_, 1, 2, a.level_);
+                zzfxPlay(playerShoot);
             });
         },
     }, {
         id_: UP_SLASH,
         name_: "Slash",
-        description_: "Slash at nearby enemies in an arc|upgrade: count+ size+",
+        description_: "Arc attack|upgrade: count+ size+",
         kind_: ABILITY,
         apply_: (): void => {
-            upgradeAbility(UP_SLASH, BULLET, 500, (a: Ability): void => {
+            upgradeAbility(UP_SLASH, COOLDOWN, 500, (a: Ability): void => {
                 let count = 5 + a.level_ * 6;
                 let ang = PI / (6 - a.level_);
                 let baseAngle: number;
@@ -196,48 +206,50 @@ export let UPGRADE_POOL: Upgrade[] = [
                     burstParticle.position_[Y] = py;
                     emitParticle(burstParticle);
                 }
+                zzfxPlay(playerShoot);
             });
         },
     }, {
         id_: UP_SHED,
-        name_: "Agressive Shedding",
-        description_: "Periodically attack in all directions|upgrade: count+",
+        name_: "Aggressive Shedding",
+        description_: "Radial attack|upgrade: count+",
         kind_: ABILITY,
         apply_: (): void => {
-            upgradeAbility(UP_SHED, BULLET, 3000, (a: Ability): void => {
+            upgradeAbility(UP_SHED, COOLDOWN, 3000, (a: Ability): void => {
                 let speed = 300;
-                let count = 4 + a.level_ * 4;
+                let count = a.level_ * 8;
                 spawnRadialBurst(posX[0], posY[0], count, speed);
+                zzfxPlay(playerShoot);
             });
         },
     }, {
         id_: UP_FELD1,
         name_: "Fel d 1",
-        description_: "A damaging aura of allergens|upgrade: size+",
+        description_: "Damaging aura|upgrade: size+",
         kind_: ABILITY,
         apply_: (): void => {
-            upgradeAbility(UP_FELD1, AURA, 5000, (a: Ability): void => {
+            upgradeAbility(UP_FELD1, AURA, 1e6, (a: Ability): void => {
                 let radius = 50 + a.level_ * 10;
-                a.entityId_ = spawnAura(radius, 1 + player.damage_, -1, 0x668888ff, 1, a.entityId_);
+                a.entityId_ = spawnAura(a.entityId_, radius, 1 + player.damage_, -1, 0x668888ff);
             });
         },
     }, {
         id_: UP_REFLEX,
         name_: "Extreme Reflexes",
-        description_: "Periodically nullify an incoming attack|upgrade: cooldown-",
+        description_: "Nullify attack|upgrade: cooldown-",
         kind_: ABILITY,
         apply_: (): void => {
-            upgradeAbility(UP_REFLEX, PASSIVE, 10000, (a: Ability): void => {
+            upgradeAbility(UP_REFLEX, COOLDOWN, 10000, (a: Ability): void => {
                 player.shield_ = min(1, player.shield_ + 1);
             });
         },
     }, {
         id_: UP_HISS,
         name_: "Hiss",
-        description_: "Knock back and harm nearby enemies|upgrade: count+ knock+",
+        description_: "Knockback attack|upgrade: count+ knock+",
         kind_: ABILITY,
         apply_: (): void => {
-            upgradeAbility(UP_HISS, BULLET, 1500, (a: Ability): void => {
+            upgradeAbility(UP_HISS, COOLDOWN, 1500, (a: Ability): void => {
                 let count = 8 + a.level_ * 4;
                 let ang = PI / 4;
                 let baseAngle: number;
@@ -256,8 +268,33 @@ export let UPGRADE_POOL: Upgrade[] = [
                     angle += (random() - 0.5) * (PI / 12);
                     let vx = cos(angle) * speed;
                     let vy = sin(angle) * speed;
-                    spawnProjectile(posX[0], posY[0], vx, vy, 2, 1, .2, 1, BLACK, false, kb);
+                    spawnProjectile(posX[0], posY[0], vx, vy, 2, 1, .2, 1, RED, false, kb);
                 }
+                zzfxPlay(playerShoot);
+            });
+        },
+    }, {
+        id_: UP_POUNCE,
+        name_: "Pounce",
+        description_: "Burst attack on dash|upgrade: count+",
+        kind_: ABILITY,
+        apply_: (): void => {
+            upgradeAbility(UP_POUNCE, PASSIVE, 1e6, (a: Ability): void => {
+                player.onDash_ = (): void => {
+                    spawnRadialBurst(posX[0], posY[0], 4 + a.level_ * 4, 300);
+                };
+            });
+        },
+    }, {
+        id_: UP_STALK,
+        name_: "Shadow Stalk",
+        description_: "Stealth then deal double damage|upgrade: duration+",
+        kind_: ABILITY,
+        apply_: (): void => {
+            upgradeAbility(UP_STALK, COOLDOWN, 10000, (a: Ability): void => {
+                player.stealthedMax_ = player.stealthed_ = 1000 + a.level_ * 1000;
+                player.bonusMax_ = player.bonus_ = 1000 + a.level_ * 500;
+                spawnAura(-1, 336, 0, 1 + a.level_, 0xaa000000);
             });
         },
     },
@@ -295,8 +332,10 @@ export let getRandomUpgrades = (n: number, skipStats: boolean = false): Upgrade[
 export let updatePlayerAbilities = (delta: number): void => {
     for (let ability of player.abilities_) {
         if (ability.timer_ <= 0) {
-            ability.fire_(ability);
-            ability.timer_ += ability.cooldown_ * (100 / (100 + player.cooldown_));
+            if (player.stealthed_ <= 0) {
+                ability.fire_(ability);
+                ability.timer_ += ability.cooldown_ * (100 / (100 + player.cooldown_));
+            }
         }
         ability.timer_ -= delta;
     }

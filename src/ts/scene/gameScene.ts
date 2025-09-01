@@ -1,4 +1,4 @@
-import { playMusic } from "../audio";
+import { enemyShoot, playMusic, zzfxPlay } from "../audio";
 import { cameraPos, cameraTarget, updateCamera, vCameraPos } from "../camera";
 import { BLACK, clearLightning, PURPLE, pushQuad, pushText, RED, updateLightning, WHITE } from "../draw";
 import { drawEntities, hp, initEntities, posX, posY, spawnEnemy, spawnOffscreenEnemy, spawnPlayer, spawnRadialBurst, updateEntities, velX, velY } from "../entity";
@@ -72,6 +72,7 @@ let waveIdx = 0; // Current wave index
 let setup = (): void => {
     bossType = randInt(0, 2);
     track = 0;
+    buttonActions[0] = "dash";
     buttonActions[1] = "pause";
     gameover = bossSpawn = bossAlive = false;
     bossId = -1;
@@ -90,6 +91,7 @@ let update = (delta: number): void => {
     if (paused) {
         if (B_PRESSED) {
             paused = false;
+            buttonActions[0] = "dash";
             buttonActions[1] = "pause";
         }
         return;
@@ -109,14 +111,17 @@ let update = (delta: number): void => {
     } else {
         if (player.levelUpPending_) {
             if (upgrades.length === 0) {
+                buttonActions[0] = "accept";
+                buttonActions[1] = "";
                 upgrades = getRandomUpgrades(3, player.level_ === 1);
             }
             if (A_PRESSED) {
+                buttonActions[0] = "dash";
+                buttonActions[1] = "pause";
                 if (upgradeSelectRow === 3) {
-                    player.luck_--;
+                    player.hp_ = min(player.maxHP_, player.hp_ + player.maxHP_ * .2);
                 } else {
                     upgrades[upgradeSelectRow].apply_();
-                    player.luck_++;
                 }
                 upgrades = [];
                 upgradeSelectRow = 0;
@@ -130,6 +135,7 @@ let update = (delta: number): void => {
         } else {
             if (B_PRESSED) {
                 paused = true;
+                buttonActions[0] = "";
                 buttonActions[1] = "unpause";
                 return;
             }
@@ -185,10 +191,24 @@ let update = (delta: number): void => {
             if (vx !== 0 || vy !== 0) {
                 let d = hypot(vx, vy);
                 if (d > 1e-6) {
-                    velX[0] = (vx / d) * player.speed_;
-                    velY[0] = (vy / d) * player.speed_;
+                    velX[0] += (vx / d) * player.speed_;
+                    velY[0] += (vy / d) * player.speed_;
                 }
             }
+
+            if (A_PRESSED && player.dash_ >= 1000) {
+                player.dash_ -= 1000;
+                velX[0] *= 50;
+                velY[0] *= 50;
+                player.onDash_();
+            } else {
+                player.dash_ = min(1000, player.dash_ + delta);
+            }
+
+            if (player.stealthed_ <= 0) {
+                player.bonus_ = max(0, player.bonus_ - delta);
+            }
+            player.stealthed_ = max(0, player.stealthed_ - delta);
 
             timer += delta;
             if (timer >= 1000) {
@@ -196,6 +216,7 @@ let update = (delta: number): void => {
                     switch (bossType) {
                         case 1:
                             spawnRadialBurst(posX[bossId], posY[bossId], 8, 200, true);
+                            zzfxPlay(enemyShoot);
                             break;
                         case 2:
                             for (let i = 0; i < 5; i++)
@@ -227,37 +248,49 @@ let draw = (): void => {
 
 let w = SCREEN_GUTTER - 4;
 let drawGUI = (): void => {
-    pushText(getRunTime(), SCREEN_GUTTER / 2, SCREEN_HEIGHT - 8, WHITE, 1, TEXT_ALIGN_CENTER);
+    pushText(getRunTime(), SCREEN_GUTTER * .5, SCREEN_HEIGHT - 8, WHITE, 1, TEXT_ALIGN_CENTER);
+
     let hpPer = ceil(player.hp_ / player.maxHP_ * w);
     let xpNext = xpTable[player.level_];
     let xpPer = clamp(floor(player.xp_ / xpNext * w), 0, w);
-    pushText(`lvl  ${player.level_}`, 1, 0);
-    pushText(`hp`, 1, 10);
+    pushText(`lvl  ${player.level_}`, 2, 0);
+    pushText(`hp`, 2, 10);
     pushQuad(2, 20, w, 8, WHITE);
     pushQuad(2, 21, hpPer, 6, 0xff0000aa);
-    pushText(`xp`, 1, 30);
+    pushText(`xp`, 2, 30);
     pushQuad(2, 40, w, 8, WHITE);
     pushQuad(2, 41, xpPer, 6, 0xff336600);
-    // pushText(`luck   ${player.luck_}`, 1, 50); // TODO WHAT DO YOU DOOOOO
     pushText(`damage ${player.damage_}`, 2, 60);
-    pushText(`armor  ${player.defense_}`, 1, 70);
-    pushText(`rate   ${100 + player.cooldown_}%`, 1, 80);
-    pushText(`move   ${player.speed_}`, 1, 90);
+    pushText(`armor  ${player.defense_}`, 2, 70);
+    pushText(`rate   ${100 + player.cooldown_}%`, 2, 80);
+    pushText(`move   ${player.speed_}`, 2, 90);
 
-    pushQuad(SCREEN_RIGHT + 2, 0, w, 1, WHITE);
+    pushQuad(SCREEN_RIGHT + 3, 0, w, 1, WHITE);
     for (let i = 0; i < player.abilities_.length; i++) {
         let a = player.abilities_[i];
         let offset = 4 + i * 35;
-        pushText(UPGRADE_POOL[a.id_].name_, SCREEN_RIGHT + 1, offset);
-        if (a.type_ === BULLET || a.type_ === PASSIVE) {
-            pushQuad(SCREEN_RIGHT + 2, 10 + offset, w, 8, WHITE);
-            pushQuad(SCREEN_RIGHT + 2, 10 + offset + 1, clamp((1 - a.timer_ / (a.cooldown_ * (100 / (100 + player.cooldown_)))) * w, 0, w), 6, 0xff0000aa);
+        pushText(UPGRADE_POOL[a.id_].name_, SCREEN_RIGHT + 3, offset);
+        if (a.type_ === COOLDOWN) {
+            pushQuad(SCREEN_RIGHT + 3, 10 + offset, w, 8, WHITE);
+            pushQuad(SCREEN_RIGHT + 3, 10 + offset + 1, clamp((1 - a.timer_ / (a.cooldown_ * (100 / (100 + player.cooldown_)))) * w, 0, w), 6, 0xff0000aa);
         } else {
-            pushText("aura", SCREEN_RIGHT + 1, 10 + offset, 0xff666666);
+            pushText(a.type_ === AURA ? "aura" : "passive", SCREEN_RIGHT + 3, 10 + offset, 0xff666666);
         }
-        pushText(`lvl ${a.level_}`, SCREEN_RIGHT + 1, 20 + offset, 0xff666666);
-        pushQuad(SCREEN_RIGHT + 2, 31 + offset, w, 1, WHITE);
+        pushText(`lvl ${a.level_}`, SCREEN_RIGHT + 3, 20 + offset, 0xff666666);
+        pushQuad(SCREEN_RIGHT + 3, 31 + offset, w, 1, WHITE);
     }
+
+    if (player.stealthed_ > 0) {
+        pushText("stealthed", SCREEN_RIGHT + SCREEN_GUTTER * .5, SCREEN_DIM - 50, WHITE, 1, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM);
+        pushQuad(SCREEN_RIGHT + 3, SCREEN_DIM - 50, player.stealthed_ / player.stealthedMax_ * w, 20, 0xff13ba13);
+    } else if (player.bonus_ > 0) {
+        pushText("bonus", SCREEN_RIGHT + SCREEN_GUTTER * .5, SCREEN_DIM - 50, WHITE, 1, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM);
+        pushQuad(SCREEN_RIGHT + 3, SCREEN_DIM - 50, player.bonus_ / player.bonusMax_ * w, 20, 0xff13ba13);
+    }
+
+    pushQuad(SCREEN_RIGHT + 3, SCREEN_DIM - 20, w, 20, WHITE);
+    pushQuad(SCREEN_RIGHT + 3, SCREEN_DIM - 20, player.dash_ / 1000 * w, 20, player.dash_ >= 1000 ? 0xff13ba13 : RED);
+    pushText("dash", SCREEN_RIGHT + SCREEN_GUTTER * .5, SCREEN_DIM - 10, WHITE, 1, TEXT_ALIGN_CENTER, TEXT_ALIGN_MIDDLE);
 
     if (bossAlive) {
         pushText(bosses[bossType][0], SCREEN_CENTER_X, SCREEN_DIM - 14, WHITE, 2, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM);
@@ -273,13 +306,14 @@ let drawGUI = (): void => {
             }
             pushQuad(SCREEN_LEFT + 1, 1 + (84 * i), SCREEN_DIM - 1, 82, BLACK);
             pushText(upgrades[i].name_, SCREEN_CENTER_X, 1 + 42 + (84 * i) - 1, WHITE, 2, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM);
-            pushText(upgrades[i].description_, SCREEN_CENTER_X, 1 + 42 + (84 * i) + 1, WHITE, 1, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP);
+            pushText(upgrades[i].description_, SCREEN_CENTER_X, 1 + 42 + (84 * i) + 8, WHITE, 1, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP);
         }
         if (upgradeSelectRow === 3) {
             pushQuad(SCREEN_LEFT + 83, (84 * 3), SCREEN_DIM - 166, 84, WHITE);
         }
         pushQuad(SCREEN_LEFT + 84, 1 + (84 * 3), SCREEN_DIM - 168, 82, BLACK);
-        pushText("SKIP", SCREEN_CENTER_X, 1 + 42 + (84 * 3), WHITE, 2, TEXT_ALIGN_CENTER, TEXT_ALIGN_MIDDLE);
+        pushText("skip", SCREEN_CENTER_X, 1 + 42 + (84 * 3), WHITE, 2, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM);
+        pushText("heal 20%", SCREEN_CENTER_X, 1 + 42 + (84 * 3) + 8, 0xff666666, 1, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP);
     }
 
     if (paused) {

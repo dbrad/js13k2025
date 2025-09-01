@@ -138,8 +138,10 @@ declare const UP_SHED: 12;
 declare const UP_FELD1: 13;
 declare const UP_REFLEX: 14;
 declare const UP_HISS: 15;
+declare const UP_POUNCE: 16;
+declare const UP_STALK: 17;
 
-declare const BULLET: 0;
+declare const COOLDOWN: 0;
 declare const AURA: 1;
 declare const PASSIVE: 2;
 

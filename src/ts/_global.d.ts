@@ -96,10 +96,15 @@ type Player = {
     maxHP_: number;
     shield_: number;
     speed_: number;
+    dash_: number;
+    onDash_: VoidFunction;
+    stealthed_: number;
+    stealthedMax_: number;
+    bonus_: number;
+    bonusMax_: number;
     damage_: number;
     defense_: number;
     cooldown_: number;
-    luck_: number;
     abilities_: Ability[];
     xp_: number;
     level_: number;
