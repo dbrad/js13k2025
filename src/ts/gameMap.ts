@@ -2,12 +2,11 @@ import { cameraPos } from "./camera";
 import { BLACK, lightningFlash, pushQuad, pushTexturedQuad } from "./draw";
 import { ceil, clamp, floor, max, min, randInt } from "./math";
 
-export let timeOfDay = 0;
-export let gameStage = 0;
+export let timeData = [0, 0, 0];
 
 export let updateTime = (dt: number): void => {
-    timeOfDay += dt;
-    gameStage = clamp(floor(timeOfDay / 18), -1, 16);
+    timeData[TIME_TRACKER] += dt;
+    timeData[TIME_STAGE] = clamp(floor(timeData[TIME_TRACKER] / 18.75), -1, 16);
 };
 
 export let WORLD_WIDTH = 4096;
@@ -19,8 +18,9 @@ export let WORLD_TILE_HEIGHT = WORLD_HEIGHT / 16;
 export let worldMap = new Uint8Array(WORLD_TILE_WIDTH * WORLD_TILE_WIDTH);
 
 export let generateWorld = (): void => {
-    timeOfDay = 0;
-    gameStage = 0;
+    timeData[TIME_TRACKER] = 0;
+    timeData[TIME_LENGTH] = 0;
+    timeData[TIME_STAGE] = 0;
     for (let x = 0; x < WORLD_TILE_WIDTH; x++) {
         for (let y = 0; y < WORLD_TILE_WIDTH; y++) {
             if (x < 3 || y < 3 || x > WORLD_TILE_WIDTH - 4 || y > WORLD_TILE_WIDTH - 4) {
@@ -67,9 +67,9 @@ export let drawWorld = (): void => {
                 pushTexturedQuad(TEXTURE_GRASS_01 + floor(t / 4), screenX + 8 * (t % 2), screenY + 8 * floor(t / 2));
             }
 
-            if (gameStage <= 15) {
-                pushTexturedQuad(TEXTURE_DITH_00 + gameStage, screenX, screenY, 1, BLACK);
-            } else if (gameStage > 15 && !lightningFlash) {
+            if (timeData[TIME_STAGE] <= 15) {
+                pushTexturedQuad(TEXTURE_DITH_00 + timeData[TIME_STAGE], screenX, screenY, 1, BLACK);
+            } else if (timeData[TIME_STAGE] > 15 && !lightningFlash) {
                 pushQuad(screenX, screenY, 16, 16, BLACK);
             }
         }

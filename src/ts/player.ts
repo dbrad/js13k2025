@@ -6,12 +6,12 @@ import { burstParticle, emitParticle } from "./particle";
 
 export let player: Player;
 
-export let resetPlayer = (): void => {
+export let resetPlayerStats = (): void => {
     player = {
         hp_: 100,
         maxHP_: 100,
         shield_: 0,
-        speed_: 10,
+        speed_: 0,
         dash_: 0,
         onDash_: () => { },
         stealthed_: 0,
@@ -29,7 +29,7 @@ export let resetPlayer = (): void => {
     UPGRADE_POOL[UP_CLAW].apply_();
 };
 
-export let xpTable: number[] = Array.from({ length: 100 }, (_, i) => roundTo(10 * (1.5 ** (i - 1)), 5));
+export let xpTable: number[] = Array.from({ length: 100 }, (_, i) => roundTo(10 * (1.2 ** (i - 1)), 1));
 
 export let gainXp = (val: number): void => {
     player.xp_ += val;

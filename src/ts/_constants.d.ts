@@ -29,8 +29,11 @@ declare const SCREEN_RIGHT: 488;
 declare const SCREEN_CENTER_X: 320;
 declare const SCREEN_CENTER_Y: 180;
 
+declare const IMAGE_WIDTH: 256;
+declare const IMAGE_HEIGHT: 32;
+
 declare const ATLAS_WIDTH: 256;
-declare const ATLAS_HEIGHT: 48;
+declare const ATLAS_HEIGHT: 256;
 
 declare const GL_TRIANGLES: 4;
 declare const GL_TRIANGLES_FAN: 6;
@@ -119,8 +122,12 @@ declare const TEXTURE_DITH_14: 33;
 declare const TEXTURE_DITH_15: 34;
 
 declare const GS_RUNCOUNT: 0;
-declare const GS_RUNTIME: 1;
-declare const GS_MUTEMUSIC: 2;
+declare const GS_MUTEMUSIC: 1;
+declare const GS_PROGRESS: 2;
+
+declare const TIME_TRACKER: 0;
+declare const TIME_STAGE: 1;
+declare const TIME_LENGTH: 2;
 
 declare const UP_HP: 0;
 declare const UP_ATK: 1;
