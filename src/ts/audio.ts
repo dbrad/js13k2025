@@ -1,4 +1,4 @@
-import { gameStage } from "./gameMap";
+import { timeData } from "./gameMap";
 import { gameState } from "./gameState";
 import { abs, cos, lerp, max, min, PI, random, round, sin, tan } from "./math";
 
@@ -139,15 +139,15 @@ export let zzfxInit = (): void => {
 
 let beat = 0;
 let bpm1 = (1 / (100 / 60) * 1000) * 0.25;
-let bpm2 = (1 / (180 / 60) * 1000) * 0.25;
+let bpm2 = (1 / (172 / 60) * 1000) * 0.25;
 let timer = bpm1;
 export let playMusic = (delta: number, track: number) => {
     if (!gameState[GS_MUTEMUSIC]) {
         timer -= delta;
         if (timer <= 0) {
-            timer = lerp(bpm1, bpm2, gameStage / 15);
+            timer = lerp(bpm1, bpm2, min(1, timeData[TIME_STAGE] / 15));
             if (track === 0) {
-                if (gameStage >= 14 || beat % 2 === 0) {
+                if (timeData[TIME_STAGE] >= 14 || beat % 2 === 0) {
                     zzfxPlay(hihat);
                 }
                 if (beat === 0 || beat === 10) {

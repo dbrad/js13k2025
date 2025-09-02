@@ -11,7 +11,7 @@ let textureDefinitions: TextureDefinition[] = [
   [TEXTURE_TYPE_SPRITE, [TEXTURE_C_8x8], 7, 22, 8, 8],
   [TEXTURE_TYPE_SPRITE_STRIP, [TEXTURE_C_16x16, TEXTURE_D_PAD, TEXTURE_D_PAD_UP, TEXTURE_D_PAD_RIGHT, TEXTURE_A_BUTTON_UP, TEXTURE_B_BUTTON_UP, TEXTURE_A_BUTTON_DOWN, TEXTURE_B_BUTTON_DOWN, TEXTURE_CAT_01, TEXTURE_CAT_02, TEXTURE_RAT], 16, 16, 16, 16],
   [TEXTURE_TYPE_SPRITE_STRIP, [TEXTURE_GRASS_01, TEXTURE_GRASS_02], 192, 16, 8, 8],
-  [TEXTURE_TYPE_SPRITE_STRIP, [TEXTURE_DITH_00, TEXTURE_DITH_01, TEXTURE_DITH_02, TEXTURE_DITH_03, TEXTURE_DITH_04, TEXTURE_DITH_05, TEXTURE_DITH_06, TEXTURE_DITH_07, TEXTURE_DITH_08, TEXTURE_DITH_09, TEXTURE_DITH_10, TEXTURE_DITH_11, TEXTURE_DITH_12, TEXTURE_DITH_13, TEXTURE_DITH_14, TEXTURE_DITH_15], 0, ATLAS_HEIGHT - 16, 16, 16],
+  [TEXTURE_TYPE_SPRITE_STRIP, [TEXTURE_DITH_00, TEXTURE_DITH_01, TEXTURE_DITH_02, TEXTURE_DITH_03, TEXTURE_DITH_04, TEXTURE_DITH_05, TEXTURE_DITH_06, TEXTURE_DITH_07, TEXTURE_DITH_08, TEXTURE_DITH_09, TEXTURE_DITH_10, TEXTURE_DITH_11, TEXTURE_DITH_12, TEXTURE_DITH_13, TEXTURE_DITH_14, TEXTURE_DITH_15], 0, 32, 16, 16],
 ];
 
 export let TEXTURE_CACHE: TextureCache = [];
@@ -26,8 +26,8 @@ export let loadTextureAtlas = async (): Promise<void> => {
     let blob = await response.blob();
     let imageBitmap = await createImageBitmap(blob);
 
-    assert(ATLAS_WIDTH === imageBitmap.width, `ATLAS WIDTH CHANGED (expected: ${ATLAS_WIDTH} actual: ${imageBitmap.width})`);
-    assert(ATLAS_HEIGHT - 16 === imageBitmap.height, `ATLAS HEIGHT CHANGED (expected: ${ATLAS_HEIGHT} actual: ${imageBitmap.height})`);
+    assert(IMAGE_WIDTH === imageBitmap.width, `ATLAS IMAGE WIDTH CHANGED (expected: ${IMAGE_WIDTH} actual: ${imageBitmap.width})`);
+    assert(IMAGE_HEIGHT === imageBitmap.height, `ATLAS IMAGE HEIGHT CHANGED (expected: ${IMAGE_HEIGHT} actual: ${imageBitmap.height})`);
 
     let canvas = document.createElement("canvas",);
     let ctx = canvas.getContext("2d")!!;
@@ -36,7 +36,7 @@ export let loadTextureAtlas = async (): Promise<void> => {
     ctx.drawImage(imageBitmap, 0, 0);
 
     let bayer4x4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map(v => v / 16);
-    let imageData = ctx.getImageData(0, ATLAS_HEIGHT - 16, ATLAS_WIDTH, 16);
+    let imageData = ctx.getImageData(0, 32, ATLAS_WIDTH, 16);
     let data = imageData.data;
     for (let stage = 0; stage < 16; stage++) {
       for (let y = 0; y < 16; y++) {
@@ -50,7 +50,7 @@ export let loadTextureAtlas = async (): Promise<void> => {
         }
       }
     }
-    ctx.putImageData(imageData, 0, ATLAS_HEIGHT - 16);
+    ctx.putImageData(imageData, 0, 32);
     glUploadAtlas(canvas);
 
     for (let i: number = 33; i <= 96; i++) {

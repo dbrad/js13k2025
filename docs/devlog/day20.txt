@@ -5,6 +5,22 @@ Day 20 - 2025-09-01
 More sound effects
 Final 2 skills: Stealth and pounce
 Added player dash
+Rebalanced enemy spawning a bit
+Rebalanced boss hp pools
+Bug fixes
 
 ---
 
+`-Zab0 -Zlr930 -Zmc4 -Zmd10 -S0,1,2,3,7,13,25,42,86,193,233,420`
+
+-------------------------------------------------------------------------------
+Language                     files          blank        comment           code
+-------------------------------------------------------------------------------
+TypeScript                      22            391             22           3064
+-------------------------------------------------------------------------------
+SUM:                            22            391             22           3064
+-------------------------------------------------------------------------------
+
+The file is under the limit.
+USED: 91.89% | 12233 BYTES
+LEFT:  8.11% |  1079 BYTES

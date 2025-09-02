@@ -2,7 +2,7 @@ import { assert } from "./__debug/debug";
 import { catHit, enemyShoot, ratDie, ratHit, sheildHit, zzfxPlay } from "./audio";
 import { cameraPos } from "./camera";
 import { BLACK, lightningFlash, PURPLE, pushQuad, pushTexturedQuad, RED, WHITE } from "./draw";
-import { gameStage, WORLD_HEIGHT, WORLD_WIDTH } from "./gameMap";
+import { timeData, WORLD_HEIGHT, WORLD_WIDTH } from "./gameMap";
 import { calcVec, clamp, cos, EULER, floor, hypot, max, min, PI, random, sin, sqrt, vecCalc } from "./math";
 import { burstParticle, catParticle, emitParticles, eyeParticle } from "./particle";
 import { gainXp, player } from "./player";
@@ -276,7 +276,7 @@ export let spawnXpOrb = (x: number, y: number, xp: number, r: number = 2, abgr: 
 let damageEnemy = (id: number, amt: number): void => {
     hp[id] -= amt * (player.bonus_ > 0 ? 2 : 1);
     if (hp[id] <= 0) {
-        spawnXpOrb(posX[id], posY[id], damage[id]);
+        spawnXpOrb(posX[id], posY[id], damage[id], max(2, floor(damage[id] * .5)));
         ratDie();
         burstParticle.position_[X] = posX[id];
         burstParticle.position_[Y] = posY[id];
@@ -355,7 +355,7 @@ export let updateEntities = (deltaMs: number): void => {
 
         if (t & TYPE_ENEMY) {
             enemyHitSetCount[id] = 0;
-            let baseSpeed = 35 + gameStage * 2.5;
+            let baseSpeed = 35 + timeData[TIME_STAGE] * 2.5;
             if (player.stealthed_ <= 0) {
                 calcVec(posX[id], posY[id], pX, pY);
                 if (vecCalc[DIST] > 1e-6) {
@@ -374,10 +374,8 @@ export let updateEntities = (deltaMs: number): void => {
                             let dmg = floor(damage[id] * .5);
                             spawnProjectile(posX[id], posY[id], vecCalc[NX] * speed, vecCalc[NY] * speed, max(3, dmg), dmg, 5, 1, PURPLE, true);
                             zzfxPlay(enemyShoot);
-                            shootTimer[id] += shootPeriod[id];
-                        } else {
-                            shootTimer[id] += shootPeriod[id] * .25;
                         }
+                        shootTimer[id] += shootPeriod[id];
                     }
                 }
             }
@@ -580,7 +578,7 @@ export let drawEntities = (): void => {
         if (t & TYPE_AURA) {
             continue;
         } else if (t & TYPE_ENEMY) {
-            pushTexturedQuad(TEXTURE_RAT, sPosX[id] - r, sPosY[id] - r, d * 0.0625, lightningFlash || gameStage < 16 ? color[id] : BLACK, velX[id] < 0, false, true);
+            pushTexturedQuad(TEXTURE_RAT, sPosX[id] - r, sPosY[id] - r, d * 0.0625, lightningFlash || timeData[TIME_STAGE] < 16 ? color[id] : BLACK, velX[id] < 0, false, true);
         } else {
             let d = r * 2;
             let tex = d < 4 ? null : d < 9 ? TEXTURE_C_4x4 + (d - 4) : TEXTURE_C_8x8;
