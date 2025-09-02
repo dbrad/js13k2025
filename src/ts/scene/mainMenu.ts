@@ -15,6 +15,7 @@ let optionsDiff: string[] = [];
 let setup = (): void => {
     loadGame();
     selected = 0;
+    mode = 0;
     buttonActions[0] = "accept";
     buttonActions[1] = "cancel";
     optionsDiff = ["act I"];

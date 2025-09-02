@@ -1,7 +1,7 @@
 import { enemyShoot, playMusic, zzfxPlay } from "../audio";
 import { cameraPos, cameraTarget, updateCamera, vCameraPos } from "../camera";
 import { BLACK, clearLightning, PURPLE, pushQuad, pushText, RED, updateLightning, WHITE } from "../draw";
-import { drawEntities, hp, initEntities, posX, posY, spawnEnemy, spawnOffscreenEnemy, spawnPlayer, spawnRadialBurst, updateEntities, velX, velY } from "../entity";
+import { drawEntities, enemyCount, hp, initEntities, posX, posY, spawnEnemy, spawnOffscreenEnemy, spawnPlayer, spawnRadialBurst, updateEntities, velX, velY } from "../entity";
 import { drawWorld, generateWorld, timeData, updateTime, WORLD_HEIGHT, WORLD_WIDTH } from "../gameMap";
 import { gameState, getRunTime, saveGame } from "../gameState";
 import { A_PRESSED, B_PRESSED, buttonActions, DOWN_IS_DOWN, DOWN_PRESSED, LEFT_IS_DOWN, RIGHT_IS_DOWN, UP_IS_DOWN, UP_PRESSED } from "../input";
@@ -19,8 +19,9 @@ let bossAlive = false;
 let bossId = -1;
 let paused = false;
 let track = 0;
-export let runInfo = [0, 0];
 let waveIdx = 0;
+let endCine = 0;
+export let runInfo = [0, 0];
 
 type BossDef = [string, number, number, number, number, number, number];
 let bosses: BossDef[] = [
@@ -30,7 +31,7 @@ let bosses: BossDef[] = [
 ];
 
 type WaveDef = { hp_: number, radius_: number, dmg_: number, color_: number, shootPeriod_: number, speed_: number, count_: number; }; // SpawnConfig: hp, radius, dmg, color, shootPeriod, speed, count
-let waves: WaveDef[][] = [ // Waves: time implied by index (30s intervals)
+let waves: WaveDef[][] = [ // Waves: time implied by index (48s intervals)
     [
         { hp_: 2, radius_: 8, dmg_: 1, color_: RED, shootPeriod_: 0, speed_: 1.5, count_: 10 },
         { hp_: 3, radius_: 12, dmg_: 2, color_: BLACK, shootPeriod_: 0, speed_: 0.9, count_: 5 }
@@ -43,7 +44,7 @@ let waves: WaveDef[][] = [ // Waves: time implied by index (30s intervals)
         { hp_: 6, radius_: 8, dmg_: 2, color_: RED, shootPeriod_: 0, speed_: 1.2, count_: 15 }
     ], // Medium
     [
-        { hp_: 15, radius_: 20, dmg_: 4, color_: PURPLE, shootPeriod_: 5, speed_: 0.3, count_: 4 },
+        { hp_: 15, radius_: 20, dmg_: 4, color_: PURPLE, shootPeriod_: 5, speed_: 0.3, count_: 5 },
         { hp_: 6, radius_: 8, dmg_: 2, color_: BLACK, shootPeriod_: 0, speed_: 1, count_: 20 },
     ], // Big+fodder
     [
@@ -80,6 +81,7 @@ let setup = (): void => {
         runInfo[0] = randInt(0, 2);
     }
     waveIdx = 0;
+    endCine = 0;
     track = 0;
     buttonActions[0] = "dash";
     buttonActions[1] = "pause";
@@ -97,7 +99,18 @@ let setup = (): void => {
 
 let update = (delta: number): void => {
     playMusic(delta, track);
-    if (gameover) return;
+    if (gameover) {
+        if (endCine <= -1) return;
+        updateEntities(delta);
+        updateCamera(posX[0], posY[0], delta);
+        endCine += delta;
+        timeData[TIME_STAGE] = max(0, 16 - floor(endCine / 250));
+        if (endCine >= 6000) {
+            endCine = -1;
+            switchToScene(gameOverScene.id_);
+        }
+        return;
+    }
     if (paused) {
         if (B_PRESSED) {
             paused = false;
@@ -152,7 +165,7 @@ let update = (delta: number): void => {
             timeData[TIME_LENGTH] += dt;
             if (!bossSpawn) {
                 updateTime(dt);
-                if (waveIdx < waves.length && timeData[TIME_LENGTH] >= waveIdx * 30) {
+                if (waveIdx < waves.length && timeData[TIME_LENGTH] >= waveIdx * 48) {
                     for (let enemy of waves[waveIdx]) {
                         for (let i = 0; i < enemy.count_; i++) {
                             let scaling = randInt(1, timeData[TIME_STAGE]);
@@ -169,13 +182,12 @@ let update = (delta: number): void => {
                     waveIdx++;
                 }
             } else if (bossSpawn && !bossAlive) {
-                updateTime(-dt * 2);
-                if (timeData[TIME_STAGE] === -1) {
-                    switchToScene(gameOverScene.id_);
-                    gameoverData[0] = "you are the night";
+                if (enemyCount <= 0) {
                     gameover = true;
-                    gameState[GS_PROGRESS] = max(runInfo[0], gameState[GS_PROGRESS]);
+                    gameoverData[0] = "you are the night";
+                    gameState[GS_PROGRESS] = max(runInfo[0] + 1, gameState[GS_PROGRESS]);
                     saveGame();
+                    return;
                 }
             }
             if (timeData[TIME_STAGE] > 15) {
@@ -224,6 +236,7 @@ let update = (delta: number): void => {
 
             timer += delta;
             if (timer >= 1000) {
+                timer -= 1000;
                 if (bossSpawn && bossAlive) {
                     switch (runInfo[0]) {
                         case 1:
@@ -236,12 +249,11 @@ let update = (delta: number): void => {
                             break;
                     }
                 }
-                timer -= 1000;
-                if (timeData[TIME_STAGE] > 0) {
+                if (!(bossSpawn && !bossAlive)) {
                     let scaling = randInt(1, timeData[TIME_STAGE]);
-                    let count = randInt(1, 2 + ~~(timeData[TIME_STAGE] / 5));
+                    let count = randInt(1, 2 + floor(timeData[TIME_STAGE] / 5));
                     for (let i = 0; i < count; i++) {
-                        if (bossSpawn && !bossAlive) spawnOffscreenEnemy(1 + scaling, 4 + scaling, 1, RED, false, 0, 1.3);
+                        if (bossSpawn && bossAlive) spawnOffscreenEnemy(1 + scaling, 4 + scaling, 1, RED, false, 0, 1.3);
                         if (random() < 0.2) spawnOffscreenEnemy(3 + scaling, 8 + scaling, 1 + scaling, PURPLE, false, 3, 0.3);
                         else spawnOffscreenEnemy(3 + scaling, 8 + scaling, 1 + scaling);
                     }
@@ -265,76 +277,82 @@ let w = SCREEN_GUTTER - 4;
 let drawGUI = (): void => {
     pushText(getRunTime(), SCREEN_GUTTER * .5, SCREEN_HEIGHT - 8, WHITE, 1, TEXT_ALIGN_CENTER);
 
-    let hpPer = ceil(player.hp_ / player.maxHP_ * w);
-    let xpNext = xpTable[player.level_];
-    let xpPer = clamp(floor(player.xp_ / xpNext * w), 0, w);
-    pushText(`lvl  ${player.level_}`, 2, 0);
-    pushText(`hp`, 2, 10);
-    pushQuad(2, 20, w, 8, WHITE);
-    pushQuad(2, 21, hpPer, 6, 0xff0000aa);
-    pushText(`xp`, 2, 30);
-    pushQuad(2, 40, w, 8, WHITE);
-    pushQuad(2, 41, xpPer, 6, 0xff336600);
-    pushText(`bonuses`, 2, 60, 0xff666666);
-    pushText(`damage  ${player.damage_}`, 2, 70);
-    pushText(`armor   ${player.defense_}`, 2, 80);
-    pushText(`move    ${player.speed_}`, 2, 90);
-    pushText(`rate   +${player.cooldown_}%`, 2, 100);
-
-    pushQuad(SCREEN_RIGHT + 3, 0, w, 1, WHITE);
-    for (let i = 0; i < player.abilities_.length; i++) {
-        let a = player.abilities_[i];
-        let offset = 4 + i * 35;
-        pushText(UPGRADE_POOL[a.id_].name_, SCREEN_RIGHT + 3, offset);
-        if (a.type_ === COOLDOWN) {
-            pushQuad(SCREEN_RIGHT + 3, 10 + offset, w, 8, WHITE);
-            pushQuad(SCREEN_RIGHT + 3, 10 + offset + 1, clamp((1 - a.timer_ / (a.cooldown_ * (100 / (100 + player.cooldown_)))) * w, 0, w), 6, 0xff0000aa);
-        } else {
-            pushText(a.type_ === AURA ? "aura" : "passive", SCREEN_RIGHT + 3, 10 + offset, 0xff666666);
-        }
-        pushText(`lvl ${a.level_}`, SCREEN_RIGHT + 3, 20 + offset, 0xff666666);
-        pushQuad(SCREEN_RIGHT + 3, 31 + offset, w, 1, WHITE);
+    if (bossSpawn && !bossAlive && !gameover) {
+        pushText("finish them all", SCREEN_CENTER_X, SCREEN_DIM * .1, WHITE, 2, TEXT_ALIGN_CENTER);
     }
 
-    if (player.stealthed_ > 0) {
-        pushText("stealthed", SCREEN_RIGHT + SCREEN_GUTTER * .5, SCREEN_DIM - 50, WHITE, 1, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM);
-        pushQuad(SCREEN_RIGHT + 3, SCREEN_DIM - 50, player.stealthed_ / player.stealthedMax_ * w, 20, 0xff13ba13);
-    } else if (player.bonus_ > 0) {
-        pushText("bonus", SCREEN_RIGHT + SCREEN_GUTTER * .5, SCREEN_DIM - 50, WHITE, 1, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM);
-        pushQuad(SCREEN_RIGHT + 3, SCREEN_DIM - 50, player.bonus_ / player.bonusMax_ * w, 20, 0xff13ba13);
-    }
+    if (!gameover) {
+        let hpPer = ceil(player.hp_ / player.maxHP_ * w);
+        let xpNext = xpTable[player.level_];
+        let xpPer = clamp(floor(player.xp_ / xpNext * w), 0, w);
+        pushText(`lvl  ${player.level_}`, 2, 0);
+        pushText(`hp`, 2, 10);
+        pushQuad(2, 20, w, 8, WHITE);
+        pushQuad(2, 21, hpPer, 6, 0xff0000aa);
+        pushText(`xp`, 2, 30);
+        pushQuad(2, 40, w, 8, WHITE);
+        pushQuad(2, 41, xpPer, 6, 0xff336600);
+        pushText(`bonuses`, 2, 60, 0xff666666);
+        pushText(`damage  ${player.damage_}`, 2, 70);
+        pushText(`armor   ${player.defense_}`, 2, 80);
+        pushText(`move    ${player.speed_}`, 2, 90);
+        pushText(`rate   +${player.cooldown_}%`, 2, 100);
 
-    pushQuad(SCREEN_RIGHT + 3, SCREEN_DIM - 20, w, 20, WHITE);
-    pushQuad(SCREEN_RIGHT + 3, SCREEN_DIM - 20, player.dash_ / 1000 * w, 20, player.dash_ >= 1000 ? 0xff13ba13 : RED);
-    pushText("dash", SCREEN_RIGHT + SCREEN_GUTTER * .5, SCREEN_DIM - 10, WHITE, 1, TEXT_ALIGN_CENTER, TEXT_ALIGN_MIDDLE);
-
-    if (bossAlive) {
-        pushText(bosses[runInfo[0]][0], SCREEN_CENTER_X, SCREEN_DIM - 14, WHITE, 2, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM);
-        pushQuad(SCREEN_CENTER_X - 50, SCREEN_DIM - 12, 100, 8, WHITE);
-        pushQuad(SCREEN_CENTER_X - 50, SCREEN_DIM - 11, hp[bossId] / bosses[runInfo[0]][1] * 100, 6, 0xff0000aa);
-    }
-
-    if (player.levelUpPending_) {
-        pushQuad(SCREEN_LEFT, 0, SCREEN_DIM + 1, SCREEN_DIM + 1, 0xcc000000);
-        for (let i = 0; i < upgrades.length; i++) {
-            if (upgradeSelectRow === i) {
-                pushQuad(SCREEN_LEFT, (84 * i), SCREEN_DIM + 1, 84, WHITE);
+        pushQuad(SCREEN_RIGHT + 3, 0, w, 1, WHITE);
+        for (let i = 0; i < player.abilities_.length; i++) {
+            let a = player.abilities_[i];
+            let offset = 4 + i * 35;
+            pushText(UPGRADE_POOL[a.id_].name_, SCREEN_RIGHT + 3, offset);
+            if (a.type_ === COOLDOWN) {
+                pushQuad(SCREEN_RIGHT + 3, 10 + offset, w, 8, WHITE);
+                pushQuad(SCREEN_RIGHT + 3, 10 + offset + 1, clamp((1 - a.timer_ / (a.cooldown_ * (100 / (100 + player.cooldown_)))) * w, 0, w), 6, 0xff0000aa);
+            } else {
+                pushText(a.type_ === AURA ? "aura" : "passive", SCREEN_RIGHT + 3, 10 + offset, 0xff666666);
             }
-            pushQuad(SCREEN_LEFT + 1, 1 + (84 * i), SCREEN_DIM - 1, 82, BLACK);
-            pushText(upgrades[i].name_, SCREEN_CENTER_X, 1 + 42 + (84 * i) - 1, WHITE, 2, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM);
-            pushText(upgrades[i].description_, SCREEN_CENTER_X, 1 + 42 + (84 * i) + 8, WHITE, 1, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP);
+            pushText(`lvl ${a.level_}`, SCREEN_RIGHT + 3, 20 + offset, 0xff666666);
+            pushQuad(SCREEN_RIGHT + 3, 31 + offset, w, 1, WHITE);
         }
-        if (upgradeSelectRow === 3) {
-            pushQuad(SCREEN_LEFT + 83, (84 * 3), SCREEN_DIM - 166, 84, WHITE);
-        }
-        pushQuad(SCREEN_LEFT + 84, 1 + (84 * 3), SCREEN_DIM - 168, 82, BLACK);
-        pushText("skip", SCREEN_CENTER_X, 1 + 42 + (84 * 3), WHITE, 2, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM);
-        pushText("heal 20%", SCREEN_CENTER_X, 1 + 42 + (84 * 3) + 8, 0xff666666, 1, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP);
-    }
 
-    if (paused) {
-        pushQuad(SCREEN_LEFT + 8, SCREEN_DIM * .333, SCREEN_DIM - 16, SCREEN_DIM * .333, 0xaa000000);
-        pushText("paused", SCREEN_CENTER_X, SCREEN_DIM * .5, WHITE, 2, TEXT_ALIGN_CENTER, TEXT_ALIGN_MIDDLE);
+        if (player.stealthed_ > 0) {
+            pushText("stealthed", SCREEN_RIGHT + SCREEN_GUTTER * .5, SCREEN_DIM - 50, WHITE, 1, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM);
+            pushQuad(SCREEN_RIGHT + 3, SCREEN_DIM - 50, player.stealthed_ / player.stealthedMax_ * w, 20, 0xff13ba13);
+        } else if (player.bonus_ > 0) {
+            pushText("bonus", SCREEN_RIGHT + SCREEN_GUTTER * .5, SCREEN_DIM - 50, WHITE, 1, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM);
+            pushQuad(SCREEN_RIGHT + 3, SCREEN_DIM - 50, player.bonus_ / player.bonusMax_ * w, 20, 0xff13ba13);
+        }
+
+        pushQuad(SCREEN_RIGHT + 3, SCREEN_DIM - 20, w, 20, WHITE);
+        pushQuad(SCREEN_RIGHT + 3, SCREEN_DIM - 20, player.dash_ / 1000 * w, 20, player.dash_ >= 1000 ? 0xff13ba13 : RED);
+        pushText("dash", SCREEN_RIGHT + SCREEN_GUTTER * .5, SCREEN_DIM - 10, WHITE, 1, TEXT_ALIGN_CENTER, TEXT_ALIGN_MIDDLE);
+
+        if (bossAlive) {
+            pushText(bosses[runInfo[0]][0], SCREEN_CENTER_X, SCREEN_DIM - 14, WHITE, 2, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM);
+            pushQuad(SCREEN_CENTER_X - 50, SCREEN_DIM - 12, 100, 8, WHITE);
+            pushQuad(SCREEN_CENTER_X - 50, SCREEN_DIM - 11, hp[bossId] / bosses[runInfo[0]][1] * 100, 6, 0xff0000aa);
+        }
+
+        if (player.levelUpPending_) {
+            pushQuad(SCREEN_LEFT, 0, SCREEN_DIM + 1, SCREEN_DIM + 1, 0xcc000000);
+            for (let i = 0; i < upgrades.length; i++) {
+                if (upgradeSelectRow === i) {
+                    pushQuad(SCREEN_LEFT, (84 * i), SCREEN_DIM + 1, 84, WHITE);
+                }
+                pushQuad(SCREEN_LEFT + 1, 1 + (84 * i), SCREEN_DIM - 1, 82, BLACK);
+                pushText(upgrades[i].name_, SCREEN_CENTER_X, 1 + 42 + (84 * i) - 1, WHITE, 2, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM);
+                pushText(upgrades[i].description_, SCREEN_CENTER_X, 1 + 42 + (84 * i) + 8, WHITE, 1, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP);
+            }
+            if (upgradeSelectRow === 3) {
+                pushQuad(SCREEN_LEFT + 83, (84 * 3), SCREEN_DIM - 166, 84, WHITE);
+            }
+            pushQuad(SCREEN_LEFT + 84, 1 + (84 * 3), SCREEN_DIM - 168, 82, BLACK);
+            pushText("skip", SCREEN_CENTER_X, 1 + 42 + (84 * 3), WHITE, 2, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM);
+            pushText("heal 20%", SCREEN_CENTER_X, 1 + 42 + (84 * 3) + 8, 0xff666666, 1, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP);
+        }
+
+        if (paused) {
+            pushQuad(SCREEN_LEFT + 8, SCREEN_DIM * .333, SCREEN_DIM - 16, SCREEN_DIM * .333, 0xaa000000);
+            pushText("paused", SCREEN_CENTER_X, SCREEN_DIM * .5, WHITE, 2, TEXT_ALIGN_CENTER, TEXT_ALIGN_MIDDLE);
+        }
     }
 };
 

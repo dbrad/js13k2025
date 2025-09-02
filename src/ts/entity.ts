@@ -24,7 +24,7 @@ let TYPE_XP_ORB = 1 << 4;
 let TYPE_HOSTILE_PROJECTILE = 1 << 5;
 
 export let playerDir = 0;
-let enemyCount = 0;
+export let enemyCount = 0;
 
 export let type = new Uint8Array(MAX_ENTITIES);
 export let alive = new Uint8Array(MAX_ENTITIES);
