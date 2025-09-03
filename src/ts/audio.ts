@@ -2,30 +2,21 @@ import { timeData } from "./gameMap";
 import { gameState } from "./gameState";
 import { abs, cos, lerp, max, min, PI, random, round, sin, tan } from "./math";
 
-export let zzfxPlay = (sample: number[], volumeScale = 1, rate = 1, pan = 0, loop = false): void => {
-    let sampleLength = sample.length;
-    let buffer = zzfxContext.createBuffer(1, sampleLength, zzfxSampleRate);
+export let zzfxPlay = (sample: number[]): void => {
+    let buffer = zzfxContext.createBuffer(1, sample.length, zzfxSampleRate);
     let source = zzfxContext.createBufferSource();
-
     buffer.getChannelData(0).set(sample);
     source.buffer = buffer;
-    source.playbackRate.value = rate;
-    source.loop = loop;
-
-    let gainNode = zzfxContext.createGain();
-    gainNode.gain.value = zzfxVolume * volumeScale;
-    gainNode.connect(zzfxContext.destination);
-
-    let pannerNode = new StereoPannerNode(zzfxContext, { 'pan': pan });
-    source.connect(pannerNode).connect(gainNode);
+    source.connect(zzfxContext.destination);
     source.start();
 };
 
 let zzfxGenerate = (volume = 1, randomness = .05, frequency = 220, attack = 0, sustain = 0, release = .1, shape = 0, shapeCurve = 1, slide = 0, deltaSlide = 0, pitchJump = 0, pitchJumpTime = 0, repeatTime = 0, noise = 0, modulation = 0, bitCrush = 0, delay = 0, sustainVolume = 1, decay = 0, tremolo = 0, filter = 0): number[] => {
-    let PI2 = PI * 2, sign = (v: number) => v < 0 ? -1 : 1, sampleRate = zzfxSampleRate,
+    let PI2 = PI * 2,
+        sign = (v: number) => v < 0 ? -1 : 1,
+        sampleRate = zzfxSampleRate,
         startSlide = slide *= 500 * PI2 / sampleRate / sampleRate,
-        startFrequency = frequency *=
-            (1 + randomness * 2 * random() - randomness) * PI2 / sampleRate,
+        startFrequency = frequency *= (1 + randomness * 2 * random() - randomness) * PI2 / sampleRate,
         b = [], t = 0, tm = 0, i = 0, j = 1, r = 0, c = 0, s = 0, f, length,
         quality = 2, w = PI2 * abs(filter) * 2 / sampleRate,
         cosVal = cos(w), alpha = sin(w) / 2 / quality,
@@ -98,7 +89,7 @@ let zzfxGenerate = (volume = 1, randomness = .05, frequency = 220, attack = 0, s
     return b;
 };
 
-let zzfx = (m: (number | undefined)[]) => zzfxPlay(zzfxGenerate(...m));
+export let zzfx = (m: (number | undefined)[]) => zzfxPlay(zzfxGenerate(...m));
 
 let zzfxVolume: number = 0.3;
 let zzfxSampleRate: number = 44100;
@@ -106,11 +97,6 @@ let zzfxContext: AudioContext;
 
 export let boop: number[];
 export let boopGood: number[];
-export let thunder: number[];
-export let sheildHit: number[];
-export let catHit: VoidFunction;
-export let ratDie: VoidFunction;
-export let ratHit: number[];
 export let playerShoot: number[];
 export let enemyShoot: number[];
 
@@ -124,17 +110,12 @@ export let zzfxInit = (): void => {
     }
     boop = zzfxGenerate(...[, , , .05, .05, , , , , , 200, .06, , , , , , .5, .05]);
     boopGood = zzfxGenerate(...[, , 440, .05, .05, , , , , , 200, .06, , , , , , .5, .05, 1]);
-    thunder = zzfxGenerate(...[2, , 25, .06, .31, .35, , 3.9, , -3, , , , .9, 12, .9, .3, .32, .16]);
-    sheildHit = zzfxGenerate(...[, , , .05, .05, .3, , 3, -20, , , , , , 200, .2, , .9]);
-    catHit = () => zzfx([, .6, 325, .04, .02, .04, 2, 3, , , , , , .5, 1, .1, , .8, .07]);
-    ratDie = () => zzfx([.3, , 900, .07, .08, .01, 1, .1, , , 109, , .02, , .9, , , .53, , , 662]);
-    ratHit = zzfxGenerate(...[.3, , 550, .01, .03, .05, 1, 1.5, -2, , 250]);
     playerShoot = zzfxGenerate(...[, , , .02, , .05, 4, , , , , , , , , , .2, , .01]);
     enemyShoot = zzfxGenerate(...[2, , 880, .28, , 0, 2, 4, , -83, 45, .06, .08, , , , .3, .7, .08, .3]);
 
-    snare = zzfxGenerate(...[2, , 655, , , .09, 3, 1.65, , , , , .02, 3.8, -.1, , .2]);
-    hihat = zzfxGenerate(...[1.5, , 2200, , , .04, 3, 2, , , 800, .02, , 4.8, , .01, .1]);
-    bass = zzfxGenerate(...[3, , 43, , , .25, , , , , , , , 2]);
+    snare = zzfxGenerate(...[1.5, , 655, , , .09, 3, 1.65, , , , , .02, 3.8, -.1, , .2]);
+    hihat = zzfxGenerate(...[1, , 2200, , , .04, 3, 2, , , 800, .02, , 4.8, , .01, .1]);
+    bass = zzfxGenerate(...[2, , 43, , , .25, , , , , , , , 2]);
 };
 
 let beat = 0;

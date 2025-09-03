@@ -1,5 +1,5 @@
 import { assert } from "./__debug/debug";
-import { catHit, enemyShoot, ratDie, ratHit, sheildHit, zzfxPlay } from "./audio";
+import { enemyShoot, zzfx, zzfxPlay } from "./audio";
 import { cameraPos } from "./camera";
 import { BLACK, lightningFlash, PURPLE, pushQuad, pushTexturedQuad, RED, setV4fToColour, WHITE } from "./draw";
 import { timeData, WORLD_HEIGHT, WORLD_WIDTH } from "./gameMap";
@@ -277,7 +277,7 @@ let damageEnemy = (id: number, amt: number): void => {
     hp[id] -= amt * (player.bonus_ > 0 ? 2 : 1);
     if (hp[id] <= 0) {
         spawnXpOrb(posX[id], posY[id], damage[id], max(2, floor(damage[id] * .5)));
-        ratDie();
+        zzfx([.3, , 900, .07, .08, .01, 1, .1, , , 109, , .02, , .9, , , .53, , , 662]);
         burstParticle.position_[X] = posX[id];
         burstParticle.position_[Y] = posY[id];
         setV4fToColour(burstParticle.colourBegin_, RED);
@@ -294,10 +294,10 @@ let damagePlayer = (amt: number): void => {
     if (lifetime[0] <= 0) {
         if (player.shield_ <= 0) {
             player.hp_ -= max(1, amt - player.defense_);
-            catHit();
+            zzfx([, .6, 325, .04, .02, .04, 2, 3, , , , , , .5, 1, .1, , .8, .07]);
         } else {
             player.shield_ = max(0, player.shield_ - 1);
-            zzfxPlay(sheildHit);
+            zzfx([, , , .05, .05, .3, , 3, -20, , , , , , 200, .2, , .9]);
         }
         lifetime[0] = 0.8;
         if (player.hp_ <= 0) {
@@ -314,7 +314,7 @@ let handlePlayerEnemyCollision = (enemyId: number, nx: number, ny: number, overl
 let handleProjectileEnemyCollision = (projectileId: number, enemyId: number) => {
     if (enemyHitSet[enemyId].includes(projectileId)) return;
     enemyHitSet[enemyId][enemyHitSetCount[enemyId]++] = projectileId;
-    zzfxPlay(ratHit);
+    zzfx([.3, , 550, .01, .03, .05, 1, 1.5, -2, , 250]);
     damageEnemy(enemyId, damage[projectileId] + player.damage_);
     if (knockback[projectileId] > 0) {
         let pv = hypot(velX[projectileId], velY[projectileId]);

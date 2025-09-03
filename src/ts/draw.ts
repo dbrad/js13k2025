@@ -1,5 +1,5 @@
 import { assert } from "./__debug/debug";
-import { thunder, zzfxPlay } from "./audio";
+import { zzfx } from "./audio";
 import { glClear, glFlush, glPushQuad } from "./gl";
 import { clamp, floor, randInt, v4f } from "./math";
 import { TEXTURE_CACHE } from "./texture";
@@ -62,7 +62,7 @@ export let updateLightning = (delta: number): void => {
     if (nextInter <= 0) {
         lightningFlash = true;
         if (nextDur <= 0) {
-            zzfxPlay(thunder);
+            zzfx([2, , 25, .06, .31, .35, , 3.9, , -3, , , , .9, 12, .9, .3, .32, .16]);
             lightningFlash = false;
             nextInter = randInt(50, 8000);
             nextDur = randInt(50, 200);
