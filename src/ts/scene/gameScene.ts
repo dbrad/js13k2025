@@ -259,7 +259,6 @@ let update = (delta: number): void => {
                     }
                 }
             }
-
             updateEntities(delta);
             updatePlayerAbilities(delta);
             updateCamera(posX[0], posY[0], delta);

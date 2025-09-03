@@ -1,13 +1,14 @@
 import { assert } from "./__debug/debug";
 import { thunder, zzfxPlay } from "./audio";
 import { glClear, glFlush, glPushQuad } from "./gl";
-import { clamp, floor, randInt } from "./math";
+import { clamp, floor, randInt, v4f } from "./math";
 import { TEXTURE_CACHE } from "./texture";
 
 // Colour
 export let WHITE = 0xfff5f5f5;
 export let BLACK = 0xff000000;
 export let PURPLE = 0xfff21d6b;
+export let PURPLE_f = v4f(0x6b / 255, 0x1d / 255, 0xf2 / 255, 1);
 export let RED = 0xff1313ba;
 
 export let toABGR = (r: number, g: number, b: number, a: number): number => {
@@ -26,11 +27,19 @@ export let setV4ToColour = (v: V4, c: number): void => {
     v[A] = ((c & 0xff000000) >>> 24);
 };
 
+export let setV4fToColour = (v: V4f, c: number): void => {
+    c >>>= 0;
+    v[R] = (c & 0xff) / 255;
+    v[G] = ((c & 0xff00) >>> 8) / 255;
+    v[B] = ((c & 0xff0000) >>> 16) / 255;
+    v[A] = (((c & 0xff000000) >>> 24)) / 255;
+};
+
 export let v4fToABGR = (colour: V4f): number => {
-    let out = (0 | (colour[3] * 255 & 0xff)) << 8 >>> 0;
-    out = (out | (colour[2] * 255 & 0xff)) << 8 >>> 0;
-    out = (out | (colour[1] * 255 & 0xff)) << 8 >>> 0;
-    out = (out | (colour[0] * 255 & 0xff)) >>> 0;
+    let out = (0 | (colour[A] * 255 & 0xff)) << 8 >>> 0;
+    out = (out | (colour[B] * 255 & 0xff)) << 8 >>> 0;
+    out = (out | (colour[G] * 255 & 0xff)) << 8 >>> 0;
+    out = (out | (colour[R] * 255 & 0xff)) >>> 0;
     return out;
 };
 

@@ -2,7 +2,25 @@ Day 21 - 2025-09-02
 
 ---
 
-
+Reworked end of game
+Rebalance xp per level
+Added more particles
+Gave xp its own texture
+Removed greyscale from atlas
+Added progression
 
 ---
 
+`-Zab0 -Zlr850 -Zmc4 -Zmd10 -S0,1,2,3,7,13,21,26,42,74,241,402`
+
+-------------------------------------------------------------------------------
+Language                     files          blank        comment           code
+-------------------------------------------------------------------------------
+TypeScript                      22            396             23           3157
+-------------------------------------------------------------------------------
+SUM:                            22            396             23           3157
+-------------------------------------------------------------------------------
+
+The file is under the limit.
+USED: 93.79% | 12485 BYTES
+LEFT:  6.21% |   827 BYTES

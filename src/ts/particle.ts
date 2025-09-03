@@ -64,11 +64,11 @@ export let burstParticle: ParticleParameters = {
     position_: [0, 0],
     velocity_: [0, 0],
     velocityVariation_: [250, 250],
-    sizeBegin_: 8,
+    sizeBegin_: 6,
     sizeEnd_: 0,
-    sizeVariation_: 1,
+    sizeVariation_: 0,
     colourBegin_: v4f(1, 0, 0, 1),
-    colourEnd_: v4f(1, 0, 0, 0.1),
+    colourEnd_: v4f(0, 0, 0, 0),
     lifetime_: 200
 };
 
