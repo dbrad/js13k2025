@@ -1,10 +1,10 @@
 import { assert } from "./__debug/debug";
 import { catHit, enemyShoot, ratDie, ratHit, sheildHit, zzfxPlay } from "./audio";
 import { cameraPos } from "./camera";
-import { BLACK, lightningFlash, PURPLE, pushQuad, pushTexturedQuad, RED, WHITE } from "./draw";
+import { BLACK, lightningFlash, PURPLE, pushQuad, pushTexturedQuad, RED, setV4fToColour, WHITE } from "./draw";
 import { timeData, WORLD_HEIGHT, WORLD_WIDTH } from "./gameMap";
 import { calcVec, clamp, cos, EULER, floor, hypot, max, min, PI, random, sin, sqrt, vecCalc } from "./math";
-import { burstParticle, catParticle, emitParticles, eyeParticle } from "./particle";
+import { burstParticle, catParticle, emitParticle, emitParticles, eyeParticle } from "./particle";
 import { gainXp, player } from "./player";
 
 let MAX_ENTITIES = 20_000 as const;
@@ -24,7 +24,7 @@ let TYPE_XP_ORB = 1 << 4;
 let TYPE_HOSTILE_PROJECTILE = 1 << 5;
 
 export let playerDir = 0;
-let enemyCount = 0;
+export let enemyCount = 0;
 
 export let type = new Uint8Array(MAX_ENTITIES);
 export let alive = new Uint8Array(MAX_ENTITIES);
@@ -259,11 +259,11 @@ export let spawnAura = (existingId: number = -1, r: number = 50, dmg: number = 5
     return id;
 };
 
-export let spawnXpOrb = (x: number, y: number, xp: number, r: number = 2, abgr: number = 0xff22ff00): number => {
+export let spawnXpOrb = (x: number, y: number, xp: number, r: number = 2, abgr: number = 0x8822ff00): number => {
     let id = alloc();
     if (id < 1) return -1;
     type[id] = TYPE_XP_ORB;
-    radius[id] = r;
+    radius[id] = 4;
     posX[id] = x;
     posY[id] = y;
     velX[id] = 0;
@@ -280,7 +280,12 @@ let damageEnemy = (id: number, amt: number): void => {
         ratDie();
         burstParticle.position_[X] = posX[id];
         burstParticle.position_[Y] = posY[id];
-        emitParticles(burstParticle, 20);
+        setV4fToColour(burstParticle.colourBegin_, RED);
+        burstParticle.colourBegin_[A] = 0.8;
+        setV4fToColour(burstParticle.colourEnd_, RED);
+        burstParticle.colourEnd_[A] = 0;
+        burstParticle.sizeBegin_ = 6;
+        emitParticles(burstParticle, 10);
         alive[id] = 0;
     }
 };
@@ -577,6 +582,8 @@ export let drawEntities = (): void => {
         let t = type[id];
         if (t & TYPE_AURA) {
             continue;
+        } else if (t & TYPE_XP_ORB) {
+            pushTexturedQuad(142, sPosX[id] - r, sPosY[id] - r, d < 9 ? 1 : d * 0.125, color[id] || WHITE);
         } else if (t & TYPE_ENEMY) {
             pushTexturedQuad(TEXTURE_RAT, sPosX[id] - r, sPosY[id] - r, d * 0.0625, lightningFlash || timeData[TIME_STAGE] < 16 ? color[id] : BLACK, velX[id] < 0, false, true);
         } else {
@@ -587,8 +594,22 @@ export let drawEntities = (): void => {
             } else {
                 pushQuad(sPosX[id] - r, sPosY[id] - r, d, d, color[id] || WHITE);
             }
+            if (t & TYPE_PROJECTILE) {
+                burstParticle.position_[X] = posX[id];
+                burstParticle.position_[Y] = posY[id];
+                if (t & TYPE_HOSTILE_PROJECTILE) {
+                    setV4fToColour(burstParticle.colourBegin_, PURPLE);
+                    setV4fToColour(burstParticle.colourEnd_, PURPLE);
+                } else if (t & TYPE_PROJECTILE) {
+                    setV4fToColour(burstParticle.colourBegin_, RED);
+                    setV4fToColour(burstParticle.colourEnd_, RED);
+                }
+                burstParticle.colourEnd_[A] = 0;
+                burstParticle.sizeBegin_ = d;
+                emitParticle(burstParticle);
+            }
         }
-    }
+    };
 
     if (velX[0] !== 0 || velY[0] !== 0 || lifetime[0] > 0) {
         if (lifetime[0] > 0 && floor(lifetime[0] * 10) % 2 == 1) {
@@ -598,7 +619,7 @@ export let drawEntities = (): void => {
         }
         catParticle.position_[X] = posX[0];
         catParticle.position_[Y] = posY[0];
-        emitParticles(catParticle, 10);
+        emitParticles(catParticle, 5);
 
         eyeParticle.position_[Y] = catParticle.position_[Y] - 1;
         eyeParticle.position_[X] = catParticle.position_[X] - 3;

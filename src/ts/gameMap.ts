@@ -6,7 +6,7 @@ export let timeData = [0, 0, 0];
 
 export let updateTime = (dt: number): void => {
     timeData[TIME_TRACKER] += dt;
-    timeData[TIME_STAGE] = clamp(floor(timeData[TIME_TRACKER] / 18.75), -1, 16);
+    timeData[TIME_STAGE] = clamp(floor(timeData[TIME_TRACKER] / 48), -1, 16);
 };
 
 export let WORLD_WIDTH = 4096;
@@ -64,7 +64,7 @@ export let drawWorld = (): void => {
                 pushTexturedQuad(TEXTURE_DITH_15 - (tile - 2), screenX, screenY, 1, BLACK);
             } else if (tile > 4) {
                 let t = tile - 5;
-                pushTexturedQuad(TEXTURE_GRASS_01 + floor(t / 4), screenX + 8 * (t % 2), screenY + 8 * floor(t / 2));
+                pushTexturedQuad(TEXTURE_GRASS_01 + floor(t / 4), screenX + 8 * (t % 2), screenY + 8 * floor(t / 2) % 2, 1, 0xffaaaaaa);
             }
 
             if (timeData[TIME_STAGE] <= 15) {
