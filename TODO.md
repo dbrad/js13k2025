@@ -1,3 +1,6 @@
+UNIFY COLORS
+    - XP
+
 Meta Progression or achievements?
         I am the night mode
             Random Boss
@@ -6,4 +9,4 @@ Meta Progression or achievements?
 
 
 QOL Ideas
-- Better level up desciptions
+- Better level up desciptions - CANCELLED, TOO BIG. 1 description took ~60 bytes post compressions

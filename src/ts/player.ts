@@ -1,7 +1,7 @@
 import { playerShoot, zzfxPlay } from "./audio";
 import { RED } from "./draw";
 import { findNearestEnemy, nearestEnemyPos, playerDir, posX, posY, spawnAura, spawnProjectile, spawnRadialBurst } from "./entity";
-import { calcVec, cos, max, min, PI, randInt, random, roundTo, sin, vecCalc } from "./math";
+import { calcVec, cos, math, max, min, PI, randInt, random, roundTo, sin, vecCalc } from "./math";
 import { burstParticle, emitParticle } from "./particle";
 
 export let player: Player;
@@ -192,7 +192,7 @@ export let UPGRADE_POOL: Upgrade[] = [
                 if (findNearestEnemy(300)) {
                     dx = nearestEnemyPos[0] - posX[0];
                     dy = nearestEnemyPos[1] - posY[0];
-                    baseAngle = Math.atan2(dy, dx);
+                    baseAngle = math.atan2(dy, dx);
                 } else {
                     baseAngle = playerDir === 0 ? PI : 0;
                 }
@@ -258,7 +258,7 @@ export let UPGRADE_POOL: Upgrade[] = [
                 if (findNearestEnemy(300)) {
                     let dx = nearestEnemyPos[0] - posX[0];
                     let dy = nearestEnemyPos[1] - posY[0];
-                    baseAngle = Math.atan2(dy, dx);
+                    baseAngle = math.atan2(dy, dx);
                 }
                 let kb = 10 + a.level_ * 5;
                 for (let i = 0; i < count; i++) {
