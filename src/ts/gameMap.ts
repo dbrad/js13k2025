@@ -4,9 +4,13 @@ import { ceil, clamp, floor, max, min, randInt } from "./math";
 
 export let timeData = [0, 0, 0];
 
-export let updateTime = (dt: number): void => {
+export let updateTime = (dt: number, night: boolean = false): void => {
     timeData[TIME_TRACKER] += dt;
-    timeData[TIME_STAGE] = clamp(floor(timeData[TIME_TRACKER] / 48), -1, 16);
+    if (night) {
+        timeData[TIME_STAGE] = clamp(floor(timeData[TIME_TRACKER] / 15), -1, 16);;
+    } else {
+        timeData[TIME_STAGE] = clamp(floor(timeData[TIME_TRACKER] / 30), -1, 16);
+    }
 };
 
 export let WORLD_WIDTH = 4096;

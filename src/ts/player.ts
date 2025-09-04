@@ -112,7 +112,7 @@ export let UPGRADE_POOL: Upgrade[] = [
                     let speed = randInt(150, 200);
                     let vx = cos(a) * speed;
                     let vy = sin(a) * speed;
-                    spawnProjectile(posX[0], posY[0], vx, vy, 3, 2, 2);
+                    spawnProjectile(posX[0], posY[0], vx, vy, 3, 1, 2);
                 }
                 zzfxPlay(playerShoot);
             });
