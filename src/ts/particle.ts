@@ -39,10 +39,10 @@ let particlePoolIndex = particlePoolSize - 1;
 export let catParticle: ParticleParameters = {
     position_: [0, 0],
     velocity_: [0, 0],
-    velocityVariation_: [75, 75],
-    sizeBegin_: 18,
+    velocityVariation_: [250, 250],
+    sizeBegin_: 16,
     sizeEnd_: 0,
-    sizeVariation_: 4,
+    sizeVariation_: 2,
     colourBegin_: v4f(0, 0, 0, 1),
     colourEnd_: v4f(0, 0, 0, 0.1),
     lifetime_: 200

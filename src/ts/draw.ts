@@ -10,7 +10,7 @@ export let BLACK = 0xff000000;
 export let PURPLE = 0xfff21d6b;
 export let PURPLE_f = v4f(0x6b / 255, 0x1d / 255, 0xf2 / 255, 1);
 export let RED = 0xff1313ba;
-export let GREEN = 0xff44f21d;
+export let GREEN = 0xff0f950f;
 
 export let toABGR = (r: number, g: number, b: number, a: number): number => {
     let out = (0 | (clamp(a, 0, 255) & 0xff)) << 8 >>> 0;
