@@ -8,9 +8,15 @@ import { mainMenuScene } from "./mainMenu";
 let selected = 0;
 let options: string[] = [];
 
+let getMute = () => gameState[GS_MUTEMUSIC] === 1 ? "music: off" : "music: on";
+let getShake = () => gameState[GS_SCREENSHAKE] === 1 ? "screen shake: on" : "screen shake: off";
 let setup = (): void => {
     selected = 0;
-    options = [gameState[GS_MUTEMUSIC] === 1 ? "unmute music" : "mute music", "back"];
+    options = [
+        getMute(),
+        getShake(),
+        "back"
+    ];
 };
 
 let update = (delta: number): void => {
@@ -20,7 +26,7 @@ let update = (delta: number): void => {
             zzfxPlay(boop);
         }
     } else if (DOWN_PRESSED) {
-        if (selected < 1) {
+        if (selected < 2) {
             selected++;
             zzfxPlay(boop);
         }
@@ -29,10 +35,15 @@ let update = (delta: number): void => {
         switch (selected) {
             case 0:
                 gameState[GS_MUTEMUSIC] = (gameState[GS_MUTEMUSIC] + 1) % 2;
-                options[0] = gameState[GS_MUTEMUSIC] === 1 ? "unmute music" : "mute music";
+                options[0] = getMute();
                 saveGame();
                 break;
             case 1:
+                gameState[GS_SCREENSHAKE] = (gameState[GS_SCREENSHAKE] + 1) % 2;
+                options[1] = getShake();
+                saveGame();
+                break;
+            case 2:
                 switchToScene(mainMenuScene.id_);
                 break;
         }
@@ -42,8 +53,8 @@ let update = (delta: number): void => {
 };
 
 let draw = (): void => {
-    for (let i = 0; i < 2; i++) {
-        pushText((selected === i ? ">" : "") + options[i], SCREEN_LEFT + 8, SCREEN_DIM - 8 - 24 + (i * 24), WHITE, 2, TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM);
+    for (let i = 0; i < 3; i++) {
+        pushText((selected === i ? ">" : "") + options[i], SCREEN_LEFT + 8, SCREEN_DIM - 8 - 48 + (i * 24), WHITE, 2, TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM);
     }
 };
 

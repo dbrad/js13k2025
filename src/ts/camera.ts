@@ -1,10 +1,20 @@
 import { WORLD_HEIGHT, WORLD_WIDTH } from "./gameMap";
-import { calcVec, EULER, max, min, round, vecCalc } from "./math";
+import { gameState } from "./gameState";
+import { calcVec, EULER, max, min, random, round, vecCalc } from "./math";
 
 export let cameraPos: V2 = [0, 0];
 export let vCameraPos: V2 = [0, 0];
 export let cameraTarget: V2 = [0, 0];
 
+let shakeDuration = 0;
+let shakeIntensity = 0;
+
+export let triggerShake = (intensity: number, duration: number): void => {
+    if (gameState[GS_SCREENSHAKE]) {
+        shakeIntensity = intensity;
+        shakeDuration = duration;
+    }
+};
 
 export let updateCamera = (x: number, y: number, delta: number): void => {
     cameraTarget[X] = x;
@@ -29,4 +39,16 @@ export let updateCamera = (x: number, y: number, delta: number): void => {
 
     cameraPos[X] = round(vCameraPos[X]);
     cameraPos[Y] = round(vCameraPos[Y]);
+
+    if (shakeDuration > 0) {
+        shakeDuration -= delta;
+        let ox = (random() - 0.5) * shakeIntensity;
+        let oy = (random() - 0.5) * shakeIntensity;
+        cameraPos[X] += ox;
+        cameraPos[Y] += oy;
+        shakeIntensity *= 0.95;
+        if (shakeDuration <= 0) {
+            shakeIntensity = 0;
+        }
+    }
 };
