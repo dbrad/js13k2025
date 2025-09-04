@@ -110,7 +110,7 @@ export let zzfxInit = (): void => {
     }
     boop = zzfxGenerate(...[, , , .05, .05, , , , , , 200, .06, , , , , , .5, .05]);
     boopGood = zzfxGenerate(...[, , 440, .05, .05, , , , , , 200, .06, , , , , , .5, .05, 1]);
-    playerShoot = zzfxGenerate(...[, , , .02, , .05, 4, , , , , , , , , , .2, , .01]);
+    playerShoot = zzfxGenerate(...[.6, , , .02, , .05, 4, , , , , , , , , , .2, , .01]);
     enemyShoot = zzfxGenerate(...[2, , 880, .28, , 0, 2, 4, , -83, 45, .06, .08, , , , .3, .7, .08, .3]);
 
     snare = zzfxGenerate(...[1.5, , 655, , , .09, 3, 1.65, , , , , .02, 3.8, -.1, , .2]);

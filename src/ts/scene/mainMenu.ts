@@ -2,12 +2,12 @@ import { boop, boopGood, zzfxPlay } from "../audio";
 import { BLACK, lightningFlash, pushQuad, pushText, pushTexturedQuad, updateLightning, WHITE } from "../draw";
 import { gameState, loadGame, saveGame } from "../gameState";
 import { A_PRESSED, B_PRESSED, buttonActions, DOWN_PRESSED, UP_PRESSED } from "../input";
+import { min } from "../math";
 import { createScene, switchToScene } from "../scene";
 import { gameScene, runInfo } from "./gameScene";
 import { optionsScene } from "./options";
 
 let mode = 0;
-
 let selected = 0;
 let options = ["new game", "options"];
 let optionsDiff: string[] = [];
@@ -27,7 +27,7 @@ let setup = (): void => {
     }
     if (gameState[GS_PROGRESS] > 2) {
         optionsDiff.push("random");
-        // optionsDiff.push("i am the night");
+        optionsDiff.push("i am the night");
     }
     optionsDiff.push("back");
 };
@@ -62,9 +62,9 @@ let update = (delta: number): void => {
                 mode = 0;
             } else {
                 runInfo[0] = selected;
-                runInfo[1] = 0;
-                if (selected === 3 || selected === 4) {
-                    runInfo[1] = 1;
+                runInfo[1] = min(2, selected);
+                if (selected === 4) {
+                    runInfo[1] = 5;
                 }
                 gameState[GS_RUNCOUNT]++;
                 saveGame();

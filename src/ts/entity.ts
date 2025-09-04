@@ -1,7 +1,7 @@
 import { assert } from "./__debug/debug";
 import { enemyShoot, zzfx, zzfxPlay } from "./audio";
 import { cameraPos } from "./camera";
-import { BLACK, lightningFlash, PURPLE, pushQuad, pushTexturedQuad, RED, setV4fToColour, WHITE } from "./draw";
+import { BLACK, GREEN, lightningFlash, PURPLE, pushQuad, pushTexturedQuad, RED, setV4fToColour, WHITE } from "./draw";
 import { timeData, WORLD_HEIGHT, WORLD_WIDTH } from "./gameMap";
 import { calcVec, clamp, cos, EULER, floor, hypot, max, min, PI, random, sin, sqrt, vecCalc } from "./math";
 import { burstParticle, catParticle, emitParticle, emitParticles, eyeParticle } from "./particle";
@@ -259,7 +259,7 @@ export let spawnAura = (existingId: number = -1, r: number = 50, dmg: number = 5
     return id;
 };
 
-export let spawnXpOrb = (x: number, y: number, xp: number, r: number = 2, abgr: number = 0x8822ff00): number => {
+export let spawnXpOrb = (x: number, y: number, xp: number, r: number = 2, abgr: number = GREEN): number => {
     let id = alloc();
     if (id < 1) return -1;
     type[id] = TYPE_XP_ORB;
@@ -284,7 +284,7 @@ let damageEnemy = (id: number, amt: number): void => {
         burstParticle.colourBegin_[A] = 0.8;
         setV4fToColour(burstParticle.colourEnd_, RED);
         burstParticle.colourEnd_[A] = 0;
-        burstParticle.sizeBegin_ = 6;
+        burstParticle.sizeBegin_ = radius[id];
         emitParticles(burstParticle, 10);
         alive[id] = 0;
     }
