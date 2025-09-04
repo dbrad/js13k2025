@@ -80,6 +80,19 @@ let gridInsert = (id: number): void => {
     }
 };
 
+let isCircleOverlappingEnemyRect = (cx: number, cy: number, cr: number, eid: number): boolean => {
+    let hw = radius[eid];
+    let l = posX[eid] - hw;
+    let r = posX[eid] + hw;
+    let b = posY[eid] + hw;
+    let t = posY[eid] - (0.125 * hw);
+    let clx = clamp(cx, l, r);
+    let cly = clamp(cy, t, b);
+    let dx = cx - clx;
+    let dy = cy - cly;
+    return hypot(dx, dy) <= cr;
+};
+
 export let findNearestEnemy = (maxDist: number): boolean => {
     if (nearestEnemyPos[X] !== -1 || nearestEnemyPos[Y] !== -1) {
         return true;
@@ -307,6 +320,7 @@ let damagePlayer = (amt: number): void => {
 };
 
 let handlePlayerEnemyCollision = (enemyId: number, nx: number, ny: number, overlap: number) => {
+    if (!isCircleOverlappingEnemyRect(posX[0], posY[0], radius[0], enemyId)) return;
     posX[enemyId] += nx * overlap; posY[enemyId] += ny * overlap;
     damagePlayer(damage[enemyId]);
 };
@@ -619,6 +633,11 @@ export let drawEntities = (): void => {
         }
         catParticle.position_[X] = posX[0];
         catParticle.position_[Y] = posY[0];
+        catParticle.velocityVariation_[0] = 250;
+        catParticle.velocityVariation_[1] = 250;
+        emitParticles(catParticle, 5);
+        catParticle.velocityVariation_[0] = 75;
+        catParticle.velocityVariation_[1] = 75;
         emitParticles(catParticle, 5);
 
         eyeParticle.position_[Y] = catParticle.position_[Y] - 1;
