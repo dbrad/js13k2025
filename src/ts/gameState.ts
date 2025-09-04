@@ -1,10 +1,10 @@
 import { timeData } from "./gameMap";
 import { floor } from "./math";
 
-let saveFileName = "js13k2025dbrad_11";
+let saveFileName = "js13k2025dbrad_rc1";
 let storage = window.localStorage;
 
-export let gameState: GameState = [0, 0, 0];
+export let gameState: GameState = [0, 0, 0, 1];
 
 export let saveFileExists = (): boolean => {
     return storage.getItem(saveFileName) !== null;
@@ -18,9 +18,10 @@ export let getRunTime = (): string => {
 
 export let newGame = (): void => {
     gameState = [
+        0, // GS_PROGRESS
         0, // GS_RUNCOUNT
         0, // GS_MUTEMUSIC
-        0, // GS_PROGRESS
+        1, // GS_SCREENSHAKE
     ];
 };
 

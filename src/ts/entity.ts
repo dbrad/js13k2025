@@ -1,6 +1,6 @@
 import { assert } from "./__debug/debug";
 import { enemyShoot, zzfx, zzfxPlay } from "./audio";
-import { cameraPos } from "./camera";
+import { cameraPos, triggerShake } from "./camera";
 import { BLACK, GREEN, lightningFlash, PURPLE, pushQuad, pushTexturedQuad, RED, setV4fToColour, WHITE } from "./draw";
 import { timeData, WORLD_HEIGHT, WORLD_WIDTH } from "./gameMap";
 import { calcVec, clamp, cos, EULER, floor, hypot, max, min, PI, random, sin, sqrt, vecCalc } from "./math";
@@ -305,6 +305,7 @@ let damageEnemy = (id: number, amt: number): void => {
 
 let damagePlayer = (amt: number): void => {
     if (lifetime[0] <= 0) {
+        triggerShake(15, 50);
         if (player.shield_ <= 0) {
             player.hp_ -= max(1, amt - player.defense_);
             zzfx([, .6, 325, .04, .02, .04, 2, 3, , , , , , .5, 1, .1, , .8, .07]);

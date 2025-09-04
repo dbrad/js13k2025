@@ -121,9 +121,10 @@ declare const TEXTURE_DITH_13: 32;
 declare const TEXTURE_DITH_14: 33;
 declare const TEXTURE_DITH_15: 34;
 
-declare const GS_RUNCOUNT: 0;
-declare const GS_MUTEMUSIC: 1;
-declare const GS_PROGRESS: 2;
+declare const GS_PROGRESS: 0;
+declare const GS_RUNCOUNT: 1;
+declare const GS_MUTEMUSIC: 2;
+declare const GS_SCREENSHAKE: 3;
 
 declare const TIME_TRACKER: 0;
 declare const TIME_STAGE: 1;
