@@ -30,7 +30,6 @@ else
 	node_modules/.bin/html-inline -i build/release/index.html -o dist/src/index.html
 	./tools/7z/7za a -tzip dist/game.zip dist/src/*
 	./tools/ect -9 -zip dist/game.zip
-	# clear
 	./tools/cloc-1.86 src/ts
 	node build/scripts/file-size.js
 fi
