@@ -252,7 +252,7 @@ export let spawnRadialBurst = (x: number, y: number, count: number, speed: numbe
         let angle = (2 * PI * k) / count;
         let vx = cos(angle) * speed;
         let vy = sin(angle) * speed;
-        spawnProjectile(x, y, vx, vy, 2, 1, 2, 1, hostile ? PURPLE : RED, hostile);
+        spawnProjectile(x, y, vx, vy, 3, 1, 2, 1, hostile ? PURPLE : RED, hostile);
     }
 };
 
