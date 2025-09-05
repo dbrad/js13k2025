@@ -41,6 +41,7 @@ let waves: WaveDef[][] = [ // Waves: time implied by index (48s intervals)
         { hp_: 5, radius_: 10, dmg_: 1, color_: PURPLE, shootPeriod_: 3, speed_: 0.3, count_: 5 },
     ], // Big+shooters
     [
+        { hp_: 10, radius_: 16, dmg_: 2, color_: BLACK, shootPeriod_: 0, speed_: 0.7, count_: 10 },
         { hp_: 6, radius_: 8, dmg_: 2, color_: RED, shootPeriod_: 0, speed_: 1.2, count_: 15 }
     ], // Medium
     [
@@ -48,9 +49,11 @@ let waves: WaveDef[][] = [ // Waves: time implied by index (48s intervals)
         { hp_: 6, radius_: 8, dmg_: 2, color_: BLACK, shootPeriod_: 0, speed_: 1, count_: 20 },
     ], // Big+fodder
     [
+        { hp_: 10, radius_: 16, dmg_: 2, color_: BLACK, shootPeriod_: 0, speed_: 0.7, count_: 10 },
         { hp_: 5, radius_: 12, dmg_: 4, color_: PURPLE, shootPeriod_: 1, speed_: 0.2, count_: 10 }
     ], // Shooters
     [
+        { hp_: 10, radius_: 16, dmg_: 2, color_: BLACK, shootPeriod_: 0, speed_: 0.7, count_: 10 },
         { hp_: 8, radius_: 14, dmg_: 2, color_: RED, shootPeriod_: 0, speed_: 1.3, count_: 30 }
     ], // Fast medium
     [
@@ -130,6 +133,7 @@ let update = (delta: number): void => {
     if (player.hp_ <= 0) {
         switchToScene(gameOverScene.id_);
         gameoverData[0] = "you died";
+        gameoverData[1] = "game over";
         gameover = true;
     } else {
         if (player.levelUpPending_) {
@@ -185,6 +189,7 @@ let update = (delta: number): void => {
                 if (enemyCount <= 0) {
                     gameover = true;
                     gameoverData[0] = "you are the night";
+                    gameoverData[1] = "victory";
                     gameState[GS_PROGRESS] = max(runInfo[0] + 1, gameState[GS_PROGRESS]);
                     saveGame();
                     return;
@@ -253,7 +258,7 @@ let update = (delta: number): void => {
                 }
                 if (!(bossSpawn && !bossAlive)) {
                     let scaling = randInt(1, timeData[TIME_STAGE]);
-                    let count = randInt(1, 2 + floor(timeData[TIME_STAGE] / 5));
+                    let count = randInt(1, 2 + floor(timeData[TIME_STAGE] / 4));
                     for (let i = 0; i < count; i++) {
                         if (bossSpawn && bossAlive) spawnOffscreenEnemy(1 + scaling + runInfo[1], 4 + scaling, 1 + runInfo[1], RED, false, 0, 1.1);
                         if (random() < 0.2) spawnOffscreenEnemy(3 + scaling + runInfo[1], 8 + scaling, 1 + scaling + runInfo[1], PURPLE, false, 3, 0.3);
