@@ -48,6 +48,7 @@ let update = (delta: number): void => {
                 break;
         }
     } else if (B_PRESSED) {
+        zzfxPlay(boopGood);
         switchToScene(mainMenuScene.id_);
     }
 };
