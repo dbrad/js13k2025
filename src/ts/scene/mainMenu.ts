@@ -72,9 +72,11 @@ let update = (delta: number): void => {
             }
         }
     } else if (B_PRESSED) {
-        zzfxPlay(boopGood);
-        selected = 0;
-        mode = 0;
+        if (mode === 1) {
+            zzfxPlay(boopGood);
+            selected = 0;
+            mode = 0;
+        }
     }
 };
 
