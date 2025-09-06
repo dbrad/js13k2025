@@ -1,0 +1,9 @@
+Day 25 - 2025-09-06
+
+---
+
+Slowing endgame music down, removing double hihats (too busy)
+Add particles to xp orbs
+
+---
+
