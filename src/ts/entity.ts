@@ -598,7 +598,15 @@ export let drawEntities = (): void => {
         if (t & TYPE_AURA) {
             continue;
         } else if (t & TYPE_XP_ORB) {
-            pushTexturedQuad(142, sPosX[id] - r, sPosY[id] - r, d < 9 ? 1 : d * 0.125, color[id] || WHITE);
+            pushTexturedQuad(142, sPosX[id] - r, sPosY[id] - r, d < 9 ? 1 : d * 0.125, color[id] || GREEN);
+            burstParticle.position_[X] = posX[id];
+            burstParticle.position_[Y] = posY[id];
+            setV4fToColour(burstParticle.colourBegin_, GREEN);
+            setV4fToColour(burstParticle.colourEnd_, GREEN);
+            burstParticle.colourBegin_[A] = 0.8;
+            burstParticle.colourEnd_[A] = 0;
+            burstParticle.sizeBegin_ = 4;
+            emitParticle(burstParticle);
         } else if (t & TYPE_ENEMY) {
             pushTexturedQuad(TEXTURE_RAT, sPosX[id] - r, sPosY[id] - r, d * 0.0625, lightningFlash || timeData[TIME_STAGE] < 16 ? color[id] : BLACK, velX[id] < 0, false, true);
         } else {
