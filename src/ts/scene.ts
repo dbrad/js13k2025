@@ -19,7 +19,7 @@ let sceneCleared: boolean = true;
 
 let nextSceneId: number = 0;
 
-export let createScene = (setup_: VoidFunction, update_: UpdateFunction, draw_: VoidFunction, drawGUI_: VoidFunction): Scene => {
+export let createScene = (setup_: VoidFunction, update_: TimedFunction, draw_: TimedFunction, drawGUI_: VoidFunction): Scene => {
     return {
         id_: -1,
         setup_,
@@ -47,7 +47,7 @@ export let switchToScene = (sceneId: number): void => {
     clearInput();
 };
 
-export let updateScene = (delta: number, now: number): void => {
+export let updateScene = (delta: number, dt: number): void => {
     if (transitionInProgress || transition > 0) {
         transition -= delta;
         if (transition <= 0) {
@@ -66,16 +66,16 @@ export let updateScene = (delta: number, now: number): void => {
 
     if (sceneCleared) {
         updateHardwareInput();
-        updateInputState(delta);
-        updateParticles(delta);
+        updateInputState(delta, dt);
+        updateParticles(delta, dt);
     }
 
-    scenes[currentSceneId].update_(delta);
+    scenes[currentSceneId].update_(delta, dt);
 };
 
-export let drawScene = (): void => {
-    scenes[currentSceneId].draw_();
-    drawParticles();
+export let drawScene = (delta: number, dt: number): void => {
+    scenes[currentSceneId].draw_(delta, dt);
+    drawParticles(delta, dt);
 
     if (transitionInProgress) {
         let progress: number = 0;

@@ -1,0 +1,24 @@
+Day 31 - 2025-09-12
+
+---
+
+Getting final submission ready.
+Added some synths to the final boss music.
+Beefed up enemy hp.
+Added on-hit damage flash to enemies.
+
+---
+
+`-Zab0 -Zlr1138 -Zmc4 -Zmd17 -Zpr16 -S0,1,2,3,6,7,13,50,57,76,209,266`
+
+-------------------------------------------------------------------------------
+Language                     files          blank        comment           code
+-------------------------------------------------------------------------------
+TypeScript                      23            403             22           3289
+-------------------------------------------------------------------------------
+SUM:                            23            403             22           3289
+-------------------------------------------------------------------------------
+
+The file is under the limit.
+USED: 95.85% | 12760 BYTES
+LEFT:  4.15% |   552 BYTES

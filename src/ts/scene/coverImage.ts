@@ -9,12 +9,12 @@ let setup = (): void => {
     buttonActions[1] = "cancel";
 };
 
-let update = (delta: number): void => { };
+let update = (delta: number, dt: number): void => { };
 
 const MAX_SUM = 20 + 20;
 const DITHER_LEVELS = 32;
 
-let draw = (): void => {
+let draw = (delta: number, dt: number): void => {
     pushQuad(SCREEN_LEFT, 0, SCREEN_DIM, SCREEN_DIM, WHITE);
     for (let x = 0; x < 21; x++) {
         for (let y = 0; y < 21; y++) {

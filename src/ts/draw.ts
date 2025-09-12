@@ -10,6 +10,7 @@ export let BLACK = 0xff000000;
 export let PURPLE = 0xfff21d6b;
 export let PURPLE_f = v4f(0x6b / 255, 0x1d / 255, 0xf2 / 255, 1);
 export let RED = 0xff1313ba;
+export let FADE_RED = 0x881313ba;
 export let GREEN = 0xff0f950f;
 
 export let toABGR = (r: number, g: number, b: number, a: number): number => {
@@ -47,7 +48,7 @@ export let v4fToABGR = (colour: V4f): number => {
 // Animation Timing
 let idleAnimationTimer = 0;
 export let animationFrame = 0;
-export let updateAnimationFrame = (delta: number): void => {
+export let updateAnimationFrame = (delta: number, dt: number): void => {
     idleAnimationTimer += delta;
     if (idleAnimationTimer > 500) {
         if (idleAnimationTimer > 1000) idleAnimationTimer = 0;

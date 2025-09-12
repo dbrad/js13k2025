@@ -1,10 +1,10 @@
 import { assert } from "./__debug/debug";
 import { enemyShoot, zzfx, zzfxPlay } from "./audio";
 import { cameraPos, triggerShake } from "./camera";
-import { BLACK, GREEN, lightningFlash, PURPLE, pushQuad, pushTexturedQuad, RED, setV4fToColour, WHITE } from "./draw";
+import { BLACK, FADE_RED, GREEN, lightningFlash, PURPLE, pushQuad, pushTexturedQuad, RED, setV4fToColour, WHITE } from "./draw";
 import { timeData, WORLD_HEIGHT, WORLD_WIDTH } from "./gameMap";
 import { calcVec, clamp, cos, EULER, floor, hypot, max, min, PI, random, sin, sqrt, vecCalc } from "./math";
-import { burstParticle, catParticle, emitParticle, emitParticles, eyeParticle } from "./particle";
+import { burstParticle, catParticle, emitParticle, emitParticles, emitterTimer, eyeParticle } from "./particle";
 import { gainXp, player } from "./player";
 
 let MAX_ENTITIES = 20_000 as const;
@@ -330,6 +330,7 @@ let handleProjectileEnemyCollision = (projectileId: number, enemyId: number) => 
     if (enemyHitSet[enemyId].includes(projectileId)) return;
     enemyHitSet[enemyId][enemyHitSetCount[enemyId]++] = projectileId;
     zzfx([.3, , 550, .01, .03, .05, 1, 1.5, -2, , 250]);
+    lifetime[enemyId] = 0.1;
     damageEnemy(enemyId, damage[projectileId] + player.damage_);
     if (knockback[projectileId] > 0) {
         let pv = hypot(velX[projectileId], velY[projectileId]);
@@ -354,7 +355,7 @@ let handleProjectileEnemyCollision = (projectileId: number, enemyId: number) => 
     }
 };
 
-export let updateEntities = (deltaMs: number): void => {
+export let updateEntities = (delta: number, dt: number): void => {
     if (activeCount === 0 || alive[0] === 0) return;
     gridCounts.fill(0);
 
@@ -362,8 +363,6 @@ export let updateEntities = (deltaMs: number): void => {
     nearestEnemyPos[Y] = -1;
 
     let pX = posX[0], pY = posY[0];
-    let dt = deltaMs * 0.001;
-
     for (let n = activeCount - 1; n >= 0; n--) {
         let id = activeIds[n];
         let t = type[id];
@@ -374,6 +373,9 @@ export let updateEntities = (deltaMs: number): void => {
         }
 
         if (t & TYPE_ENEMY) {
+            if (lifetime[id] > 0) {
+                lifetime[id] -= dt;
+            }
             enemyHitSetCount[id] = 0;
             let baseSpeed = 35 + timeData[TIME_STAGE] * 2.5;
             if (player.stealthed_ <= 0) {
@@ -570,7 +572,7 @@ export let updateEntities = (deltaMs: number): void => {
     }
 };
 
-export let drawEntities = (): void => {
+export let drawEntities = (delta: number, dt: number): void => {
     if (activeCount === 0) return;
     for (let n = 0; n < activeCount; n++) {
         let id = activeIds[n];
@@ -606,9 +608,15 @@ export let drawEntities = (): void => {
             burstParticle.colourBegin_[A] = 0.8;
             burstParticle.colourEnd_[A] = 0;
             burstParticle.sizeBegin_ = 4;
-            emitParticle(burstParticle);
+            emitterTimer(2, burstParticle, 16, delta);
         } else if (t & TYPE_ENEMY) {
-            pushTexturedQuad(TEXTURE_RAT, sPosX[id] - r, sPosY[id] - r, d * 0.0625, lightningFlash || timeData[TIME_STAGE] < 16 ? color[id] : BLACK, velX[id] < 0, false, true);
+            let enemyColor = color[id];
+            if (lifetime[id] > 0) {
+                enemyColor = FADE_RED;
+            } else if (timeData[TIME_STAGE] >= 16 && !lightningFlash) {
+                enemyColor = BLACK;
+            }
+            pushTexturedQuad(TEXTURE_RAT, sPosX[id] - r, sPosY[id] - r, d * 0.0625, enemyColor, velX[id] < 0, false, true);
         } else {
             let d = r * 2;
             let tex = d < 4 ? null : d < 9 ? TEXTURE_C_4x4 + (d - 4) : TEXTURE_C_8x8;
@@ -629,13 +637,15 @@ export let drawEntities = (): void => {
                 }
                 burstParticle.colourEnd_[A] = 0;
                 burstParticle.sizeBegin_ = d;
-                emitParticle(burstParticle);
+                emitterTimer(3, burstParticle, 16, delta);
             }
         }
     };
 
-    if (velX[0] !== 0 || velY[0] !== 0 || lifetime[0] > 0) {
-        if (lifetime[0] > 0 && floor(lifetime[0] * 10) % 2 == 1) {
+    let hurtColor = lifetime[0] > 0 && floor(lifetime[0] * 10) % 2 == 1;
+    if (velX[0] !== 0 || velY[0] !== 0) {
+        pushTexturedQuad(TEXTURE_C_16x16, sPosX[0] - 8, sPosY[0] - 8, 1, hurtColor ? RED : BLACK);
+        if (hurtColor) {
             catParticle.colourBegin_[R] = 0.8;
         } else {
             catParticle.colourBegin_[R] = 0;
@@ -644,18 +654,18 @@ export let drawEntities = (): void => {
         catParticle.position_[Y] = posY[0];
         catParticle.velocityVariation_[0] = 250;
         catParticle.velocityVariation_[1] = 250;
-        emitParticles(catParticle, 5);
+        emitterTimer(0, catParticle, 16 / 7, delta);
         catParticle.velocityVariation_[0] = 75;
         catParticle.velocityVariation_[1] = 75;
-        emitParticles(catParticle, 5);
+        emitterTimer(1, catParticle, 16 / 8, delta);
 
-        eyeParticle.position_[Y] = catParticle.position_[Y] - 1;
-        eyeParticle.position_[X] = catParticle.position_[X] - 3;
-        emitParticles(eyeParticle, 2);
-        eyeParticle.position_[X] += 6;
-        emitParticles(eyeParticle, 2);
+        eyeParticle.position_[X] = posX[0] - 3;
+        eyeParticle.position_[Y] = posY[0] - 1;
+        emitParticle(eyeParticle);
+        eyeParticle.position_[X] = posX[0] + 3;
+        emitParticle(eyeParticle);
     } else {
-        pushTexturedQuad(TEXTURE_CAT_01, sPosX[0] - 8, sPosY[0] - 8, 1, BLACK, playerDir === 0, false, false, true);
+        pushTexturedQuad(TEXTURE_CAT_01, sPosX[0] - 8, sPosY[0] - 8, 1, hurtColor ? RED : BLACK, playerDir === 0, false, false, true);
     }
     if (player.shield_ > 0) {
         pushTexturedQuad(TEXTURE_C_16x16, sPosX[0] - 16, sPosY[0] - 16, 2, 0x33aa0000);

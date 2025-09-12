@@ -16,7 +16,7 @@ export let triggerShake = (intensity: number, duration: number): void => {
     }
 };
 
-export let updateCamera = (x: number, y: number, delta: number): void => {
+export let updateCamera = (x: number, y: number, delta: number, dt: number): void => {
     cameraTarget[X] = x;
     cameraTarget[Y] = y;
 
@@ -32,7 +32,7 @@ export let updateCamera = (x: number, y: number, delta: number): void => {
 
     let stiffness = 3 + vecCalc[DIST] * 0.00005;
 
-    let lerpFactor = 1 - EULER ** (-stiffness * delta * 0.001);
+    let lerpFactor = 1 - EULER ** (-stiffness * dt);
 
     vCameraPos[X] += (cameraTarget[X] - vCameraPos[X]) * lerpFactor;
     vCameraPos[Y] += (cameraTarget[Y] - vCameraPos[Y]) * lerpFactor;

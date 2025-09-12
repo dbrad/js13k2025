@@ -19,7 +19,7 @@ let setup = (): void => {
     ];
 };
 
-let update = (delta: number): void => {
+let update = (delta: number, dt: number): void => {
     if (UP_PRESSED) {
         if (selected > 0) {
             selected--;
@@ -53,7 +53,7 @@ let update = (delta: number): void => {
     }
 };
 
-let draw = (): void => {
+let draw = (delta: number, dt: number): void => {
     for (let i = 0; i < 3; i++) {
         pushText((selected === i ? ">" : "") + options[i], SCREEN_LEFT + 8, SCREEN_DIM - 8 - 48 + (i * 24), WHITE, 2, TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM);
     }

@@ -2,7 +2,6 @@ import { playerShoot, zzfxPlay } from "./audio";
 import { RED } from "./draw";
 import { findNearestEnemy, nearestEnemyPos, playerDir, posX, posY, spawnAura, spawnProjectile, spawnRadialBurst } from "./entity";
 import { calcVec, cos, math, max, min, PI, randInt, random, roundTo, sin, vecCalc } from "./math";
-import { burstParticle, emitParticle } from "./particle";
 
 export let player: Player;
 
@@ -203,9 +202,6 @@ export let UPGRADE_POOL: Upgrade[] = [
                     let px = posX[0] + cos(angle) * 64;
                     let py = posY[0] + sin(angle) * 64;
                     spawnProjectile(px, py, 0, 0, a.level_, 1, .1, 999);
-                    burstParticle.position_[X] = px;
-                    burstParticle.position_[Y] = py;
-                    emitParticle(burstParticle);
                 }
                 zzfxPlay(playerShoot);
             });
