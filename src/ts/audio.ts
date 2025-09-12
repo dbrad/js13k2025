@@ -103,6 +103,9 @@ export let enemyShoot: number[];
 let bass: number[];
 let snare: number[];
 let hihat: number[];
+let bassSynthC: number[];
+let bassSynthB: number[];
+let bassSynthA: number[];
 
 export let zzfxInit = (): void => {
     if (!zzfxContext) {
@@ -113,21 +116,38 @@ export let zzfxInit = (): void => {
     playerShoot = zzfxGenerate(...[.6, , , .02, , .05, 4, , , , , , , , , , .2, , .01]);
     enemyShoot = zzfxGenerate(...[2, , 880, .28, , 0, 2, 4, , -83, 45, .06, .08, , , , .3, .7, .08, .3]);
 
-    snare = zzfxGenerate(...[1.5, , 655, , , .09, 3, 1.65, , , , , .02, 3.8, -.1, , .2]);
-    hihat = zzfxGenerate(...[1, , 2200, , , .04, 3, 2, , , 800, .02, , 4.8, , .01, .1]);
+    snare = zzfxGenerate(...[1, , 655, , , .09, 3, 1.65, , , , , .02, 3.8, -.1, , .2]);
+    hihat = zzfxGenerate(...[.7, , 2200, , , .04, 3, 2, , , 800, .02, , 4.8, , .01, .1]);
     bass = zzfxGenerate(...[2, , 43, , , .25, , , , , , , , 2]);
+
+    bassSynthC = zzfxGenerate(...[.35, 0, 65.40639, .08, 1.5, 1, 2, .2, , , , , , .1, , , .19, .42, .15]);
+    bassSynthB = zzfxGenerate(...[.35, 0, 123.4708, .08, .96, 1, 2, .2, , , , , , .1, , , .19, .42, .15]);
+    bassSynthA = zzfxGenerate(...[.35, 0, 110, .08, 1.25, 1, 2, .2, , , , , , .1, , , .19, .42, .15]);
 };
 
 let beat = 0;
 let bpm1 = (1 / (100 / 60) * 1000) * 0.25;
 let bpm2 = (1 / (170 / 60) * 1000) * 0.25;
 let timer = bpm1;
+let rep = 0;
+
 export let playMusic = (delta: number, track: number) => {
     if (!gameState[GS_MUTEMUSIC]) {
         timer -= delta;
         if (timer <= 0) {
             timer = lerp(bpm1, bpm2, min(1, timeData[TIME_STAGE] / 15));
             if (track === 0) {
+                if (timeData[TIME_STAGE] > 15) {
+                    if ((rep === 0) && beat === 0) {
+                        zzfxPlay(bassSynthC);
+                    } else if (rep === 1 && beat === 8) {
+                        zzfxPlay(bassSynthB);
+                    } else if ((rep === 2) && beat === 0) {
+                        zzfxPlay(bassSynthA);
+                    } else if ((rep === 3) && beat === 0) {
+                        zzfxPlay(bassSynthB);
+                    }
+                }
                 if (beat % 2 === 0) {
                     zzfxPlay(hihat);
                 }
@@ -149,6 +169,9 @@ export let playMusic = (delta: number, track: number) => {
                 }
             }
             beat = (beat + 1) % 16;
+            if (beat === 0) {
+                rep = (rep + 1) % 4;
+            }
         }
     }
 };

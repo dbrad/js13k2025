@@ -32,7 +32,7 @@ let setup = (): void => {
     optionsDiff.push("back");
 };
 
-let update = (delta: number): void => {
+let update = (delta: number, dt: number): void => {
     updateLightning(delta);
 
     if (UP_PRESSED) {
@@ -80,7 +80,7 @@ let update = (delta: number): void => {
     }
 };
 
-let draw = (): void => {
+let draw = (delta: number, dt: number): void => {
     if (lightningFlash) {
         pushQuad(SCREEN_LEFT, 0, SCREEN_DIM, SCREEN_DIM, WHITE);
     }

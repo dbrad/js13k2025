@@ -41,7 +41,7 @@ export let catParticle: ParticleParameters = {
     velocity_: [0, 0],
     velocityVariation_: [250, 250],
     sizeBegin_: 16,
-    sizeEnd_: 0,
+    sizeEnd_: 4,
     sizeVariation_: 2,
     colourBegin_: v4f(0, 0, 0, 1),
     colourEnd_: v4f(0, 0, 0, 0.1),
@@ -91,9 +91,8 @@ export let initParticles = (): void => {
     }
 };
 
-export let updateParticles = (delta: number): void => {
+export let updateParticles = (delta: number, dt: number): void => {
     if (activeParticles.size === 0) return;
-    let deltaSeconds = (delta * 0.001);
     let indexes = activeParticles.values();
     for (let i of indexes) {
         if (particleLifetimeRemaining[i] <= 0 || particleSize[i] < 1) {
@@ -103,8 +102,8 @@ export let updateParticles = (delta: number): void => {
 
         particleLifetimeRemaining[i] -= delta;
 
-        particlePosition[i][X] += particleVelocity[i][X] * deltaSeconds;
-        particlePosition[i][Y] += particleVelocity[i][Y] * deltaSeconds;
+        particlePosition[i][X] += particleVelocity[i][X] * dt;
+        particlePosition[i][Y] += particleVelocity[i][Y] * dt;
 
         let lifeProgress = clamp(particleLifetimeRemaining[i] / particleLifetime[i], 0, 1);
 
@@ -124,7 +123,7 @@ export let clearParticles = (): void => {
     activeParticles.clear();
 };
 
-export let drawParticles = (): void => {
+export let drawParticles = (delta: number, dt: number): void => {
     if (activeParticles.size === 0) return;
     for (let i of activeParticles) {
         if (particleSize[i] < 1) {
@@ -142,6 +141,16 @@ export let drawParticles = (): void => {
         } else {
             pushTexturedQuad(TEXTURE_C_16x16, x, y, particleSize[i] * 0.0625, particleColour[i]);
         }
+    }
+};
+
+let emitterTimers = new Float32Array(5);
+export let emitterTimer = (id: number, particle: ParticleParameters, frequencyMs: number, delta: number) => {
+    if (emitterTimers[id] <= 0) {
+        emitParticle(particle);
+        emitterTimers[id] += frequencyMs;
+    } else {
+        emitterTimers[id] -= delta;
     }
 };
 

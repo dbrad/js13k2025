@@ -162,7 +162,7 @@ export let updateHardwareInput = (): void => {
 };
 
 let rateLimit: number[] = [0, 0, 0, 0, 0, 0];
-export let updateInputState = (delta: number): void => {
+export let updateInputState = (delta: number, dt: number): void => {
     for (let key = 0; key <= 5; key++) {
         if (rateLimit[key] > 0) {
             rateLimit[key] -= delta;

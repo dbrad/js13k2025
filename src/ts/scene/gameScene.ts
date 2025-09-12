@@ -100,12 +100,12 @@ let setup = (): void => {
     spawnPlayer(cx, cy, 8);
 };
 
-let update = (delta: number): void => {
+let update = (delta: number, dt: number): void => {
     playMusic(delta, track);
     if (gameover) {
         if (endCine <= -1) return;
-        updateEntities(delta);
-        updateCamera(posX[0], posY[0], delta);
+        updateEntities(delta, dt);
+        updateCamera(posX[0], posY[0], delta, dt);
         endCine += delta;
         timeData[TIME_STAGE] = max(0, 16 - floor(endCine / 250));
         if (endCine >= 6000) {
@@ -122,7 +122,6 @@ let update = (delta: number): void => {
         }
         return;
     }
-    let dt = delta * 0.001;
     if (bossAlive) {
         bossAlive = hp[bossId] > 0;
         if (!bossAlive) {
@@ -174,7 +173,7 @@ let update = (delta: number): void => {
                         for (let i = 0; i < enemy.count_; i++) {
                             let scaling = randInt(1, timeData[TIME_STAGE]);
                             spawnOffscreenEnemy(
-                                enemy.hp_ + scaling + runInfo[1],
+                                enemy.hp_ + scaling * 2 + runInfo[1],
                                 enemy.radius_ + scaling * 0.5,
                                 enemy.dmg_ + scaling * 0.5 + runInfo[1],
                                 enemy.color_,
@@ -261,22 +260,22 @@ let update = (delta: number): void => {
                     let count = randInt(1, 2 + floor(timeData[TIME_STAGE] / 4));
                     for (let i = 0; i < count; i++) {
                         if (bossSpawn && bossAlive) spawnOffscreenEnemy(1 + scaling + runInfo[1], 4 + scaling, 1 + runInfo[1], RED, false, 0, 1.1);
-                        if (random() < 0.2) spawnOffscreenEnemy(3 + scaling + runInfo[1], 8 + scaling, 1 + scaling + runInfo[1], PURPLE, false, 3, 0.3);
-                        else spawnOffscreenEnemy(3 + scaling + runInfo[1], 8 + scaling, 1 + scaling + runInfo[1]);
+                        if (random() < 0.2) spawnOffscreenEnemy(5 + scaling * 2 + runInfo[1], 8 + scaling, 1 + scaling + runInfo[1], PURPLE, false, 3, 0.3);
+                        else spawnOffscreenEnemy(5 + scaling * 2 + runInfo[1], 8 + scaling, 1 + scaling + runInfo[1]);
                     }
                 }
             }
-            updateEntities(delta);
+            updateEntities(delta, dt);
             updatePlayerAbilities(delta);
-            updateCamera(posX[0], posY[0], delta);
+            updateCamera(posX[0], posY[0], delta, dt);
         }
     }
 };
 
-let draw = (): void => {
+let draw = (delta: number, dt: number): void => {
     pushQuad(SCREEN_LEFT, 0, SCREEN_DIM, SCREEN_DIM, WHITE);
     drawWorld();
-    drawEntities();
+    drawEntities(delta, dt);
 };
 
 let w = SCREEN_GUTTER - 4;

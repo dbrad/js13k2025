@@ -9,13 +9,13 @@ let setup = (): void => {
     buttonActions[0] = buttonActions[1] = "continue";
 };
 
-let update = (delta: number): void => {
+let update = (delta: number, dt: number): void => {
     if (A_PRESSED || B_PRESSED) {
         switchToScene(mainMenuScene.id_);
     }
 };
 
-let draw = (): void => {
+let draw = (delta: number, dt: number): void => {
     pushText(gameoverData[0], SCREEN_CENTER_X, SCREEN_CENTER_Y - 16, WHITE, 2, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM);
     pushText(gameoverData[1], SCREEN_CENTER_X, SCREEN_CENTER_Y, WHITE, 3, TEXT_ALIGN_CENTER, TEXT_ALIGN_MIDDLE);
     pushText("run duration|" + getRunTime(), SCREEN_CENTER_X, SCREEN_CENTER_Y + 16, WHITE, 1, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP);

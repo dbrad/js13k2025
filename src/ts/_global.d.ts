@@ -64,13 +64,13 @@ type V2f = Float32Array;
 type V3f = Float32Array;
 type V4f = Float32Array;
 
-type UpdateFunction = (delta: number) => void;
+type TimedFunction = (delta: number, dt: number) => void;
 
 type Scene = {
     id_: number,
     setup_: VoidFunction,
-    update_: UpdateFunction,
-    draw_: VoidFunction,
+    update_: TimedFunction,
+    draw_: TimedFunction,
     drawGUI_: VoidFunction,
 };
 

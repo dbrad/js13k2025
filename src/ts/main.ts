@@ -60,6 +60,8 @@ window.addEventListener("load", async (): Promise<void> => {
         requestAnimationFrame(tick);
 
         let delta = now - then;
+        let dt = delta * 0.001;
+
         then = now;
         let drawCalls = 0;
 
@@ -67,18 +69,19 @@ window.addEventListener("load", async (): Promise<void> => {
             performanceMark("start_of_frame");
             if (delta > 250) {
                 delta = 16.6;
+                dt = delta * 0.001;
             }
             clear();
             performanceMark("update_start");
             {
-                updateAnimationFrame(delta);
-                updateScene(delta, now);
+                updateAnimationFrame(delta, dt);
+                updateScene(delta, dt);
             }
             performanceMark("update_end");
 
             performanceMark("draw_start");
             {
-                drawScene();
+                drawScene(delta, dt);
                 pushQuad(0, 0, SCREEN_LEFT, SCREEN_DIM, BLACK);
                 pushQuad(SCREEN_RIGHT, 0, SCREEN_GUTTER, SCREEN_DIM, BLACK);
                 pushQuad(0, SCREEN_DIM, SCREEN_WIDTH, 24, BLACK);
@@ -104,7 +107,7 @@ window.addEventListener("load", async (): Promise<void> => {
 
             tickPerformanceMeter(delta, drawCalls);
         } else {
-            updateAnimationFrame(delta);
+            updateAnimationFrame(delta, dt);
             clear();
             pushText("i am the night", SCREEN_CENTER_X, SCREEN_CENTER_Y - 28, WHITE, 3, TEXT_ALIGN_CENTER);
             pushText("js13k 2025 entry by david brad", SCREEN_CENTER_X, SCREEN_CENTER_Y, WHITE, 1, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP);
