@@ -1,7 +1,7 @@
 import { timeData } from "./gameMap";
 import { floor } from "./math";
 
-let saveFileName = "js13k2025dbrad_rc1";
+let saveFileName = "js13k2025dbrad_final";
 let storage = window.localStorage;
 
 export let gameState: GameState = [0, 0, 0, 1];
