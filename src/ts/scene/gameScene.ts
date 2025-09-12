@@ -33,7 +33,7 @@ let bosses: BossDef[] = [
 type WaveDef = { hp_: number, radius_: number, dmg_: number, color_: number, shootPeriod_: number, speed_: number, count_: number; }; // SpawnConfig: hp, radius, dmg, color, shootPeriod, speed, count
 let waves: WaveDef[][] = [ // Waves: time implied by index (48s intervals)
     [
-        { hp_: 2, radius_: 8, dmg_: 1, color_: RED, shootPeriod_: 0, speed_: 1.5, count_: 10 },
+        { hp_: 2, radius_: 8, dmg_: 1, color_: RED, shootPeriod_: 0, speed_: 1.2, count_: 10 },
         { hp_: 3, radius_: 12, dmg_: 2, color_: BLACK, shootPeriod_: 0, speed_: 0.9, count_: 5 }
     ], // Fast
     [
@@ -54,17 +54,17 @@ let waves: WaveDef[][] = [ // Waves: time implied by index (48s intervals)
     ], // Shooters
     [
         { hp_: 10, radius_: 16, dmg_: 2, color_: BLACK, shootPeriod_: 0, speed_: 0.7, count_: 10 },
-        { hp_: 8, radius_: 14, dmg_: 2, color_: RED, shootPeriod_: 0, speed_: 1.3, count_: 30 }
+        { hp_: 8, radius_: 14, dmg_: 2, color_: RED, shootPeriod_: 0, speed_: 1.2, count_: 30 }
     ], // Fast medium
     [
         { hp_: 30, radius_: 24, dmg_: 10, color_: BLACK, shootPeriod_: 0, speed_: 0.5, count_: 10 }
     ], // Very big
     [
         { hp_: 10, radius_: 10, dmg_: 2, color_: PURPLE, shootPeriod_: 4, speed_: 0.2, count_: 10 },
-        { hp_: 10, radius_: 8, dmg_: 2, color_: RED, shootPeriod_: 0, speed_: 1.5, count_: 15 }
+        { hp_: 10, radius_: 8, dmg_: 2, color_: RED, shootPeriod_: 0, speed_: 1.2, count_: 15 }
     ], // Many shooters + Speeders
     [
-        { hp_: 10, radius_: 8, dmg_: 1, color_: RED, shootPeriod_: 0, speed_: 1.3, count_: 20 },
+        { hp_: 10, radius_: 8, dmg_: 1, color_: RED, shootPeriod_: 0, speed_: 1.2, count_: 20 },
         { hp_: 30, radius_: 32, dmg_: 10, color_: BLACK, shootPeriod_: 0, speed_: 0.5, count_: 10 }
     ], // Swarm
     [
@@ -75,7 +75,7 @@ let waves: WaveDef[][] = [ // Waves: time implied by index (48s intervals)
     [
         { hp_: 12, radius_: 18, dmg_: 4, color_: PURPLE, shootPeriod_: 3, speed_: 0.4, count_: 6 },
         { hp_: 30, radius_: 32, dmg_: 10, color_: BLACK, shootPeriod_: 0, speed_: 0.6, count_: 10 },
-        { hp_: 10, radius_: 8, dmg_: 2, color_: RED, shootPeriod_: 0, speed_: 1.3, count_: 20 }
+        { hp_: 10, radius_: 8, dmg_: 2, color_: RED, shootPeriod_: 0, speed_: 1.2, count_: 20 }
     ], // Bigger Balanced
 ];
 
@@ -171,9 +171,9 @@ let update = (delta: number, dt: number): void => {
                 if (waveIdx < waves.length && timeData[TIME_LENGTH] >= waveIdx * 48) {
                     for (let enemy of waves[waveIdx]) {
                         for (let i = 0; i < enemy.count_; i++) {
-                            let scaling = randInt(1, timeData[TIME_STAGE]);
+                            let scaling = randInt(1, timeData[TIME_STAGE] * 2);
                             spawnOffscreenEnemy(
-                                enemy.hp_ + scaling * 2 + runInfo[1],
+                                enemy.hp_ + scaling + runInfo[1],
                                 enemy.radius_ + scaling * 0.5,
                                 enemy.dmg_ + scaling * 0.5 + runInfo[1],
                                 enemy.color_,
@@ -256,12 +256,12 @@ let update = (delta: number, dt: number): void => {
                     }
                 }
                 if (!(bossSpawn && !bossAlive)) {
-                    let scaling = randInt(1, timeData[TIME_STAGE]);
+                    let scaling = randInt(1, timeData[TIME_STAGE] * 2);
                     let count = randInt(1, 2 + floor(timeData[TIME_STAGE] / 4));
                     for (let i = 0; i < count; i++) {
                         if (bossSpawn && bossAlive) spawnOffscreenEnemy(1 + scaling + runInfo[1], 4 + scaling, 1 + runInfo[1], RED, false, 0, 1.1);
-                        if (random() < 0.2) spawnOffscreenEnemy(5 + scaling * 2 + runInfo[1], 8 + scaling, 1 + scaling + runInfo[1], PURPLE, false, 3, 0.3);
-                        else spawnOffscreenEnemy(5 + scaling * 2 + runInfo[1], 8 + scaling, 1 + scaling + runInfo[1]);
+                        if (random() < 0.2) spawnOffscreenEnemy(5 + scaling + runInfo[1], 8 + scaling, 1 + scaling + runInfo[1], PURPLE, false, 3, 0.3);
+                        else spawnOffscreenEnemy(5 + scaling + runInfo[1], 8 + scaling, 1 + scaling + runInfo[1]);
                     }
                 }
             }

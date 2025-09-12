@@ -183,7 +183,7 @@ export let UPGRADE_POOL: Upgrade[] = [
         kind_: ABILITY,
         apply_: (): void => {
             upgradeAbility(UP_SLASH, COOLDOWN, 500, (a: Ability): void => {
-                let count = 5 + a.level_ * 6;
+                let count = 5 + a.level_ * 5;
                 let ang = PI / (6 - a.level_);
                 let baseAngle: number;
                 let dx: number, dy: number;
@@ -331,7 +331,10 @@ export let updatePlayerAbilities = (delta: number): void => {
                 ability.fire_(ability);
                 ability.timer_ += ability.cooldown_ * (100 / (100 + player.cooldown_));
             }
+        } else {
+            if (ability.id_ !== UP_STALK || player.stealthed_ <= 0) {
+                ability.timer_ -= delta;
+            }
         }
-        ability.timer_ -= delta;
     }
 };
