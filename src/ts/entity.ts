@@ -290,7 +290,7 @@ let damageEnemy = (id: number, amt: number): void => {
     hp[id] -= amt * (player.bonus_ > 0 ? 2 : 1);
     if (hp[id] <= 0) {
         spawnXpOrb(posX[id], posY[id], damage[id], max(2, floor(damage[id] * .5)));
-        zzfx([.3, , 900, .07, .08, .01, 1, .1, , , 109, , .02, , .9, , , .53, , , 662]);
+        zzfx([.1, , 900, .07, .08, .01, 1, .1, , , 109, , .02, , .9, , , .53, , , 662]);
         burstParticle.position_[X] = posX[id];
         burstParticle.position_[Y] = posY[id];
         setV4fToColour(burstParticle.colourBegin_, RED);
@@ -329,7 +329,7 @@ let handlePlayerEnemyCollision = (enemyId: number, nx: number, ny: number, overl
 let handleProjectileEnemyCollision = (projectileId: number, enemyId: number) => {
     if (enemyHitSet[enemyId].includes(projectileId)) return;
     enemyHitSet[enemyId][enemyHitSetCount[enemyId]++] = projectileId;
-    zzfx([.3, , 550, .01, .03, .05, 1, 1.5, -2, , 250]);
+    zzfx([.1, , 550, .01, .03, .05, 1, 1.5, -2, , 250]);
     lifetime[enemyId] = 0.1;
     damageEnemy(enemyId, damage[projectileId] + player.damage_);
     if (knockback[projectileId] > 0) {

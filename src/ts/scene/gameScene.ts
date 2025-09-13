@@ -1,4 +1,4 @@
-import { enemyShoot, playMusic, zzfxPlay } from "../audio";
+import { enemyShoot, playMusic, zzfx, zzfxPlay } from "../audio";
 import { cameraPos, cameraTarget, updateCamera, vCameraPos } from "../camera";
 import { BLACK, clearLightning, GREEN, PURPLE, pushQuad, pushText, RED, updateLightning, WHITE } from "../draw";
 import { drawEntities, enemyCount, hp, initEntities, posX, posY, spawnEnemy, spawnOffscreenEnemy, spawnPlayer, spawnRadialBurst, updateEntities, velX, velY } from "../entity";
@@ -17,11 +17,15 @@ let gameover = false;
 let bossSpawn = false;
 let bossAlive = false;
 let bossId = -1;
+let levelupDelay = 0;
 let paused = false;
 let track = 0;
 let waveIdx = 0;
 let endCine = 0;
 export let runInfo = [0, 0];
+
+let catQuotes = ["level up!", "i grow stronger", "oh lord he coming", "i am darkness", "i am fear", "pstpstpst", "time for an ash treat|shaped like a fish"];
+let catQuote = "";
 
 type BossDef = [string, number, number, number, number, number, number];
 let bosses: BossDef[] = [
@@ -137,26 +141,34 @@ let update = (delta: number, dt: number): void => {
     } else {
         if (player.levelUpPending_) {
             if (upgrades.length === 0) {
+                zzfx([, , 440, .3, .14, .27, , 3.5, 15, , -150, .07, , , , , .15, .7, .24, , 280]);
+                catQuote = catQuotes[randInt(0, catQuotes.length - 1)];
+                levelupDelay = 1000;
+                upgradeSelectRow = 0;
                 buttonActions[0] = "accept";
                 buttonActions[1] = "";
                 upgrades = getRandomUpgrades(3, player.level_ === 1);
             }
-            if (A_PRESSED) {
-                buttonActions[0] = "dash";
-                buttonActions[1] = "pause";
-                if (upgradeSelectRow === 3) {
-                    player.hp_ = min(player.maxHP_, player.hp_ + player.maxHP_ * .2);
-                } else {
-                    upgrades[upgradeSelectRow].apply_();
+            if (levelupDelay > 0) {
+                levelupDelay -= delta;
+            } else {
+                if (A_PRESSED) {
+                    buttonActions[0] = "dash";
+                    buttonActions[1] = "pause";
+                    if (upgradeSelectRow === 3) {
+                        player.hp_ = min(player.maxHP_, player.hp_ + player.maxHP_ * .2);
+                    } else {
+                        upgrades[upgradeSelectRow].apply_();
+                    }
+                    upgrades = [];
+                    upgradeSelectRow = 0;
+                    player.levelUpPending_ = false;
                 }
-                upgrades = [];
-                upgradeSelectRow = 0;
-                player.levelUpPending_ = false;
-            }
-            if (DOWN_PRESSED) {
-                upgradeSelectRow = min(upgradeSelectRow + 1, 3);
-            } else if (UP_PRESSED) {
-                upgradeSelectRow = max(upgradeSelectRow - 1, 0);
+                if (DOWN_PRESSED) {
+                    upgradeSelectRow = min(upgradeSelectRow + 1, 3);
+                } else if (UP_PRESSED) {
+                    upgradeSelectRow = max(upgradeSelectRow - 1, 0);
+                }
             }
         } else {
             if (B_PRESSED) {
@@ -171,7 +183,7 @@ let update = (delta: number, dt: number): void => {
                 if (waveIdx < waves.length && timeData[TIME_LENGTH] >= waveIdx * 48) {
                     for (let enemy of waves[waveIdx]) {
                         for (let i = 0; i < enemy.count_; i++) {
-                            let scaling = randInt(1, timeData[TIME_STAGE] * 2);
+                            let scaling = floor(randInt(1, timeData[TIME_STAGE] * 1.5));
                             spawnOffscreenEnemy(
                                 enemy.hp_ + scaling + runInfo[1],
                                 enemy.radius_ + scaling * 0.5,
@@ -256,7 +268,7 @@ let update = (delta: number, dt: number): void => {
                     }
                 }
                 if (!(bossSpawn && !bossAlive)) {
-                    let scaling = randInt(1, timeData[TIME_STAGE] * 2);
+                    let scaling = floor(randInt(1, timeData[TIME_STAGE] * 1.5));
                     let count = randInt(1, 2 + floor(timeData[TIME_STAGE] / 4));
                     for (let i = 0; i < count; i++) {
                         if (bossSpawn && bossAlive) spawnOffscreenEnemy(1 + scaling + runInfo[1], 4 + scaling, 1 + runInfo[1], RED, false, 0, 1.1);
@@ -328,7 +340,7 @@ let drawGUI = (): void => {
 
         pushQuad(SCREEN_RIGHT + 3, SCREEN_DIM - 20, w, 20, WHITE);
         pushQuad(SCREEN_RIGHT + 3, SCREEN_DIM - 20, player.dash_ / 1000 * w, 20, player.dash_ >= 1000 ? 0xff13ba13 : RED);
-        pushText("dash", SCREEN_RIGHT + SCREEN_GUTTER * .5, SCREEN_DIM - 10, WHITE, 1, TEXT_ALIGN_CENTER, TEXT_ALIGN_MIDDLE);
+        pushText("dash cooldown", SCREEN_RIGHT + SCREEN_GUTTER * .5, SCREEN_DIM - 10, WHITE, 1, TEXT_ALIGN_CENTER, TEXT_ALIGN_MIDDLE);
 
         if (bossAlive) {
             pushText(bosses[runInfo[0]][0], SCREEN_CENTER_X, SCREEN_DIM - 14, WHITE, 2, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM);
@@ -338,20 +350,24 @@ let drawGUI = (): void => {
 
         if (player.levelUpPending_) {
             pushQuad(SCREEN_LEFT, 0, SCREEN_DIM + 1, SCREEN_DIM + 1, 0xcc000000);
-            for (let i = 0; i < upgrades.length; i++) {
-                if (upgradeSelectRow === i) {
-                    pushQuad(SCREEN_LEFT, (84 * i), SCREEN_DIM + 1, 84, WHITE);
+            if (levelupDelay > 0) {
+                pushText(catQuote, SCREEN_CENTER_X, SCREEN_DIM * .5, WHITE, 2, TEXT_ALIGN_CENTER, TEXT_ALIGN_MIDDLE);
+            } else {
+                for (let i = 0; i < upgrades.length; i++) {
+                    if (upgradeSelectRow === i) {
+                        pushQuad(SCREEN_LEFT, (84 * i), SCREEN_DIM + 1, 84, WHITE);
+                    }
+                    pushQuad(SCREEN_LEFT + 1, 1 + (84 * i), SCREEN_DIM - 1, 82, BLACK);
+                    pushText(upgrades[i].name_, SCREEN_CENTER_X, 1 + 42 + (84 * i) - 1, WHITE, 2, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM);
+                    pushText(upgrades[i].description_, SCREEN_CENTER_X, 1 + 42 + (84 * i) + 8, WHITE, 1, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP);
                 }
-                pushQuad(SCREEN_LEFT + 1, 1 + (84 * i), SCREEN_DIM - 1, 82, BLACK);
-                pushText(upgrades[i].name_, SCREEN_CENTER_X, 1 + 42 + (84 * i) - 1, WHITE, 2, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM);
-                pushText(upgrades[i].description_, SCREEN_CENTER_X, 1 + 42 + (84 * i) + 8, WHITE, 1, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP);
+                if (upgradeSelectRow === 3) {
+                    pushQuad(SCREEN_LEFT + 83, (84 * 3), SCREEN_DIM - 166, 84, WHITE);
+                }
+                pushQuad(SCREEN_LEFT + 84, 1 + (84 * 3), SCREEN_DIM - 168, 82, BLACK);
+                pushText("skip", SCREEN_CENTER_X, 1 + 42 + (84 * 3), WHITE, 2, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM);
+                pushText("heal 20%", SCREEN_CENTER_X, 1 + 42 + (84 * 3) + 8, 0xff666666, 1, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP);
             }
-            if (upgradeSelectRow === 3) {
-                pushQuad(SCREEN_LEFT + 83, (84 * 3), SCREEN_DIM - 166, 84, WHITE);
-            }
-            pushQuad(SCREEN_LEFT + 84, 1 + (84 * 3), SCREEN_DIM - 168, 82, BLACK);
-            pushText("skip", SCREEN_CENTER_X, 1 + 42 + (84 * 3), WHITE, 2, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM);
-            pushText("heal 20%", SCREEN_CENTER_X, 1 + 42 + (84 * 3) + 8, 0xff666666, 1, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP);
         }
 
         if (paused) {
